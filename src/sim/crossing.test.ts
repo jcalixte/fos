@@ -100,7 +100,7 @@ describe("the bridge march", () => {
 
     const said = b.dispatches.map((d) => d.text)
     expect(said[0]).toContain("received its Order")
-    expect(said).toContain("1er/4e de Ligne took march column for the road")
+    expect(said).toContain("1er/4e de Ligne took march column to cover the ground")
     expect(crossedTheBridge).toBe(true)
     expect(unit.order).toBeNull()
     expect(distance(unit.position, destination)).toBeLessThan(10)

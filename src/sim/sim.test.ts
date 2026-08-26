@@ -238,7 +238,7 @@ describe("C2 Initiative", () => {
       arrivedAt: 0,
     }
     for (let i = 0; i < 10; i++) step(battle)
-    expect(unit.suspendedBy).toBe("took march column for the road")
+    expect(unit.suspendedBy).toBe("took march column to cover the ground")
     expect(unit.changing?.to).toBe("march-column")
     const halted = { ...unit.position }
 
@@ -273,7 +273,7 @@ describe("C2 Initiative", () => {
     }
     for (let i = 0; i < 10; i++) step(battle)
     expect(battle.dispatches.map((d) => d.text)).toContain(
-      "12e Ligne took march column for the road",
+      "12e Ligne took march column to cover the ground",
     )
   })
 

@@ -112,6 +112,10 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   }
 
   // Arrived. Dress on the ordered facing, then take up the ordered Formation.
+  // A battalion therefore arrives in whatever it marched in and re-forms while
+  // standing on the spot, where historically it would have deployed short of
+  // it. Known simplification: deploying early means guessing how much ground
+  // the Unit needs before it has any, and nothing in milestone 1 punishes it.
   unit.route = []
   if (Math.abs(angleDelta(unit.facing, body.arrivalFacing)) > FACING_TOLERANCE) {
     turnToward(battle, unit, body.arrivalFacing, dt)

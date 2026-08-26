@@ -205,9 +205,12 @@ export function useBattle(scenarioPath: string) {
       return
     }
 
+    // Pressing on one of your own Units always selects it, which means a Unit
+    // cannot be sent to stand exactly where another already is. Select the
+    // other one instead — it is a fair trade for never mis-clicking an Order.
     const own = ui.units.filter((u) => u.army === ui.playerArmy)
     const hit = v.unitAt(own, point)
-    if (hit && (!ui.selected || hit.id === ui.selected || !dragFrom)) {
+    if (hit) {
       ui.selected = hit.id
       ui.arrivalFormation = hit.formation
       dragFrom = null

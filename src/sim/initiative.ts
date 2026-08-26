@@ -90,7 +90,7 @@ export const RULES: InitiativeRule[] = [
     },
   },
   {
-    name: "took march column for the road",
+    name: "took march column to cover the ground",
     applies: (unit) => {
       if (pinned(unit)) return null
       if (unit.order?.order.body.kind !== "move") return null
