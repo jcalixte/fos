@@ -103,8 +103,10 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
 }
 
 /**
- * The Ghost's placement: where an Order in flight will put its Unit, held on
- * screen from the moment it is issued until the Courier arrives.
+ * The Ghost's placement: where an Order will put its Unit, and how it will
+ * stand there. Held on screen from the moment the Order is issued until the
+ * Unit is actually on the spot — across the ride and the march both, since the
+ * march is the longer wait and the one the player most needs a mark for.
  */
 export interface Ghost {
   unitId: UnitId
@@ -134,6 +136,19 @@ export function ghosts(battle: Battle): Ghost[] {
         formation: body.formation,
       })
     }
+  }
+  // A Unit still working a move Order has not arrived: `order` is only cleared
+  // once it is on the spot, faced and formed. So this outlives the Courier and
+  // carries the Ghost through the march.
+  for (const unit of battle.units) {
+    const body = unit.order?.order.body
+    if (body?.kind !== "move") continue
+    out.push({
+      unitId: unit.id,
+      position: body.destination,
+      facing: body.arrivalFacing,
+      formation: body.arrivalFormation,
+    })
   }
   return out
 }

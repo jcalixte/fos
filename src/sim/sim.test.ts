@@ -177,6 +177,32 @@ describe("C1 Order Delivery", () => {
     expect(shown[0].position).toEqual({ x: 900, y: 300 })
     expect(battle.couriers).toHaveLength(1)
   })
+
+  it("holds the Ghost until the Unit arrives, not until the Courier does", () => {
+    const unit = battalion()
+    const battle = emptyBattle(blankField(400, 40), [unit])
+    issueOrder(
+      battle,
+      unit.id,
+      {
+        kind: "move",
+        destination: { x: 900, y: 300 },
+        arrivalFacing: 1,
+        arrivalFormation: "square",
+      },
+      { x: 0, y: 0 },
+    )
+    while (battle.couriers.length > 0) step(battle)
+
+    // The Courier is home and the march has barely started.
+    expect(unit.order).not.toBeNull()
+    const shown = ghosts(battle)
+    expect(shown).toHaveLength(1)
+    expect(shown[0].position).toEqual({ x: 900, y: 300 })
+    // It stands in the Formation the Unit will arrive in, not the one it marches in.
+    expect(shown[0].formation).toBe("square")
+    expect(unit.formation).not.toBe("square")
+  })
 })
 
 describe("C5 Routing", () => {
