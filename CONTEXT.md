@@ -1,0 +1,339 @@
+# Field of Strategy III
+
+Real-time tactical battles of the Napoleonic era, seen from above in 2D. The player is the
+army commander: they deploy their army before the battle and issue Orders during it.
+
+## Language
+
+### The army
+
+**Unit**:
+The smallest body of troops the player can give an Order to: one body that maneuvers and
+changes Formation as one. What it is called historically — battalion, squadron, battery — is a
+display name; the model sees only an Arm, a Grade and a Strength.
+_Avoid_: stack, squad, troop, group, regiment, battalion
+
+**Arm**:
+The branch a Unit belongs to — infantry, cavalry, or artillery.
+_Avoid_: type, class, branch, category
+
+**Grade**:
+The training and experience tier of a Unit. It sets how fast the Unit drills — Formation
+changes and reloading — how close it lets an enemy come before its nerve makes it fire, and
+how much it takes to Break. It is never a multiplier on how lethal a Volley is. Grades are an ordered
+ladder of three — conscript, line, elite — and each Roster supplies its own display names.
+_Avoid_: level, veterancy, tier, quality, rank (a rank is a row of men)
+
+**Army**:
+The whole of one side's force in a battle — its Roster on the Field, plus its Headquarters.
+_Avoid_: side, team, faction, force, player
+
+**Figure**:
+A drawn marker at a fixed slot in a Unit's Formation, standing for several men. How many men
+it stands for follows the view scale, not the rules. It has no position, behaviour or fate of
+its own.
+_Avoid_: soldier, man, agent, entity, model, sprite
+
+### State of a Unit
+
+**Strength**:
+The number of men still with a Unit. It counts men, never Figures.
+_Avoid_: hit points, health, HP, size, manpower
+
+**Morale**:
+A Unit's willingness to stay and fight. It is the real health bar: a Unit is beaten when its
+Morale gives out, not when its Strength runs down.
+_Avoid_: hit points, health, spirit, courage
+
+**Fatigue**:
+Accumulated exhaustion. It slows a Unit, blunts its fire and denies it a charge.
+_Avoid_: stamina, energy, tiredness
+
+**Disorder**:
+The state of a Unit whose ranks have lost their shape. A Disordered Unit cannot change
+Formation or charge until it re-forms. Its opposite is Ordered.
+_Avoid_: broken (that is Break), shaken, chaos, messy
+
+**Break**:
+The moment a Unit's Morale gives out and it stops obeying Orders.
+_Avoid_: destroyed, killed, dead, wiped, defeated
+
+**Rout**:
+The state of a Unit that has Broken: fleeing toward its own rear, deaf to Orders.
+_Avoid_: fleeing, retreat (a retreat is ordered; a Rout is not), panic
+
+**Rally**:
+A Routing Unit coming back under command of its own accord, once it is clear of the enemy and
+its Morale has crept back above a floor. It cannot be Ordered — routing Units are deaf. Routing
+past the Headquarters hastens it.
+_Avoid_: heal, repair, recover, reinforce, regroup
+
+**Morale Ceiling**:
+The highest Morale a Unit can recover to. It drops each time the Unit Rallies, so a Unit that
+has Broken once Breaks sooner the next time.
+_Avoid_: max morale, morale cap
+
+**Pursuit**:
+Chasing a Routing Unit to finish it rather than letting it get away. It leaves the pursuer in
+Disorder, heavy with Fatigue and far out of position.
+_Avoid_: chase, follow up, mop up
+
+### The ground
+
+**Field**:
+The battleground a battle is fought on: a grid of cells, each carrying a Ground and a Height.
+_Avoid_: map, level, board, arena, terrain
+
+**Ground**:
+What a cell of the Field is made of — open, wood, village, marsh, road, water.
+_Avoid_: terrain type, tile type, biome, surface
+
+**Crossing**:
+A passable strip through otherwise impassable terrain — a bridge, a ford, a gorge. Impassability
+comes from Ground or from gradient, so a defile between cliffs is a Crossing exactly as a bridge
+over a river is. A Crossing is narrow enough that only a march column fits on it.
+_Avoid_: bridge (a bridge is one kind of Crossing), path, passage, chokepoint, defile
+
+**Height**:
+A cell's elevation in metres. It decides what a Unit can see, what it can be seen by, what a
+Charge costs, and — through the gradient to its neighbours — what is impassable. A cliff is a
+gradient, not a Ground.
+_Avoid_: altitude, elevation, z
+
+**Frontage**:
+The ground a Unit covers across its face. It is derived, never authored:
+`ceil(Strength / ranks) x spacing`, with ranks and spacing coming from the Arm and Formation.
+Casualties shrink it.
+_Avoid_: width, size, span
+
+**Footprint**:
+The rectangle of Field a Unit's Formation covers. Terrain applies to a Unit by averaging the
+cells under its Footprint — a Unit is never partly in two places, it is "60% in wood".
+_Avoid_: hitbox, bounds, collider, area
+
+### Seeing
+
+**Powder Smoke**:
+The cloud a Unit leaves behind when it fires. It is drawn and it drifts, and that is all it does
+— it never blinds the player, and whether it blunts fire is a dial that starts at nothing.
+_Avoid_: smog, fog, dust, haze
+
+**Concealment**:
+The state of a Unit the enemy cannot see, because opaque Ground covers it or a Height stands
+between. Open ground in view is never concealed — terrain is the only thing that hides anything.
+_Avoid_: fog of war, stealth, hidden, invisible
+
+### Commanding
+
+**Headquarters**:
+The player's own position on the Field. Orders are couriered from it, so it is what makes
+distance cost time; it is also an eye, and it can be shot at.
+_Avoid_: HQ (in prose), base, command post, general
+
+**Courier**:
+The rider who carries an Order from the Headquarters to a Unit. His speed and the distance he
+must ride are the whole of an Order's delay, and he is drawn on the Field while he rides — an
+Order in flight is a thing the player can watch, not a hidden timer.
+_Avoid_: messenger, aide, runner, dispatch, latency
+
+**Ghost**:
+The greyed outline drawn where an Order will put a Unit — its destination Footprint, in the
+ordered Formation and facing — held on screen from the moment the Order is issued until the
+Courier arrives.
+_Avoid_: preview, marker, waypoint, indicator
+
+**Dispatch**:
+A single reported line of what just happened and why — "12e Ligne broke: 31% down, enfiladed by
+the battery on the ridge". Delivered at once, unlike an Order.
+_Avoid_: event, log line, notification, message, feed
+
+**Initiative**:
+The judgement a Unit exercises when no Order covers its situation — returning fire, forming square
+against oncoming cavalry, Breaking, Routing, choosing what to march in. It only ever preserves: it
+never advances, takes ground or picks an objective, and it suspends a live Order rather than
+cancelling it.
+_Avoid_: AI, autonomy, behaviour, reflex
+
+**Scenario**:
+An authored battle: a Field, both armies, the enemy's Plan, and what counts as winning.
+_Avoid_: level, mission, map, match, stage
+
+**Roster**:
+An army's order of battle as a standalone thing — which Units, of which Arm, at which Grade, at
+what Strength, under what display name. A Scenario names the Rosters it puts on the Field rather
+than containing them. Authoring rule: size a Unit so its Frontage lands in roughly 75-150m, and
+split anything wider.
+_Avoid_: army list, order of battle, force, lineup
+
+**Deployment**:
+The paused phase before a battle in which the player arranges their army inside a zone and
+sites the Headquarters. No Orders are given; nothing is being commanded yet.
+_Avoid_: setup, placement, pre-battle, draft
+
+**Arrival**:
+A Unit entering the Field after the clock has started, at a named point or a Field edge, on a
+clock time or a trigger. Unlike Deployment, the player does not place it and cannot see it coming.
+_Avoid_: reinforcement, spawn, entry, respawn
+
+**Key Ground**:
+A named piece of the Field whose possession at the end of a battle decides it — the bridge,
+the farm, the ridge. An army holds one by having the last uncontested Unit on it.
+_Avoid_: point of interest, objective, capture point, control point, flag
+
+**Army Break**:
+The point at which enough of an army's Units have Broken that the army quits the Field,
+weighted so that losing an elite Unit counts for more than losing a conscript one.
+_Avoid_: defeat, game over, army rout, collapse
+
+**Plan**:
+The enemy army's authored intent — Orders fired by clock time or by trigger. There is no
+planning intelligence behind it; the tactical competence lives in each Unit's Initiative.
+_Avoid_: AI, script, strategy, behaviour tree
+
+**Order**:
+An instruction the player issues to a Unit, which reaches it only after a delivery delay
+rather than taking effect at once.
+_Avoid_: command, instruction, action, move
+
+**Route**:
+The line a Unit works out for itself across the Field to reach where an Order sends it. The
+player may draw one instead, but does not have to.
+_Avoid_: path, waypoints, trajectory
+
+**Formation**:
+The geometric arrangement a Unit holds. Each Arm has its own set — infantry: march column,
+attack column, line, square, **Open Order**; cavalry: march column, line; artillery:
+**Limbered** and **In Battery**. Changing Formation takes real time, and a Unit is at its
+worst while it does.
+_Avoid_: stance, shape, posture, order
+
+**Face**:
+A side of a Formation that is prepared to fight. A line and an attack column have one; a square
+has four; a march column and Open Order have none. A Charge resolves against the Face it strikes,
+and striking anywhere that is not a Face is not a fight.
+_Avoid_: front, side, facing (a facing is a direction, a Face is a side)
+
+**Withdraw**:
+An ordered fall-back that keeps its shape and its facing. The opposite number of a Rout,
+which keeps neither.
+_Avoid_: retreat, fall back, disengage, flee
+
+### Fighting
+
+**Volley**:
+A Unit's discrete act of firing — one moment on a reload clock, never a continuous stream.
+_Avoid_: shooting, damage, attack, fire rate, DPS
+
+**Charge**:
+A committed run at another Unit, resolved as a short sequence that ends with one side
+Breaking or the chargers recoiling.
+_Avoid_: attack, rush, engage
+
+**Contact**:
+The brief, violent state of two Units' blocks touching. It is decided in seconds and is
+never sustained.
+_Avoid_: melee, fight, combat, battle
+
+### Time
+
+**Tempo**:
+The dial that runs the battle clock faster or slower than history. It scales how long the
+player waits; it changes no ratio inside the battle.
+_Avoid_: game speed, time scale, simulation speed
+
+## Relationships
+
+- An **Army** is composed of many **Units**
+- A **Unit** belongs to exactly one **Arm** and holds exactly one **Grade**
+- A **Unit** holds exactly one **Formation** at a time
+- An **Order** is issued to exactly one **Unit**, and is delivered to it after a delay
+- An **Order**'s delay is the ride a **Courier** makes from the **Headquarters** to the **Unit**
+- Every **Order** in flight is a **Courier** visibly on the **Field**, and a **Ghost** where it leads
+- An **Order** given to several **Units** at once sends a **Courier** to each, so they arrive apart
+- An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**
+- A **Move** carries a destination, an arrival facing and an arrival **Formation**
+- A **Unit** picks its own travelling **Formation** by **Initiative**, unless a **Form** pins one
+- A **Formation** determines the slots that a Unit's **Figures** are drawn in
+- A **Formation** and a facing give a Unit its **Footprint** on the **Field**
+- **Ground** and **Height** reach a Unit only through the cells under its **Footprint**
+- A **Crossing** is the only way a Unit passes impassable **Ground**, and only in march column
+- A **Unit** given somewhere to be finds its own **Route** there, funnelling to **Crossings**
+- A **Unit** with no applicable **Order** acts on its **Initiative**
+- **Initiative** suspends an **Order** and resumes it; it never cancels one
+- A **Scenario** carries a **Field**, two **Rosters**, the enemy's **Plan**, a clock, and its **Key Ground**
+- A battle ends at **Army Break** for either side, or when the **Scenario** clock runs out — and
+  then the **Key Ground** is counted
+- A **Roster** entry either stands on the **Field** at **Deployment** or waits on an **Arrival**
+- An **Arrival** can land after its army is already near **Army Break**, so a battle is not lost
+  while a column is still on the road
+- An army sees from the eyes of all its own **Units**, never from where the camera is pointed
+- **Height** blocks sight past it, so a ridge conceals its own reverse slope — symmetrically,
+  for both armies
+- A **Unit** carries a **Strength**, a **Morale** and a **Fatigue**, and is either Ordered or in **Disorder**
+- Casualties reduce both **Strength** and **Morale**; **Morale** is what decides the Unit's fate
+- A **Unit** whose **Morale** gives out will **Break** into a **Rout**, and may later **Rally**
+- A Routing **Unit** sheds **Strength** as it runs, and **Rallies** with a lower **Morale Ceiling**
+- **Pursuit** denies a **Rally** outright, and costs the pursuer **Disorder**, **Fatigue** and position
+- The **Headquarters** hastens a **Rally**, which is its third job after couriers and sight
+- A Routing **Unit** that crosses a formed one throws it into **Disorder**
+- A **Unit** delivers a **Volley** on its own reload clock, or presses a **Charge** into **Contact**
+- A **Volley**'s effect turns mostly on the target's **Formation**: a column offers a quarter of
+  a line's frontage and far more depth to plough through
+- A **Unit**'s fire falls off as its **Morale** drops and **Disorder** sets in — which is the
+  route by which **Grade** reaches lethality, rather than any direct multiplier
+- **Contact** ends when one **Unit** **Breaks** — it is never a state a **Unit** sits in
+- A **Charge** resolves against the **Face** it strikes; off a **Face** there is no fight
+- A **Square** resists cavalry by having four **Faces** and therefore no flank — it needs no rule
+  of its own
+- Fire striking a **Unit** off its facing runs down the **Frontage** it cannot present, so a
+  flanked line is a worse target than a column — this is enfilade, and it needs no rule either
+- Being engaged off its facing costs a **Unit** **Morale** sharply, scaling with the angle and
+  worst from behind. This is a deliberate rule, not geometry: Units broke from being flanked
+  long before the casualties justified it
+
+## Example dialogue
+
+> **Dev:** "When the player tells a Unit to form square, does it form square?"
+> **Designer:** "It receives an Order to form square. Whether it has formed square by the
+> time the cavalry arrives is the whole game."
+>
+> **Dev:** "Nobody ordered the 12th into march column. Why is it in march column?"
+> **Designer:** "Because you told it to be on the ridge and it has two kilometres to walk.
+> That's Initiative. And that is exactly why the hussars are sitting in that wood."
+>
+> **Dev:** "So how much Strength does it take to destroy a battalion?"
+> **Designer:** "You don't destroy it. You break it. It'll go at a quarter of its Strength,
+> sooner if it's tired, sooner still if the battalion beside it went first."
+
+## Flagged ambiguities
+
+- "formation" was used for both the *shape* a Unit holds and the *body of troops* itself.
+  Resolved: **Formation** is the shape; **Unit** is the body of troops. Never swapped.
+- "command" is avoided for a player instruction — **Order** is the term. "Command" is left
+  free for its historical sense (a body of troops under an officer).
+- a Unit is never "destroyed" or "killed". It **Breaks**, and what happens next is a **Rout**.
+- "broken" and "Disordered" are different states: a Disordered Unit still obeys Orders.
+- the camera is not the eye. Visibility is computed from where the army is, not from where the
+  player is looking.
+- the ladder is neutral in the model, not French. "Vieille Garde" is a French *label* for the
+  guard rung, not the rung itself — otherwise the Coldstream Guards end up carrying it.
+- "discipline makes them deadlier" is true but indirect. **Grade** buys rate of fire, the nerve
+  to hold fire to short range, and steadiness under fire — never a flat damage bonus.
+- a battalion historically detached a skirmish company rather than dispersing whole. Modelling
+  that would split a Unit in two and break "one Unit, one Formation", so **Open Order** applies
+  to the whole battalion. Known simplification, deliberately taken.
+- **Contact** is deliberately not called "melee": melee suggests a sustained grind, and this is
+  a thing that is over in seconds.
+- **Tempo** scales the clock only. Changing how a battle *plays* means editing the underlying
+  seconds and metres, which are a separate set of knobs.
+- a **Figure** is not a man. It is a drawn marker standing for several, at a ratio that follows
+  the view scale — so `unit.figures.length` is never a Unit's **Strength**. The word "soldier"
+  was used for this early on and was wrong.
+- "rank" means a row of Figures within a Formation, never a Unit's quality — that is **Grade**.
+- "how big is a Unit" was two questions wearing one coat. Resolved: men per Unit, map size and
+  Unit count are tuning data and stay changeable; a Unit being *battalion-sized* is structure and
+  is fixed — see [ADR-0001](./docs/adr/0001-unit-is-always-a-battalion.md).
+- "a Unit is a battalion" was a French-army assumption. Austrian cavalry regiments ran 1,000-1,400
+  men against a French 250, so no historical title unifies across armies. Resolved: a **Unit** is
+  defined by function — one body maneuvering as one — and sized by a **Frontage** band on the
+  **Roster**. The model holds no opinion about squadrons versus regiments.
