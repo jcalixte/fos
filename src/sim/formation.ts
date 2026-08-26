@@ -28,16 +28,24 @@ interface FormationSpec {
   faces: 0 | 1 | 4
   /** Metres per second on open, level Ground. */
   speed: number
+  /**
+   * Metres the Unit's fire carries. 0 is "cannot fire at all" — a Unit on the
+   * march has its muskets slung and a battery limbered has its guns hitched.
+   * Volley itself is C6; these are the ranges it will resolve against, kept
+   * here beside Frontage because the beaten ground is Frontage times this.
+   */
+  range: number
 }
 
 const INFANTRY: Record<string, FormationSpec> = {
-  line: { spread: { ranks: 3 }, spacing: 0.6, rankDepth: 1.2, faces: 1, speed: 0.8 },
+  line: { spread: { ranks: 3 }, spacing: 0.6, rankDepth: 1.2, faces: 1, speed: 0.8, range: 100 },
   "attack-column": {
     spread: { ranks: 9 },
     spacing: 0.6,
     rankDepth: 2.2,
     faces: 1,
     speed: 1.2,
+    range: 100,
   },
   "march-column": {
     spread: { files: 4 },
@@ -45,28 +53,51 @@ const INFANTRY: Record<string, FormationSpec> = {
     rankDepth: 0.9,
     faces: 0,
     speed: 1.4,
+    range: 0,
   },
-  square: { spread: { ranks: 16 }, spacing: 0.6, rankDepth: 1.2, faces: 4, speed: 0.25 },
+  square: {
+    spread: { ranks: 16 },
+    spacing: 0.6,
+    rankDepth: 1.2,
+    faces: 4,
+    speed: 0.25,
+    range: 100,
+  },
   "open-order": {
     spread: { ranks: 6 },
     spacing: 1.6,
     rankDepth: 3,
     faces: 0,
     speed: 1.2,
+    range: 150,
   },
 }
 
 const CAVALRY: Record<string, FormationSpec> = {
-  line: { spread: { ranks: 2 }, spacing: 1, rankDepth: 3, faces: 1, speed: 2.5 },
-  "march-column": { spread: { files: 4 }, spacing: 1, rankDepth: 3, faces: 0, speed: 3.2 },
+  line: { spread: { ranks: 2 }, spacing: 1, rankDepth: 3, faces: 1, speed: 2.5, range: 0 },
+  "march-column": {
+    spread: { files: 4 },
+    spacing: 1,
+    rankDepth: 3,
+    faces: 0,
+    speed: 3.2,
+    range: 0,
+  },
 }
 
 /** Gunners per gun. Artillery's Frontage is set by its guns, not by its men. */
 const GUNNERS_PER_GUN = 15
 
 const ARTILLERY: Record<string, FormationSpec> = {
-  "in-battery": { spread: { ranks: 1 }, spacing: 18, rankDepth: 8, faces: 1, speed: 0.2 },
-  limbered: { spread: { files: 1 }, spacing: 6, rankDepth: 14, faces: 0, speed: 2.2 },
+  "in-battery": {
+    spread: { ranks: 1 },
+    spacing: 18,
+    rankDepth: 8,
+    faces: 1,
+    speed: 0.2,
+    range: 900,
+  },
+  limbered: { spread: { files: 1 }, spacing: 6, rankDepth: 14, faces: 0, speed: 2.2, range: 0 },
 }
 
 const SPECS: Record<Arm, Record<string, FormationSpec>> = {
@@ -153,6 +184,35 @@ export function footprint(arm: Arm, formation: FormationName, strength: number):
 
 export function faces(arm: Arm, formation: FormationName): 0 | 1 | 4 {
   return spec(arm, formation).faces
+}
+
+/**
+ * The ground a Unit can beat with fire, in Unit-local metres. Derived from
+ * Frontage and the Formation's range, never authored.
+ *
+ * A battalion in line is 144m across and reaches about 100m, so its beaten
+ * ground is wider than it is deep — a slab, not a cone. Square puts one of
+ * those on each side and leaves the corners bare. Skirmishers in Open Order
+ * have no Face to speak of and shoot every way at once, so theirs is a circle.
+ * A Unit on the march has no zone at all, which is the whole argument against
+ * being caught in column.
+ */
+export interface FireZone {
+  /** Metres the fire carries beyond the Unit's own edge. */
+  range: number
+  /** 1 a single band off the Face, 4 a band per side, 0 all round. */
+  faces: 0 | 1 | 4
+  /** The Unit's own Footprint, which the bands stand off from. */
+  width: number
+  depth: number
+}
+
+/** Null when the Unit cannot fire at all. */
+export function fireZone(arm: Arm, formation: FormationName, strength: number): FireZone | null {
+  const range = spec(arm, formation).range
+  if (range <= 0) return null
+  const shape = footprint(arm, formation, strength)
+  return { range, faces: spec(arm, formation).faces, width: shape.width, depth: shape.depth }
 }
 
 /** Metres per second on open, level Ground. */

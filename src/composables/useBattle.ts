@@ -21,6 +21,8 @@ export interface BattleUi {
   time: number
   clock: number
   tempo: number
+  /** Show beaten ground for every Unit, not just the selected one. */
+  fireZones: boolean
   running: boolean
   ordersInFlight: number
   units: UnitSnapshot[]
@@ -43,6 +45,7 @@ export function useBattle(scenarioPath: string) {
     time: 0,
     clock: 0,
     tempo: 4,
+    fireZones: false,
     running: false,
     ordersInFlight: 0,
     units: [],
@@ -62,6 +65,7 @@ export function useBattle(scenarioPath: string) {
     drag: null,
     placing: null,
     armyColours: {},
+    fireZones: false,
   }
 
   let frame = 0
@@ -150,6 +154,11 @@ export function useBattle(scenarioPath: string) {
     if (!r) return
     r.tempo = tempo
     ui.tempo = tempo
+  }
+
+  function toggleFireZones(): void {
+    viewState.fireZones = !viewState.fireZones
+    ui.fireZones = viewState.fireZones
   }
 
   function togglePause(): void {
@@ -314,6 +323,7 @@ export function useBattle(scenarioPath: string) {
     start,
     beginBattle,
     setTempo,
+    toggleFireZones,
     togglePause,
     order,
     deselect,

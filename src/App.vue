@@ -78,6 +78,19 @@ onBeforeUnmount(() => {
           >
             ×{{ tempo }}
           </button>
+          <button
+            type="button"
+            class="btn btn-xs"
+            :class="ui.fireZones ? 'btn-primary' : 'btn-ghost'"
+            :title="
+              ui.fireZones
+                ? 'showing beaten ground for every Unit'
+                : 'showing beaten ground for the selected Unit only'
+            "
+            @click="battle.toggleFireZones()"
+          >
+            range
+          </button>
         </div>
 
         <button

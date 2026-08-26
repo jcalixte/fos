@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest"
 import { STEP, step, unitSpeed } from "./battle"
 import { blankField } from "./scenario"
 import { cellIndex } from "./field"
-import { baseSpeed, drillSeconds, faces, figureSlots, frontage, poseOf, slots } from "./formation"
+import {
+  baseSpeed,
+  drillSeconds,
+  faces,
+  figureSlots,
+  fireZone,
+  frontage,
+  poseOf,
+  slots,
+} from "./formation"
 import { GROUNDS } from "./ground"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
@@ -66,6 +75,26 @@ describe("C3 Formation Geometry", () => {
     expect(faces("infantry", "square")).toBe(4)
     expect(faces("infantry", "line")).toBe(1)
     expect(faces("infantry", "march-column")).toBe(0)
+  })
+
+  it("beats ground wider than it is deep, and none at all on the march", () => {
+    // 720 men, 3 ranks, 0.6m a file: 240 files across, reaching 100m.
+    const line = fireZone("infantry", "line", 720)!
+    expect(Math.round(line.width)).toBe(144)
+    expect(line.range).toBe(100)
+    expect(line.width).toBeGreaterThan(line.range)
+    expect(line.faces).toBe(1)
+
+    // A column trades the frontage away: same reach, a third of the ground.
+    expect(fireZone("infantry", "attack-column", 720)!.width).toBeLessThan(line.width)
+
+    // Square fires four ways; skirmishers face none and shoot all round.
+    expect(fireZone("infantry", "square", 720)!.faces).toBe(4)
+    expect(fireZone("infantry", "open-order", 720)!.faces).toBe(0)
+
+    // Slung muskets and hitched guns beat nothing.
+    expect(fireZone("infantry", "march-column", 720)).toBeNull()
+    expect(fireZone("artillery", "limbered", 120)).toBeNull()
   })
 
   it("lays out one slot per man, and none of them on top of each other", () => {

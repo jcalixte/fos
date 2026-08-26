@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
-import { bodyCount, faces, figureSlots, footprint, poseFootprint } from "@/sim/formation"
+import { bodyCount, faces, figureSlots, fireZone, footprint, poseFootprint } from "@/sim/formation"
 import type { Battle, Field, KeyGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
@@ -39,6 +39,8 @@ export interface ViewState {
   /** Deployment: the Unit or Headquarters being placed. */
   placing: { id: string; at: Vec2 } | null
   armyColours: Record<string, number>
+  /** Show every Unit's beaten ground. Off, only the selected Unit shows its own. */
+  fireZones: boolean
 }
 
 /** Mix a colour toward white, so Figures read against their own Unit's base. */
@@ -92,6 +94,7 @@ export class BattleView {
   readonly app = new Application()
   private world = new Container()
   private overlay = new Graphics()
+  private fireLayer = new Graphics()
   private ghostLayer = new Graphics()
   private unitLayer = new Container()
   private effects = new Graphics()
@@ -124,7 +127,7 @@ export class BattleView {
     this.observer.observe(host)
     this.texture = figureTexture()
     this.app.stage.addChild(this.world)
-    this.world.addChild(this.overlay, this.ghostLayer, this.unitLayer, this.effects)
+    this.world.addChild(this.overlay, this.fireLayer, this.ghostLayer, this.unitLayer, this.effects)
   }
 
   /** Draw the Field once. Terrain never changes during a battle. */
@@ -197,6 +200,7 @@ export class BattleView {
     const byId = new Map(previous.units.map((u) => [u.id, u]))
     const units = current.units.map((u) => tween(byId.get(u.id), u, alpha))
     this.drawOverlay(view)
+    this.drawFireZones(units, view)
     this.drawGhosts(current, view)
     this.drawUnits(units, view)
     this.drawEffects(previous, current, alpha, units, view)
@@ -222,6 +226,68 @@ export class BattleView {
         alpha: 0.85,
       })
     }
+  }
+
+  /**
+   * Beaten ground, under everything else so it never fights the Units for
+   * legibility. A Unit that cannot fire draws nothing, which is the point:
+   * order a battalion into march column and watch its reach leave the Field.
+   */
+  private drawFireZones(units: UnitSnapshot[], view: ViewState): void {
+    const g = this.fireLayer
+    g.clear()
+    for (const unit of units) {
+      if (!view.fireZones && unit.id !== view.selected) continue
+      const zone = fireZone(unit.arm, unit.changingTo ?? unit.formation, unit.strength)
+      if (!zone) continue
+      const colour = view.armyColours[unit.army] ?? 0xffffff
+      const alpha = unit.id === view.selected ? 0.16 : 0.07
+      const line = this.metresPerPixel()
+      if (zone.faces === 0) {
+        // No Face: skirmishers shoot every way at once.
+        g.circle(unit.position.x, unit.position.y, zone.range + zone.width / 2)
+          .fill({ color: colour, alpha: alpha * 0.7 })
+          .stroke({ width: line * 1.5, color: colour, alpha: alpha * 3 })
+        continue
+      }
+      // A band per Face, each as wide as the Unit and standing off its edge.
+      // Square gets four and its corners stay bare, as they were in life.
+      const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
+      for (const side of sides) {
+        const facing = unit.facing + (side * Math.PI) / 2
+        const across = side % 2 === 0 ? zone.width : zone.depth
+        const out = side % 2 === 0 ? zone.depth : zone.width
+        this.fillBand(g, unit.position, facing, across, out / 2, zone.range, colour, alpha, line)
+      }
+    }
+  }
+
+  /** A rectangle `range` deep, standing `standoff` metres off the Unit's centre. */
+  private fillBand(
+    g: Graphics,
+    at: Vec2,
+    facing: number,
+    across: number,
+    standoff: number,
+    range: number,
+    colour: ColorSource,
+    alpha: number,
+    line: number,
+  ): void {
+    const cos = Math.cos(facing + QUARTER_TURN)
+    const sin = Math.sin(facing + QUARTER_TURN)
+    const corners: Vec2[] = [
+      { x: -across / 2, y: -standoff },
+      { x: across / 2, y: -standoff },
+      { x: across / 2, y: -standoff - range },
+      { x: -across / 2, y: -standoff - range },
+    ].map((p) => ({
+      x: at.x + p.x * cos - p.y * sin,
+      y: at.y + p.x * sin + p.y * cos,
+    }))
+    g.poly(corners.flatMap((c) => [c.x, c.y]))
+      .fill({ color: colour, alpha })
+      .stroke({ width: line * 1.5, color: colour, alpha: Math.min(1, alpha * 3) })
   }
 
   private drawGhosts(current: BattleSnapshot, view: ViewState): void {
