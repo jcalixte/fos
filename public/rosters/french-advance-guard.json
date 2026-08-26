@@ -1,0 +1,89 @@
+{
+  "id": "french-advance-guard",
+  "name": "Avant-garde de l'Armée d'Italie",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-4e-1",
+      "name": "1er/4e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "position": { "x": 280, "y": 470 },
+      "facing": 0
+    },
+    {
+      "id": "fr-4e-2",
+      "name": "2e/4e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 690,
+      "formation": "line",
+      "position": { "x": 280, "y": 620 },
+      "facing": 0
+    },
+    {
+      "id": "fr-18e-1",
+      "name": "1er/18e de Ligne",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 740,
+      "formation": "line",
+      "position": { "x": 280, "y": 770 },
+      "facing": 0
+    },
+    {
+      "id": "fr-18e-3",
+      "name": "3e/18e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 660,
+      "formation": "attack-column",
+      "position": { "x": 430, "y": 700 },
+      "facing": 0
+    },
+    {
+      "id": "fr-2e-chasseurs",
+      "name": "2e Chasseurs à Cheval",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 240,
+      "formation": "line",
+      "position": { "x": 430, "y": 380 },
+      "facing": 0
+    },
+    {
+      "id": "fr-batterie",
+      "name": "5e Cie, 1er Rgt d'Artillerie à Pied",
+      "arm": "artillery",
+      "grade": "elite",
+      "strength": 90,
+      "formation": "in-battery",
+      "position": { "x": 400, "y": 560 },
+      "facing": 0
+    },
+    {
+      "id": "fr-9e-legere",
+      "name": "9e Légère",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 580,
+      "formation": "march-column",
+      "arrival": {
+        "at": 300,
+        "entry": { "x": 12, "y": 232 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 640, "y": 600 },
+          "arrivalFacing": 0,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    }
+  ]
+}

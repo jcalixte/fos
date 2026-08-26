@@ -1,0 +1,76 @@
+{
+  "name": "The bridge march",
+  "summary": "A fixture, not a battle. One river, one bridge, and an advance guard that has to be over it before the Austrians settle in. It exists to answer whether an Order that takes a minute and a half to arrive is a game or a nuisance.",
+  "field": {
+    "cells": [200, 120],
+    "cellSize": 8,
+    "ground": "ground.png",
+    "heightmap": "height.png",
+    "elevation": [0, 80]
+  },
+  "clock": 1800,
+  "seed": 179605,
+  "armies": [
+    {
+      "id": "french",
+      "name": "French",
+      "colour": "#2f4d8f",
+      "roster": "/rosters/french-advance-guard.json",
+      "headquarters": {
+        "x": 352,
+        "y": 557
+      },
+      "deploymentZone": [96, 340, 460, 480]
+    },
+    {
+      "id": "austrian",
+      "name": "Austrian",
+      "colour": "#e3e7ef",
+      "roster": "/rosters/austrian-bridge-guard.json"
+    }
+  ],
+  "crossings": [
+    {
+      "name": "the bridge",
+      "cells": [89, 74, 9, 1]
+    }
+  ],
+  "keyGround": [
+    {
+      "name": "the bridge",
+      "position": {
+        "x": 744,
+        "y": 596
+      },
+      "radius": 90
+    }
+  ],
+  "plan": [
+    {
+      "at": 90,
+      "unitId": "au-ir23-2",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 850,
+          "y": 590
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "au-ir45-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 470
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    }
+  ]
+}

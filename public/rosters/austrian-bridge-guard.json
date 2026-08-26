@@ -1,0 +1,51 @@
+{
+  "id": "austrian-bridge-guard",
+  "name": "Brückenwache",
+  "grades": {
+    "conscript": "Landwehr",
+    "line": "Linie",
+    "elite": "Grenadier"
+  },
+  "entries": [
+    {
+      "id": "au-ir23-2",
+      "name": "2. Bataillon IR 23 Preiss",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "position": { "x": 930, "y": 520 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir45-1",
+      "name": "1. Bataillon IR 45 Lattermann",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "line",
+      "position": { "x": 980, "y": 700 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-batterie",
+      "name": "Positionsbatterie Nr. 4",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 105,
+      "formation": "in-battery",
+      "position": { "x": 1080, "y": 610 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-husaren",
+      "name": "3. Eskadron, Husaren-Regiment Erdödy",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 220,
+      "formation": "line",
+      "position": { "x": 1180, "y": 430 },
+      "facing": 3.14159
+    }
+  ]
+}
