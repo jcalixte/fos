@@ -12,7 +12,7 @@ import {
   poseOf,
   slots,
 } from "./formation"
-import { GROUNDS } from "./ground"
+import { GROUND_COST, GROUNDS, movementCost } from "./ground"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
@@ -481,6 +481,23 @@ describe("C8 Battle Clock", () => {
     const unit = battalion({ position: { x: 300, y: 300 }, facing: 0 })
     const battle = emptyBattle(field, [unit])
     expect(unitSpeed(battle, unit)).toBeCloseTo(baseSpeed("infantry", "line"), 5)
+  })
+
+  it("lets the marsh cost a route more than it costs a Unit's legs", () => {
+    // The routing weight and the speed divisor are different numbers on purpose:
+    // A* should walk round the marsh, but a battalion caught in one must still
+    // be moving at a speed the battle clock can notice.
+    expect(movementCost(GROUND_COST.marsh)).toBeLessThan(GROUND_COST.marsh)
+    expect(movementCost(GROUND_COST.marsh)).toBeGreaterThan(GROUND_COST.open)
+    // The road's bonus is not softened along with the malus.
+    expect(movementCost(GROUND_COST.road)).toBe(GROUND_COST.road)
+
+    const field = blankField(60, 60)
+    field.ground.fill(GROUNDS.indexOf("marsh"))
+    const unit = battalion({ position: { x: 300, y: 300 }, facing: 0 })
+    const battle = emptyBattle(field, [unit])
+    // 20m a minute would be a Unit that has stopped, on a 30-minute clock.
+    expect(unitSpeed(battle, unit) * 60).toBeGreaterThan(20)
   })
 
   it("slows a Unit down in the marsh and speeds it up on the road", () => {

@@ -1,4 +1,4 @@
-import { GROUND_COST, GROUND_OPAQUE, GROUNDS } from "./ground"
+import { GROUND_COST, GROUND_OPAQUE, GROUNDS, movementCost } from "./ground"
 import type { Field, Ground, Vec2 } from "./types"
 import { rotate } from "./vec"
 
@@ -99,15 +99,17 @@ export function opaqueAt(field: Field, index: number): boolean {
 }
 
 /**
- * What one cell costs a Unit standing on it, Ground alone and no gradient.
- * Impassable Ground under a Unit is read as marsh rather than as Infinity: a
+ * What one cell costs a Unit standing on it: Ground alone, no gradient, and the
+ * movement share of it rather than the routing weight.
+ *
+ * Impassable Ground under a Unit is read as marsh rather than as Infinity — a
  * Unit that has somehow ended up in the river still has to be given a speed.
  */
 function cellCost(field: Field, index: number): number {
-  if (isCrossing(field, index)) return GROUND_COST.road
+  if (isCrossing(field, index)) return movementCost(GROUND_COST.road)
   const ground = GROUNDS[field.ground[index]] ?? "open"
   const cost = GROUND_COST[ground]
-  return Number.isFinite(cost) ? cost : GROUND_COST.marsh
+  return movementCost(Number.isFinite(cost) ? cost : GROUND_COST.marsh)
 }
 
 /**
