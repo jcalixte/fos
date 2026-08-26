@@ -33,7 +33,7 @@ const FACING_TOLERANCE = 0.05
  */
 export function unitSpeed(battle: Battle, unit: Unit): number {
   const shape = unitFootprint(unit)
-  const cost = averageCostUnder(battle.field, unit.position, shape.width, shape.depth)
+  const cost = averageCostUnder(battle.field, unit.position, shape.width, shape.depth, unit.facing)
   return baseSpeed(unit.arm, unit.formation) / Math.max(0.5, cost)
 }
 

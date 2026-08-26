@@ -468,6 +468,21 @@ describe("C8 Battle Clock", () => {
     expect(run()).toBe(run())
   })
 
+  it("reads the ground under the Unit, not the ground behind it", () => {
+    // A battalion in line is 140m across and 4m deep. A wood twelve metres to
+    // its rear is ground it is not standing on, and must cost it nothing: the
+    // Footprint is sampled along the Unit's own axes, so its depth reaches back
+    // four metres, not seventy.
+    const field = blankField(60, 60)
+    const wood = GROUNDS.indexOf("wood")
+    for (let cy = 0; cy < 60; cy++) {
+      for (let cx = 0; cx < 36; cx++) field.ground[cellIndex(field, cx, cy)] = wood
+    }
+    const unit = battalion({ position: { x: 300, y: 300 }, facing: 0 })
+    const battle = emptyBattle(field, [unit])
+    expect(unitSpeed(battle, unit)).toBeCloseTo(baseSpeed("infantry", "line"), 5)
+  })
+
   it("slows a Unit down in the marsh and speeds it up on the road", () => {
     const field = blankField(40, 20)
     const unit = battalion({ formation: "march-column", position: { x: 100, y: 80 } })

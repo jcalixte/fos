@@ -1,5 +1,6 @@
 import { GROUND_COST, GROUND_OPAQUE, GROUNDS } from "./ground"
 import type { Field, Ground, Vec2 } from "./types"
+import { rotate } from "./vec"
 
 /**
  * C4 Field. A grid of cells, each carrying a Ground and a Height.
@@ -98,26 +99,50 @@ export function opaqueAt(field: Field, index: number): boolean {
 }
 
 /**
+ * What one cell costs a Unit standing on it, Ground alone and no gradient.
+ * Impassable Ground under a Unit is read as marsh rather than as Infinity: a
+ * Unit that has somehow ended up in the river still has to be given a speed.
+ */
+function cellCost(field: Field, index: number): number {
+  if (isCrossing(field, index)) return GROUND_COST.road
+  const ground = GROUNDS[field.ground[index]] ?? "open"
+  const cost = GROUND_COST[ground]
+  return Number.isFinite(cost) ? cost : GROUND_COST.marsh
+}
+
+/**
  * Terrain reaches a Unit by averaging the cells under its Footprint — a Unit is
  * never partly in two places, it is "60% in wood".
+ *
+ * Sampled along the Unit's own axes, the way its slots are laid out, because a
+ * battalion in line is 144m across and 4m deep. An axis-aligned box round it
+ * would be 144m square and have the battalion wading through a wood seventy
+ * metres off its flank.
  */
-export function averageCostUnder(field: Field, centre: Vec2, width: number, depth: number): number {
-  const half = Math.max(width, depth) / 2
-  const min = cellAt(field, { x: centre.x - half, y: centre.y - half })
-  const max = cellAt(field, { x: centre.x + half, y: centre.y + half })
+export function averageCostUnder(
+  field: Field,
+  centre: Vec2,
+  width: number,
+  depth: number,
+  facing: number,
+): number {
+  const across = Math.max(1, Math.round(width / field.cellSize))
+  const deep = Math.max(1, Math.round(depth / field.cellSize))
   let total = 0
   let n = 0
-  for (let cy = min.cy; cy <= max.cy; cy++) {
-    for (let cx = min.cx; cx <= max.cx; cx++) {
+  for (let j = 0; j < deep; j++) {
+    for (let i = 0; i < across; i++) {
+      // Unit-local metres: +x across the Face, +y toward the rear, as slots are.
+      const offset = rotate(
+        {
+          x: ((i + 0.5) / across - 0.5) * width,
+          y: ((j + 0.5) / deep - 0.5) * depth,
+        },
+        facing + Math.PI / 2,
+      )
+      const { cx, cy } = cellAt(field, { x: centre.x + offset.x, y: centre.y + offset.y })
       if (!inBounds(field, cx, cy)) continue
-      const i = cellIndex(field, cx, cy)
-      const ground = GROUNDS[field.ground[i]] ?? "open"
-      const cost = isCrossing(field, i)
-        ? GROUND_COST.road
-        : Number.isFinite(GROUND_COST[ground])
-          ? GROUND_COST[ground]
-          : GROUND_COST.marsh
-      total += cost
+      total += cellCost(field, cellIndex(field, cx, cy))
       n++
     }
   }
