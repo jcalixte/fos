@@ -1,0 +1,69 @@
+import { ghosts, type Ghost } from "./orders"
+import type { Battle, FormationName, Unit, Vec2 } from "./types"
+
+/**
+ * What the renderer is allowed to see. The simulation runs at 10Hz and the
+ * screen at 60fps, so the renderer draws *between* the last two of these
+ * (F14) — and nothing it computes may ever come back in, or replays diverge
+ * (ADR-0003).
+ */
+export interface UnitSnapshot {
+  id: string
+  army: string
+  name: string
+  arm: Unit["arm"]
+  grade: Unit["grade"]
+  strength: number
+  position: Vec2
+  facing: number
+  formation: FormationName
+  changingTo: FormationName | null
+  /** 0 to 1 through the Formation change, or 0 when there is none. */
+  changeProgress: number
+  suspendedBy: string | null
+  hasOrder: boolean
+}
+
+export interface CourierSnapshot {
+  id: string
+  unitId: string
+  position: Vec2
+  origin: Vec2
+}
+
+export interface BattleSnapshot {
+  time: number
+  units: UnitSnapshot[]
+  couriers: CourierSnapshot[]
+  ghosts: Ghost[]
+}
+
+export function snapshot(battle: Battle): BattleSnapshot {
+  return {
+    time: battle.time,
+    units: battle.units.map((unit) => ({
+      id: unit.id,
+      army: unit.army,
+      name: unit.name,
+      arm: unit.arm,
+      grade: unit.grade,
+      strength: unit.strength,
+      position: { ...unit.position },
+      facing: unit.facing,
+      formation: unit.formation,
+      changingTo: unit.changing?.to ?? null,
+      changeProgress: unit.changing
+        ? Math.min(1, unit.changing.elapsed / unit.changing.duration)
+        : 0,
+      suspendedBy: unit.suspendedBy,
+      hasOrder: unit.order !== null,
+    })),
+    couriers: battle.couriers.map((courier) => ({
+      id: courier.id,
+      unitId: courier.order.unitId,
+      position: { ...courier.position },
+      origin: { ...courier.origin },
+    })),
+    ghosts: ghosts(battle),
+  }
+}
