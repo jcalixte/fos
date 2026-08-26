@@ -1,3 +1,4 @@
+import { unitSpeed } from "./battle"
 import { ghosts, type Ghost } from "./orders"
 import type { Battle, FormationName, Unit, Vec2 } from "./types"
 
@@ -22,6 +23,12 @@ export interface UnitSnapshot {
   changeProgress: number
   suspendedBy: string | null
   hasOrder: boolean
+  /**
+   * Metres per second over the ground it is standing on, in the Formation it is
+   * standing in. Drawn from the simulation rather than recomputed, because the
+   * renderer has no business knowing what the marsh does to a battalion.
+   */
+  speed: number
 }
 
 export interface CourierSnapshot {
@@ -57,6 +64,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
         : 0,
       suspendedBy: unit.suspendedBy,
       hasOrder: unit.order !== null,
+      speed: unitSpeed(battle, unit),
     })),
     couriers: battle.couriers.map((courier) => ({
       id: courier.id,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
-import { drillSeconds, formationsFor, frontage } from "@/sim/formation"
+import { baseSpeed, drillSeconds, formationsFor, frontage } from "@/sim/formation"
 import { describeFormation, type FormationName, type Grade } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
 
@@ -22,6 +22,16 @@ const width = computed(() =>
   Math.round(frontage(props.unit.arm, props.unit.formation, props.unit.strength)),
 )
 const busy = computed(() => props.unit.changingTo !== null)
+
+/**
+ * Metres a minute over the ground it is on. Shown because the ground can halve
+ * it and nothing else on screen says so — a battalion crawling through a village
+ * looks exactly like a battalion dawdling.
+ */
+const pace = computed(() => Math.round(props.unit.speed * 60))
+const hobbled = computed(
+  () => props.unit.speed < baseSpeed(props.unit.arm, props.unit.formation) - 0.001,
+)
 
 /** Seconds this Unit would still need to be in the Formation it is taking up. */
 const remaining = computed(() => {
@@ -49,7 +59,9 @@ const label = describeFormation
         <div class="min-w-56">
           <p class="text-sm font-semibold">{{ unit.name }}</p>
           <p class="text-xs text-base-content/60">
-            {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men · {{ width }}m frontage
+            {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men · {{ width }}m frontage ·
+            <span v-if="pace === 0">does not move</span>
+            <span v-else :class="hobbled ? 'text-warning' : ''">{{ pace }}m a minute</span>
           </p>
         </div>
 
