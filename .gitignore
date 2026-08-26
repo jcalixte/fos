@@ -3,3 +3,8 @@ dist/
 .DS_Store
 *.local
 .vite/
+*.log
+dist-ssr
+.vscode/*
+!.vscode/extensions.json
+.idea
