@@ -303,10 +303,6 @@ export function useBattle(scenarioPath: string) {
     viewState.drag = null
   }
 
-  function resize(): void {
-    view.value?.layout()
-  }
-
   onBeforeUnmount(() => {
     cancelAnimationFrame(frame)
     view.value?.destroy()
@@ -315,7 +311,6 @@ export function useBattle(scenarioPath: string) {
   return {
     ui,
     start,
-    resize,
     beginBattle,
     setTempo,
     togglePause,

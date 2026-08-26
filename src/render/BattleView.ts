@@ -99,6 +99,7 @@ export class BattleView {
   private texture: Texture | null = null
   private field: Field | null = null
   private host: HTMLElement | null = null
+  private observer: ResizeObserver | null = null
   private pxPerMetre = 1
 
   async mount(host: HTMLElement): Promise<void> {
@@ -111,6 +112,16 @@ export class BattleView {
       autoDensity: true,
     })
     host.appendChild(this.app.canvas)
+    // Pixi's `resizeTo` only listens for a window resize, and the host box moves
+    // without one: the footer grows the moment a Unit is selected, and again
+    // whenever its controls wrap to another row. The canvas is absolutely
+    // positioned, so a stale height does not just letterbox — it hangs over the
+    // footer and paints out the row underneath it.
+    this.observer = new ResizeObserver(() => {
+      this.app.resize()
+      this.layout()
+    })
+    this.observer.observe(host)
     this.texture = figureTexture()
     this.app.stage.addChild(this.world)
     this.world.addChild(this.overlay, this.ghostLayer, this.unitLayer, this.effects)
@@ -424,6 +435,8 @@ export class BattleView {
   }
 
   destroy(): void {
+    this.observer?.disconnect()
+    this.observer = null
     this.app.destroy(true, { children: true })
   }
 }

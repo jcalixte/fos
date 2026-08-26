@@ -32,11 +32,9 @@ function onKey(event: KeyboardEvent): void {
 
 onMounted(() => {
   if (host.value) battle.start(host.value)
-  globalThis.addEventListener("resize", battle.resize)
   globalThis.addEventListener("keydown", onKey)
 })
 onBeforeUnmount(() => {
-  globalThis.removeEventListener("resize", battle.resize)
   globalThis.removeEventListener("keydown", onKey)
 })
 </script>
@@ -94,7 +92,7 @@ onBeforeUnmount(() => {
     </header>
 
     <main class="flex min-h-0 flex-1">
-      <div class="relative min-w-0 flex-1">
+      <div class="relative min-w-0 flex-1 overflow-hidden">
         <div
           ref="host"
           class="absolute inset-0 touch-none select-none"
