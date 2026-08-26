@@ -429,6 +429,18 @@ export function intendedFormation(unit: Unit): FormationName {
   return unit.changing?.to ?? unit.formation
 }
 
+/** What each Arm falls back to when it must be able to fight and nothing says how. */
+export const FIGHTING_FORMATION: Record<Arm, FormationName> = {
+  infantry: "line",
+  cavalry: "line",
+  artillery: "in-battery",
+}
+
+/** True if the Formation can beat any ground at all. */
+export function canFire(arm: Arm, formation: FormationName): boolean {
+  return spec(arm, formation).range > 0
+}
+
 /** What each Arm marches in when it has ground to cover and nothing pins it. */
 export const TRAVELLING_FORMATION: Record<Arm, FormationName> = {
   infantry: "march-column",

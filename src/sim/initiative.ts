@@ -1,5 +1,11 @@
 import { cellAt, cellIndex, inBounds, isCrossing } from "./field"
-import { beginChange, intendedFormation, TRAVELLING_FORMATION } from "./formation"
+import {
+  beginChange,
+  canFire,
+  FIGHTING_FORMATION,
+  intendedFormation,
+  TRAVELLING_FORMATION,
+} from "./formation"
 import type { Battle, FormationName, Unit } from "./types"
 import { distance } from "./vec"
 
@@ -33,6 +39,17 @@ const DEPLOY_RANGE = 180
 
 /** How far ahead a Unit looks for the mouth of a Crossing. */
 const CROSSING_LOOKAHEAD = 120
+
+/**
+ * Metres within which a Unit will not be caught on the march. Roughly cannon
+ * shot, and about ninety seconds of cavalry — long enough that a battalion
+ * still has time to do something about it, which is the only reason to pick a
+ * number larger than musket range.
+ *
+ * Known cheat: this reads true positions. Concealment is not built, so a Unit
+ * deploys against an enemy it could not actually see. Revisit with C8.
+ */
+const ENGAGEMENT_RANGE = 300
 
 /** Route left, in metres, following the waypoints rather than the crow. */
 function routeRemaining(unit: Unit): number {
@@ -73,17 +90,54 @@ function travelling(unit: Unit): FormationName {
   return TRAVELLING_FORMATION[unit.arm]
 }
 
+/** True if any enemy stands within ENGAGEMENT_RANGE. */
+function enemyNear(unit: Unit, battle: Battle): boolean {
+  for (const other of battle.units) {
+    if (other.army === unit.army) continue
+    if (distance(unit.position, other.position) <= ENGAGEMENT_RANGE) return true
+  }
+  return false
+}
+
 /**
- * The list, in priority order. Milestone 1 has no fighting in it, so the only
- * rules are the ones about how a Unit chooses to travel. Return fire, forming
- * square, Breaking, Routing and Rallying join the list above these when C6 and
- * C7 land — order matters, and the fighting rules outrank the marching ones.
+ * The Formation to deploy into when caught travelling. The Order's arrival
+ * Formation is the player's own answer, so use it when it can fight; a Unit
+ * ordered to arrive in column still has to survive the last three hundred
+ * metres, and falls back on the Arm's fighting Formation to do it.
+ */
+function deployInto(unit: Unit): FormationName {
+  const body = unit.order?.order.body
+  if (body?.kind === "move" && canFire(unit.arm, body.arrivalFormation)) {
+    return body.arrivalFormation
+  }
+  return FIGHTING_FORMATION[unit.arm]
+}
+
+/**
+ * The list, in priority order: how a Unit chooses to travel, and when it stops
+ * travelling. Return fire, forming square against cavalry, Breaking, Routing
+ * and Rallying join above these when C6 and C7 land — order matters, and the
+ * fighting rules outrank the marching ones.
  */
 export const RULES: InitiativeRule[] = [
+  {
+    // Above the travelling rules, because coming out of column outranks any
+    // reason to be in one. This rule acts, so it suspends the Order and the
+    // Unit stands still to drill — which is right: it cannot march and form
+    // at once, and arriving late beats arriving in column.
+    name: "deployed, the enemy too close to stay on the march",
+    applies: (unit, battle) => {
+      if (pinned(unit)) return null
+      if (canFire(unit.arm, intendedFormation(unit))) return null
+      if (!enemyNear(unit, battle)) return null
+      return { formation: deployInto(unit) }
+    },
+  },
   {
     name: "squeezed into march column for the crossing",
     applies: (unit, battle) => {
       if (pinned(unit)) return null
+      if (enemyNear(unit, battle)) return null
       if (intendedFormation(unit) === travelling(unit)) return null
       if (!crossingAhead(unit, battle)) return null
       return { formation: travelling(unit) }
@@ -91,8 +145,9 @@ export const RULES: InitiativeRule[] = [
   },
   {
     name: "took march column to cover the ground",
-    applies: (unit) => {
+    applies: (unit, battle) => {
       if (pinned(unit)) return null
+      if (enemyNear(unit, battle)) return null
       if (unit.order?.order.body.kind !== "move") return null
       if (intendedFormation(unit) === travelling(unit)) return null
       if (routeRemaining(unit) < DEPLOY_RANGE) return null

@@ -309,6 +309,61 @@ describe("C2 Initiative", () => {
     expect(distance(unit.position, halted)).toBeGreaterThan(5)
   })
 
+  it("will not fold into column with the enemy in reach", () => {
+    const unit = battalion()
+    // 250m off, inside ENGAGEMENT_RANGE.
+    const austrian = battalion({ id: "a1", army: "austrian", position: { x: 350, y: 100 } })
+    const battle = emptyBattle(blankField(200, 40), [unit, austrian])
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 1200, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    for (let i = 0; i < 10; i++) step(battle)
+    // Long march, but it keeps its line and walks at line pace.
+    expect(unit.suspendedBy).toBeNull()
+    expect(unit.changing).toBeNull()
+    expect(unit.formation).toBe("line")
+  })
+
+  it("comes out of column when the enemy gets close, and stands to do it", () => {
+    const unit = battalion({ formation: "march-column" })
+    const austrian = battalion({ id: "a1", army: "austrian", position: { x: 350, y: 100 } })
+    const battle = emptyBattle(blankField(200, 40), [unit, austrian])
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 1200, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "square",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    step(battle)
+    expect(unit.suspendedBy).toBe("deployed, the enemy too close to stay on the march")
+    // It deploys into what the player asked it to arrive in, since that can fight.
+    expect(unit.changing?.to).toBe("square")
+
+    const halted = { ...unit.position }
+    while (unit.changing !== null) step(battle)
+    expect(distance(unit.position, halted)).toBeLessThan(1)
+    expect(unit.formation).toBe("square")
+  })
+
   it("says why, in the words of the rule that fired", () => {
     const unit = battalion()
     const battle = emptyBattle(blankField(200, 40), [unit])
