@@ -68,10 +68,15 @@ for (let cx = 0; cx < CELLS_X; cx++) {
 const bridgeCentre = riverCentre(BRIDGE_ROW)
 for (let d = -4; d <= 4; d++) set(bridgeCentre + d, BRIDGE_ROW, "road")
 
-// A hamlet on the far bank, and woods to break up the approaches.
+// A hamlet on the far bank, and woods to break up the approaches. Houses go on
+// open ground only: a hamlet grew up along the road, it did not bury it. Paving
+// over the road here would put a second bottleneck straight after the bridge,
+// which is the one thing this fixture is trying to measure cleanly.
 for (let cy = BRIDGE_ROW - 4; cy <= BRIDGE_ROW + 3; cy++) {
   for (let cx = bridgeCentre + 6; cx <= bridgeCentre + 14; cx++) {
-    if ((cx + cy) % 5 !== 0) set(cx, cy, "village")
+    if ((cx + cy) % 5 !== 0 && ground[cy * CELLS_X + cx] === "open") {
+      set(cx, cy, "village")
+    }
   }
 }
 const blob = (ox, oy, rx, ry, g) => {
