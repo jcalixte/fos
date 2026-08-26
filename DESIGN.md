@@ -739,17 +739,16 @@ Milestone 1 only, on the bridge-march fixture.
 |------|--------|----------|-------|
 | 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
 | 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
+| 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
 downstream reopens, so the cascade stands as scored.
 
-C6's first cut measures one more thing, which is not in the table because it is F9's clock rather
-than a ranked target. Two lines standing eighty metres apart take about 9% off each other in the
-first minute and half their strength in ten — and then neither of them dies, because the exchange
-thins out with the Frontage it is fired from. F10's Break band of 15–30% is crossed inside three
-minutes. So Morale is not a tuning knob on fire at all; it is the only thing that can *end* a
-firefight, and without it one simply runs to the end of the clock.
+C6 and C7 together settle what a firefight is. Two lines standing eighty metres apart take about
+9% off each other in the first minute, and one of them Breaks between two and a half and four
+minutes in. Morale is what ends a fight; fire only decides how quickly it gets there. Nothing
+reaches 0 Strength any more, which is what F10 asked for.
 
 Two of §9's triggers are still unmeasured, and both are cheap: how many order-cycles a 20-minute
 battle allows to the far flank, and whether the fixture resolves much the same with no Orders
@@ -826,6 +825,17 @@ issued at all.
   the two very nearly cancel. What the column loses is the *exchange* — it can only reply with
   the muskets its own Frontage carries. The period's lesson stands, for a different reason than
   the one the design had written down.
+
+- **Grade was given a flat multiplier on how lethal a Volley is.** CONTEXT forbids exactly that,
+  in as many words: Grade buys rate of fire, the nerve to hold fire, and steadiness under fire, and
+  never a damage bonus. The multiplier is gone. Grade now reaches lethality the way the glossary
+  says it does — through Morale, because a steady battalion keeps firing as it was drilled to and a
+  shaken one does not, and Grade is what decides which it is.
+- **Break was nearly written as a rule about Morale rather than about the Rout.** A rule reading
+  "Morale has given out" stops matching the instant Morale creeps back, which it does while the
+  Unit is still running — handing a mob at full flight back to the rule that files it into column
+  for the bridge. The rule asks whether the Unit *is Routing*; only the Rally rule, above it, can
+  end that. Morale decides when a Unit Breaks and never when it stops.
 
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 

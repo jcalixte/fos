@@ -25,12 +25,15 @@ Order that takes a minute and a half to arrive is a game or a nuisance. It is a 
 Ghosts on the Field, Formation geometry and the morph between Formations, routing that funnels
 to Crossings, Initiative as an ordered rule list, Arrivals, and the Dispatch feed.
 
-Fighting has started, with the Volley. A Unit standing still with an enemy in its beaten ground
-fires on the period's clock, and what that costs comes out of the geometry: how many weapons bear,
-and how much depth their shot has to find. Guns are laid on their target; muskets point where the
-rank points. Nothing yet stops a firefight short of annihilation, which is what makes Morale next.
+Fighting, and what ends it. A Unit standing still with an enemy in its beaten ground fires on the
+period's clock, and what that costs comes out of the geometry: how many weapons bear, and how much
+depth their shot has to find. Guns are laid on their target; muskets point where the rank points.
+Then Morale decides its fate rather than Strength — a battalion Breaks at about a fifth of its men,
+Routs away from whatever broke it, is deaf to Orders while it runs, and Rallies with a lower Morale
+Ceiling than it had before.
 
-Not built yet: Charge, Contact, Morale, Concealment, Powder Smoke, sound.
+Not built yet: Charge, Contact, Fatigue, Disorder, Pursuit, Army Break, Concealment, Powder Smoke,
+sound.
 
 ## Layout
 
