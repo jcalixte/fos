@@ -491,6 +491,40 @@ describe("C8 Battle Clock", () => {
     expect(unit.formation).toBe("line")
   })
 
+  it("wheels onto the ordered facing while still marching, not after", () => {
+    const field = blankField(200, 60)
+    const unit = battalion({ position: { x: 100, y: 240 }, facing: 0 })
+    const battle = emptyBattle(field, [unit])
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        // 150m east, to stand facing north at the end of it. Short enough that
+        // Initiative leaves it in line: a line is what has a wheel worth timing.
+        body: {
+          kind: "move",
+          destination: { x: 250, y: 240 },
+          arrivalFacing: -Math.PI / 2,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    let done = 0
+    for (let i = 0; i < 12000 && done === 0; i++) {
+      step(battle)
+      if (unit.order === null) done = battle.time
+    }
+    // 142m in line is 178s. A 140m line wheeling 90 degrees is 138s more, and
+    // standing still for it at the destination was the whole complaint — the
+    // wheel is walked over the last hundred metres instead.
+    expect(unit.formation).toBe("line")
+    expect(done).toBeGreaterThan(0)
+    expect(done).toBeLessThan(200)
+    expect(unit.facing).toBeCloseTo(-Math.PI / 2, 2)
+  })
+
   it("brings an Arrival onto the Field on its clock time, not before", () => {
     const field = blankField(200, 40)
     const battle = emptyBattle(field, [])

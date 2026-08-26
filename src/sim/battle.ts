@@ -53,6 +53,17 @@ function turnRate(battle: Battle, unit: Unit): number {
   return (2 * Math.max(TRAVERSE_SPEED, unitSpeed(battle, unit))) / width
 }
 
+/**
+ * Ground a Unit needs to come onto its ordered facing while still marching.
+ * A wheel's outer flank walks the arc, so the ground is the turn times half the
+ * Frontage — and the speed cancels out, which is why this is a distance and not
+ * a time. A march column dresses in a couple of metres and a line in a hundred.
+ */
+function dressingGround(unit: Unit, facing: number): number {
+  const width = Math.max(4, frontage(unit.arm, unit.formation, unit.strength))
+  return Math.abs(angleDelta(unit.facing, facing)) * (width / 2)
+}
+
 function turnToward(battle: Battle, unit: Unit, target: number, dt: number): void {
   const delta = angleDelta(unit.facing, target)
   const most = turnRate(battle, unit) * dt
@@ -103,7 +114,14 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     const waypoint = unit.route[0]
     const stride = unitSpeed(battle, unit) * dt
     const toWaypoint = distance(unit.position, waypoint)
-    turnToward(battle, unit, bearing(unit.position, waypoint), dt)
+    // Dress over the last stretch rather than on arrival. A battalion that has
+    // marched four hundred metres has been coming onto its facing as it went,
+    // and charging the wheel afterwards left it standing still for two minutes
+    // at the end of every Order — the one moment the player is watching it.
+    const dressing =
+      unit.route.length === 1 &&
+      toWaypoint <= dressingGround(unit, body.arrivalFacing) + ARRIVAL_RANGE
+    turnToward(battle, unit, dressing ? body.arrivalFacing : bearing(unit.position, waypoint), dt)
     if (toWaypoint <= stride) {
       unit.position = { ...waypoint }
       unit.route.shift()
