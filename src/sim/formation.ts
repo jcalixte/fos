@@ -90,11 +90,15 @@ const GUNNERS_PER_GUN = 15
 
 const ARTILLERY: Record<string, FormationSpec> = {
   "in-battery": {
+    // Zero, not slow. The guns are off their limbers and standing on their
+    // trails: a battery in battery does not go anywhere at all, it traverses.
+    // Moving it means hitching up, which is the 45 seconds in DRILL_SECONDS
+    // and the Initiative rule that spends them.
     spread: { ranks: 1 },
     spacing: 18,
     rankDepth: 8,
     faces: 1,
-    speed: 0.2,
+    speed: 0,
     range: 900,
   },
   limbered: { spread: { files: 1 }, spacing: 6, rankDepth: 14, faces: 0, speed: 2.2, range: 0 },

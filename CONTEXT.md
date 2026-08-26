@@ -204,7 +204,8 @@ _Avoid_: path, waypoints, trajectory
 The geometric arrangement a Unit holds. Each Arm has its own set — infantry: march column,
 attack column, line, square, **Open Order**; cavalry: march column, line; artillery:
 **Limbered** and **In Battery**. Changing Formation takes real time, and a Unit is at its
-worst while it does.
+worst while it does. A Formation can also forbid movement outright: guns In Battery are off
+their limbers and traverse where they stand, so moving a battery means hitching up first.
 _Avoid_: stance, shape, posture, order
 
 **Face**:

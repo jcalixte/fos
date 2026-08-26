@@ -41,10 +41,16 @@ export function unitSpeed(battle: Battle, unit: Unit): number {
  * Radians per second a Unit can wheel. Derived rather than authored: the outer
  * flank of a long line has further to walk, so a 140m line wheels slowly and a
  * march column turns on the spot (F8).
+ *
+ * The floor is what a Unit that cannot march can still do. A battery in battery
+ * has no speed at all and yet traverses its guns; this is the rate it does it
+ * at, and the reason the floor is not zero.
  */
+const TRAVERSE_SPEED = 0.4
+
 function turnRate(battle: Battle, unit: Unit): number {
   const width = Math.max(4, frontage(unit.arm, unit.formation, unit.strength))
-  return (2 * Math.max(0.4, unitSpeed(battle, unit))) / width
+  return (2 * Math.max(TRAVERSE_SPEED, unitSpeed(battle, unit))) / width
 }
 
 function turnToward(battle: Battle, unit: Unit, target: number, dt: number): void {

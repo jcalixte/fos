@@ -1,5 +1,6 @@
 import { cellAt, cellIndex, inBounds, isCrossing } from "./field"
 import {
+  baseSpeed,
   beginChange,
   canFire,
   FIGHTING_FORMATION,
@@ -131,6 +132,27 @@ export const RULES: InitiativeRule[] = [
       if (canFire(unit.arm, intendedFormation(unit))) return null
       if (!enemyNear(unit, battle)) return null
       return { formation: deployInto(unit) }
+    },
+  },
+  {
+    // Above the rules that only bother for ground worth covering, because a
+    // Formation with no speed at all cannot be walked into position however
+    // short the distance — a battery ordered fifty metres forward would
+    // otherwise sit in battery with a live Order and never reach it.
+    //
+    // Guarded by the enemy being away, like the other travelling rules. So a
+    // battery ordered to move with the enemy in reach stays in battery and its
+    // Order stalls, which is the right answer rather than idleness: guns do not
+    // hitch up and trundle off under close threat, and the one thing they can
+    // still do — traverse onto the threat — they are already doing.
+    name: "limbered up, because guns in battery do not move",
+    applies: (unit, battle) => {
+      if (pinned(unit)) return null
+      if (enemyNear(unit, battle)) return null
+      if (unit.order?.order.body.kind !== "move") return null
+      if (routeRemaining(unit) <= 0) return null
+      if (baseSpeed(unit.arm, intendedFormation(unit)) > 0) return null
+      return { formation: travelling(unit) }
     },
   },
   {

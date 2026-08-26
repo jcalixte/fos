@@ -387,6 +387,67 @@ describe("C2 Initiative", () => {
     )
   })
 
+  it("limbers a battery up to move it, however short the distance", () => {
+    const battery = battalion({
+      id: "b1",
+      arm: "artillery",
+      formation: "in-battery",
+      strength: 90,
+      position: { x: 100, y: 100 },
+    })
+    const battle = emptyBattle(blankField(60, 60), [battery])
+    // Fifty metres: less than DEPLOY_RANGE, so no rule about covering ground
+    // fires, and a battery in battery has no speed to cover it with.
+    battery.order = {
+      order: {
+        id: "o1",
+        unitId: battery.id,
+        body: {
+          kind: "move",
+          destination: { x: 150, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "in-battery",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    for (let i = 0; i < 20; i++) step(battle)
+    expect(battery.suspendedBy).toBe("limbered up, because guns in battery do not move")
+    expect(battery.changing?.to).toBe("limbered")
+
+    for (let i = 0; i < 3000; i++) step(battle)
+    expect(distance(battery.position, { x: 150, y: 100 })).toBeLessThan(10)
+    expect(battery.formation).toBe("in-battery")
+  })
+
+  it("traverses a battery onto a new facing without moving it an inch", () => {
+    const battery = battalion({ arm: "artillery", formation: "in-battery", strength: 90 })
+    const battle = emptyBattle(blankField(60, 60), [battery])
+    expect(unitSpeed(battle, battery)).toBe(0)
+    // Ordered to stand where it stands and face north instead: no ground to
+    // cover, so nothing limbers up, and the guns come round on the spot.
+    battery.order = {
+      order: {
+        id: "o1",
+        unitId: battery.id,
+        body: {
+          kind: "move",
+          destination: { ...battery.position },
+          arrivalFacing: -Math.PI / 2,
+          arrivalFormation: "in-battery",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    for (let i = 0; i < 3000; i++) step(battle)
+    expect(battery.position).toEqual({ x: 100, y: 100 })
+    expect(battery.formation).toBe("in-battery")
+    expect(battery.facing).toBeCloseTo(-Math.PI / 2, 2)
+    expect(battery.order).toBeNull()
+  })
+
   it("leaves the Formation alone when a Form Order pins it", () => {
     const unit = battalion()
     const battle = emptyBattle(blankField(200, 40), [unit])
