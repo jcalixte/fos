@@ -423,7 +423,16 @@ export function beginChange(unit: Unit, to: FormationName): boolean {
     from: unit.formation,
     to,
     elapsed: 0,
-    duration: drillSeconds(unit.arm, unit.grade, unit.formation, to),
+    // Timed from the Formation the Unit was on its way to, not the one it still
+    // stands in. Reading the held Formation charged nothing at all to abandon a
+    // change and go back to it — from and to were the same Formation, so the
+    // drill was free and instant, and two rules that disagreed could trade a
+    // battalion back and forth every tick for the whole battle.
+    //
+    // Known simplification: the full drill, whether it had been filing off for
+    // a second or for half a minute. So changing its mind is dear, which is the
+    // right way round to be wrong.
+    duration: drillSeconds(unit.arm, unit.grade, current, to),
   }
   return true
 }

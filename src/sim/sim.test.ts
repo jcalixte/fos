@@ -4,6 +4,7 @@ import { blankField } from "./scenario"
 import { cellIndex } from "./field"
 import {
   baseSpeed,
+  beginChange,
   drillSeconds,
   faces,
   figureSlots,
@@ -116,6 +117,16 @@ describe("C3 Formation Geometry", () => {
     expect(drillSeconds("infantry", "line", "line", "square")).toBe(30)
     expect(drillSeconds("infantry", "elite", "line", "square")).toBeLessThan(30)
     expect(drillSeconds("infantry", "conscript", "line", "square")).toBeGreaterThan(30)
+  })
+
+  it("charges a change of mind mid-drill from where the Unit was going", () => {
+    const unit = battalion()
+    expect(beginChange(unit, "march-column")).toBe(true)
+    unit.changing!.elapsed = 10
+    // Told to be in line after all, having spent ten seconds filing off. It is
+    // not already in line, and getting back there is drill like any other.
+    expect(beginChange(unit, "line")).toBe(true)
+    expect(unit.changing?.duration).toBe(drillSeconds("infantry", "line", "march-column", "line"))
   })
 
   it("morphs the slot layout across a change rather than popping", () => {
