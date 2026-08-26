@@ -68,6 +68,23 @@ function figureTexture(): Texture {
   return Texture.from(canvas)
 }
 
+/**
+ * A discharge on screen. The simulation reports a Volley for the one step it
+ * happened in; the flash has to outlive that step to be seen at all, so the
+ * renderer keeps it and burns it down on wall-clock time. Renderer-only state,
+ * which is the only reason it is allowed to exist: nothing here goes back in.
+ */
+interface Flash {
+  at: Vec2
+  facing: number
+  width: number
+  /** performance.now() when it was raised. */
+  born: number
+}
+
+/** How long a flash and its smoke stay on screen, in milliseconds. */
+const FLASH_MS = 420
+
 interface UnitVisual {
   container: Container
   base: Graphics
@@ -107,6 +124,8 @@ export class BattleView {
   private host: HTMLElement | null = null
   private observer: ResizeObserver | null = null
   private pxPerMetre = 1
+  private flashes: Flash[] = []
+  private flashed = new Set<string>()
 
   async mount(host: HTMLElement): Promise<void> {
     this.host = host
@@ -204,11 +223,76 @@ export class BattleView {
   draw(previous: BattleSnapshot, current: BattleSnapshot, alpha: number, view: ViewState): void {
     const byId = new Map(previous.units.map((u) => [u.id, u]))
     const units = current.units.map((u) => tween(byId.get(u.id), u, alpha))
+    this.collectFlashes(current)
     this.drawOverlay(view)
     this.drawFireZones(units, view)
     this.drawGhosts(current, view)
     this.drawUnits(units, view)
     this.drawEffects(previous, current, alpha, units, view)
+  }
+
+  /**
+   * Raise a flash for every Volley not seen yet. The same snapshot is drawn for
+   * several frames, so a Volley has to be remembered as fired or it flashes once
+   * per frame — and the memory is pruned with the flashes so it cannot grow.
+   */
+  private collectFlashes(current: BattleSnapshot): void {
+    const now = performance.now()
+    for (const volley of current.volleys) {
+      if (this.flashed.has(volley.id)) continue
+      this.flashed.add(volley.id)
+      this.flashes.push({
+        at: { ...volley.from },
+        facing: volley.direction,
+        width: volley.width,
+        born: now,
+      })
+    }
+    if (this.flashes.length === 0) {
+      this.flashed.clear()
+      return
+    }
+    const alive = this.flashes.filter((f) => now - f.born < FLASH_MS)
+    if (alive.length !== this.flashes.length) this.flashes = alive
+  }
+
+  /**
+   * The flash, and nothing else yet: Powder Smoke is a drifting accumulator the
+   * design keeps deliberately inert (T10) and it belongs to its own slice.
+   */
+  private drawFlashes(): void {
+    const now = performance.now()
+    const mpp = this.metresPerPixel()
+    const g = this.effects
+    for (const flash of this.flashes) {
+      const t = Math.min(1, (now - flash.born) / FLASH_MS)
+      const fade = (1 - t) ** 2
+      if (fade <= 0.01) continue
+      const cos = Math.cos(flash.facing)
+      const sin = Math.sin(flash.facing)
+      const across = { x: -sin, y: cos }
+      const half = flash.width / 2
+      // A bar of fire along the Face, growing out of it as the smoke lifts, so a
+      // battalion's discharge reads as one act at a glance and a battery's as
+      // eight separate ones.
+      const out = Math.max(6 * mpp, 5 + 22 * t)
+      const corners: Vec2[] = [
+        { x: flash.at.x - across.x * half, y: flash.at.y - across.y * half },
+        { x: flash.at.x + across.x * half, y: flash.at.y + across.y * half },
+        {
+          x: flash.at.x + across.x * half * 0.8 + cos * out,
+          y: flash.at.y + across.y * half * 0.8 + sin * out,
+        },
+        {
+          x: flash.at.x - across.x * half * 0.8 + cos * out,
+          y: flash.at.y - across.y * half * 0.8 + sin * out,
+        },
+      ]
+      g.poly(corners.flatMap((c) => [c.x, c.y])).fill({ color: 0xf7e2a0, alpha: 0.55 * fade })
+      g.moveTo(flash.at.x - across.x * half, flash.at.y - across.y * half)
+        .lineTo(flash.at.x + across.x * half, flash.at.y + across.y * half)
+        .stroke({ width: mpp * 2.5, color: 0xfff4d0, alpha: 0.95 * fade })
+    }
   }
 
   private drawOverlay(view: ViewState): void {
@@ -456,6 +540,7 @@ export class BattleView {
     const g = this.effects
     g.clear()
     const mpp = this.metresPerPixel()
+    this.drawFlashes()
     const before = new Map(previous.couriers.map((c) => [c.id, c]))
 
     for (const courier of current.couriers) {
