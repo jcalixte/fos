@@ -13,6 +13,17 @@ export type Phase = "loading" | "deployment" | "battle" | "over"
 /** Metres of drag below which the player is placing, not aiming. */
 const AIM_THRESHOLD = 24
 
+/**
+ * Metres of drag below which no Order is sent at all. A press that does not
+ * travel this far is a selection, not a command.
+ *
+ * A near-miss on a Unit used to commit a move Order the player then spent
+ * ninety seconds of Courier time undoing — the cost of a slip was wildly out of
+ * proportion to the slip. Releasing back inside this radius cancels, so a drag
+ * begun by accident can be walked back to where it started.
+ */
+const COMMIT_THRESHOLD = 12
+
 export interface BattleUi {
   phase: Phase
   error: string | null
@@ -168,9 +179,17 @@ export function useBattle(scenarioPath: string) {
     ui.running = r.running
   }
 
+  /** The selected Unit, when it is one you may actually command. */
+  function commandable(): UnitSnapshot | null {
+    const unit = unitById(ui.selected)
+    return unit && unit.army === ui.playerArmy ? unit : null
+  }
+
   function order(body: OrderBody): void {
     const r = runner.value
     if (!r || !ui.selected || ui.phase !== "battle") return
+    // An enemy Unit can be selected to read it, never to order it about.
+    if (!commandable()) return
     const from = r.battle.armies.find((a) => a.id === ui.playerArmy)?.headquarters?.position
     if (!from) return
     issueOrder(r.battle, ui.selected, body, from)
@@ -215,18 +234,23 @@ export function useBattle(scenarioPath: string) {
       return
     }
 
-    // Pressing on one of your own Units always selects it, which means a Unit
-    // cannot be sent to stand exactly where another already is. Select the
-    // other one instead — it is a fair trade for never mis-clicking an Order.
-    const own = ui.units.filter((u) => u.army === ui.playerArmy)
-    const hit = v.unitAt(own, point)
+    // Pressing on any Unit selects it, enemy included — you cannot order an
+    // enemy about, but you can read it, and a press that lands on one must not
+    // quietly become an Order aimed at where it stands.
+    const hit = v.unitAt(ui.units, point)
+    if (hit && hit.army !== ui.playerArmy) {
+      ui.selected = hit.id
+      dragFrom = null
+      return
+    }
     if (hit) {
       ui.selected = hit.id
       ui.arrivalFormation = hit.formation
       dragFrom = null
       return
     }
-    if (ui.selected) {
+    const from = commandable()
+    if (from) {
       dragFrom = point
       viewState.drag = { at: point, facing: unitById(ui.selected)?.facing ?? 0 }
     }
@@ -294,9 +318,19 @@ export function useBattle(scenarioPath: string) {
     }
     if (!dragFrom || !viewState.drag) return
     const point = fieldPoint(event)
+    const travelled = distance(dragFrom, point)
+    if (travelled < COMMIT_THRESHOLD) {
+      // A click, or a drag walked back to where it began. Nothing was
+      // commanded. The press can only have landed on bare ground — a press on
+      // a Unit selects and never sets `dragFrom` — so this clears the
+      // selection, which is what clicking away from everything should do.
+      ui.selected = null
+      dragFrom = null
+      viewState.drag = null
+      return
+    }
     const unit = unitById(ui.selected)
-    const facing =
-      distance(dragFrom, point) > AIM_THRESHOLD ? bearing(dragFrom, point) : (unit?.facing ?? 0)
+    const facing = travelled > AIM_THRESHOLD ? bearing(dragFrom, point) : (unit?.facing ?? 0)
     order({
       kind: "move",
       destination: dragFrom,

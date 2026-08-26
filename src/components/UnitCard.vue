@@ -98,6 +98,7 @@ const label = describeFormation
             type="button"
             class="btn btn-xs"
             :class="arrivalFormation === option ? 'btn-primary btn-outline' : 'btn-ghost'"
+            :disabled="disabled"
             @click="emit('arrivalFormation', option)"
           >
             {{ label(option) }}

@@ -28,6 +28,9 @@ const MEN_PER_FIGURE = 10
 /** Floor on a Figure's size, so a line never collapses into a smear (F5). */
 const MIN_FIGURE_PX = 3
 
+/** Smallest a Unit may be to press on, in screen pixels. */
+const GRAB_FLOOR_PX = 28
+
 export interface ViewState {
   selected: string | null
   playerArmy: string
@@ -183,9 +186,11 @@ export class BattleView {
       const cos = Math.cos(-(unit.facing + QUARTER_TURN))
       const sin = Math.sin(-(unit.facing + QUARTER_TURN))
       const local = { x: dx * cos - dy * sin, y: dx * sin + dy * cos }
-      // A thin line is hard to hit at 1px/m, so the grab area has a floor.
-      const grabX = Math.max(shape.width, 14 * this.metresPerPixel()) / 2
-      const grabY = Math.max(shape.depth, 14 * this.metresPerPixel()) / 2
+      // A battalion in line is 144m across and 3.6m deep, so front-to-rear it
+      // is a hairline at this scale and the floor is doing all the work. 28px
+      // is roughly a fingertip on a trackpad.
+      const grabX = Math.max(shape.width, GRAB_FLOOR_PX * this.metresPerPixel()) / 2
+      const grabY = Math.max(shape.depth, GRAB_FLOOR_PX * this.metresPerPixel()) / 2
       if (Math.abs(local.x) > grabX || Math.abs(local.y) > grabY) continue
       const distance = Math.hypot(dx, dy)
       if (distance < bestDistance) {

@@ -166,7 +166,7 @@ onBeforeUnmount(() => {
         :unit="selected"
         :grade-name="gradeName"
         :arrival-formation="ui.arrivalFormation"
-        :disabled="ui.phase !== 'battle'"
+        :disabled="ui.phase !== 'battle' || selected.army !== ui.playerArmy"
         @form="battle.order({ kind: 'form', formation: $event as FormationName })"
         @arrival-formation="ui.arrivalFormation = $event"
         @halt="battle.order({ kind: 'halt' })"
@@ -175,8 +175,8 @@ onBeforeUnmount(() => {
         {{ ui.scenarioSummary }}
       </p>
       <p v-else-if="ui.phase === 'battle'" class="text-xs text-base-content/55">
-        Click one of your Units, then press where you want it and drag to set the facing it should
-        arrive on.
+        Click a Unit to read it. To order one of yours: select it, then press where you want it and
+        drag to set the facing it arrives on. A click that does not drag never sends anything.
       </p>
     </footer>
   </div>
