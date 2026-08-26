@@ -1,6 +1,6 @@
 import { unitSpeed } from "./battle"
 import { ghosts, type Ghost } from "./orders"
-import type { Battle, FormationName, Unit, Vec2 } from "./types"
+import type { Battle, FormationName, Unit, Vec2, Volley } from "./types"
 
 /**
  * What the renderer is allowed to see. The simulation runs at 10Hz and the
@@ -43,6 +43,8 @@ export interface BattleSnapshot {
   units: UnitSnapshot[]
   couriers: CourierSnapshot[]
   ghosts: Ghost[]
+  /** Fired in the step this snapshot was taken of, and nowhere else. */
+  volleys: Volley[]
 }
 
 export function snapshot(battle: Battle): BattleSnapshot {
@@ -54,7 +56,9 @@ export function snapshot(battle: Battle): BattleSnapshot {
       name: unit.name,
       arm: unit.arm,
       grade: unit.grade,
-      strength: unit.strength,
+      // Whole men. Casualties are the expected value and land fractional; the
+      // fraction is the simulation's business and not the screen's.
+      strength: Math.round(unit.strength),
       position: { ...unit.position },
       facing: unit.facing,
       formation: unit.formation,
@@ -73,5 +77,6 @@ export function snapshot(battle: Battle): BattleSnapshot {
       origin: { ...courier.origin },
     })),
     ghosts: ghosts(battle),
+    volleys: battle.volleys.map((v) => ({ ...v, from: { ...v.from } })),
   }
 }

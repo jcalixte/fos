@@ -13,6 +13,7 @@ import {
   slots,
 } from "./formation"
 import { GROUND_COST, GROUNDS, movementCost } from "./ground"
+import { aim, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
@@ -33,6 +34,7 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    reload: 0,
     ...overrides,
   }
 }
@@ -44,6 +46,7 @@ function emptyBattle(field: Field, units: Unit[]): Battle {
     armies: [{ id: "french", name: "French", colour: 0x2c7c40, headquarters: null }],
     units,
     couriers: [],
+    volleys: [],
     dispatches: [],
     crossings: [],
     keyGround: [],
@@ -604,5 +607,150 @@ describe("C8 Battle Clock", () => {
     expect(unitSpeed(battle, unit)).toBeLessThan(open)
     field.ground.fill(GROUNDS.indexOf("road"))
     expect(unitSpeed(battle, unit)).toBeGreaterThan(open)
+  })
+})
+
+describe("C6 Fighting", () => {
+  /** A firer and something for it to shoot at, `gap` metres in front of it. */
+  function facingOff(gap: number, target: Partial<Unit> = {}, firer: Partial<Unit> = {}) {
+    const shooter = battalion({ id: "fr", position: { x: 100, y: 100 }, ...firer })
+    const enemy = battalion({
+      id: "au",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 100 + gap, y: 100 },
+      facing: Math.PI,
+      ...target,
+    })
+    return { shooter, enemy, battle: emptyBattle(blankField(60, 40), [shooter, enemy]) }
+  }
+
+  it("fires on the period's clocks: three rounds a minute, and a gun in half of one", () => {
+    for (const grade of ["conscript", "line", "elite"] as const) {
+      expect(reloadSeconds("infantry", grade)).toBeGreaterThanOrEqual(20)
+      expect(reloadSeconds("infantry", grade)).toBeLessThanOrEqual(25)
+      expect(reloadSeconds("artillery", grade)).toBeGreaterThanOrEqual(30)
+      expect(reloadSeconds("artillery", grade)).toBeLessThanOrEqual(60)
+    }
+  })
+
+  it("shoots what stands in its beaten ground, and nothing behind it", () => {
+    const { shooter, battle } = facingOff(60)
+    expect(aim(battle, shooter)?.target.id).toBe("au")
+    battle.units[1].position = { x: 40, y: 100 }
+    expect(aim(battle, shooter)).toBeNull()
+  })
+
+  it("does not shoot at its own army, whatever it is pointed at", () => {
+    const { battle, shooter } = facingOff(60, { army: "french" })
+    expect(aim(battle, shooter)).toBeNull()
+  })
+
+  it("cannot fire in march column, which is the argument against being caught in one", () => {
+    const { battle, shooter } = facingOff(60, {}, { formation: "march-column" })
+    expect(aim(battle, shooter)).toBeNull()
+  })
+
+  it("cannot fire while it is re-forming", () => {
+    const { battle, shooter } = facingOff(60)
+    shooter.changing = { from: "line", to: "square", elapsed: 1, duration: 30 }
+    expect(aim(battle, shooter)).toBeNull()
+  })
+
+  it("will not fire on the march, so a Unit that wants to shoot has to stop", () => {
+    const { battle, shooter, enemy } = facingOff(60)
+    const before = enemy.strength
+    resolveFire(battle, shooter, STEP, false)
+    expect(enemy.strength).toBe(before)
+    expect(battle.volleys).toHaveLength(0)
+    resolveFire(battle, shooter, STEP, true)
+    expect(enemy.strength).toBeLessThan(before)
+    expect(battle.volleys).toHaveLength(1)
+  })
+
+  it("holds its fire until it has reloaded", () => {
+    const { battle, shooter } = facingOff(60)
+    resolveFire(battle, shooter, STEP, true)
+    battle.volleys = []
+    for (let t = 0; t < reloadSeconds("infantry", "line") - 1; t += STEP) {
+      resolveFire(battle, shooter, STEP, true)
+    }
+    expect(battle.volleys).toHaveLength(0)
+    for (let t = 0; t < 2; t += STEP) resolveFire(battle, shooter, STEP, true)
+    expect(battle.volleys).toHaveLength(1)
+  })
+
+  it("costs a battalion a Volley's worth of men and no more", () => {
+    const { battle, shooter, enemy } = facingOff(60)
+    resolveFire(battle, shooter, STEP, true)
+    const lost = 700 - enemy.strength
+    // A firefight at sixty metres is decided in a couple of minutes, not thirty.
+    expect(lost).toBeGreaterThan(15)
+    expect(lost).toBeLessThan(50)
+    expect(battle.volleys[0].casualties).toBeCloseTo(lost)
+  })
+
+  it("thins out with the range", () => {
+    const near = facingOff(30)
+    const far = facingOff(95)
+    expect(volleyCasualties(near.shooter, aim(near.battle, near.shooter)!)).toBeGreaterThan(
+      volleyCasualties(far.shooter, aim(far.battle, far.shooter)!) * 1.5,
+    )
+  })
+
+  it("settles the line-against-column exchange by which of them can reply", () => {
+    const line = facingOff(60)
+    const column = facingOff(60, { formation: "attack-column" })
+    const lineOnLine = volleyCasualties(line.shooter, aim(line.battle, line.shooter)!)
+    const lineOnColumn = volleyCasualties(column.shooter, aim(column.battle, column.shooter)!)
+    // Two thirds of the line's muskets are pointed at open country either side
+    // of the column, and the third that bears finds three times as much depth to
+    // find. Those very nearly cancel, so what the column standing there actually
+    // loses is not men — it is the exchange, because it can only reply with the
+    // muskets its own narrow Frontage carries.
+    expect(lineOnColumn).toBeGreaterThan(lineOnLine * 0.8)
+    const columnBack = volleyCasualties(column.enemy, aim(column.battle, column.enemy)!)
+    expect(columnBack).toBeLessThan(lineOnColumn / 2)
+  })
+
+  it("lays its guns rather than levelling them, so a battery loses nothing to a narrow target", () => {
+    const battery = { arm: "artillery" as const, formation: "in-battery" as const, strength: 120 }
+    const onLine = facingOff(400, {}, battery)
+    const onColumn = facingOff(400, { formation: "attack-column" }, battery)
+    const shotLine = aim(onLine.battle, onLine.shooter)!
+    const shotColumn = aim(onColumn.battle, onColumn.shooter)!
+    expect(shotColumn.overlap).toBeLessThan(shotLine.overlap / 2)
+    // Every gun still bears, and the column's depth is what round shot is for.
+    expect(volleyCasualties(onColumn.shooter, shotColumn)).toBeGreaterThan(
+      volleyCasualties(onLine.shooter, shotLine) * 2,
+    )
+  })
+
+  it("ploughs a march column, which is the worst place to be caught by guns", () => {
+    const battery = { arm: "artillery" as const, formation: "in-battery" as const, strength: 120 }
+    const column = facingOff(400, { formation: "march-column" }, battery)
+    const line = facingOff(400, {}, battery)
+    expect(volleyCasualties(column.shooter, aim(column.battle, column.shooter)!)).toBeGreaterThan(
+      volleyCasualties(line.shooter, aim(line.battle, line.shooter)!) * 3,
+    )
+  })
+
+  it("takes a Unit with nobody left off the Field, for want of Morale to Break it", () => {
+    // Where enough Volleys get a Unit to, with nothing in the game yet able to
+    // Break it first. A Unit of no men would otherwise stand there returning
+    // fire, which is worse than the missing rule it stands in for.
+    const { battle } = facingOff(60, { strength: 0 })
+    step(battle)
+    expect(battle.units.map((u) => u.id)).toEqual(["fr"])
+    expect(battle.dispatches.at(-1)?.text).toContain("destroyed")
+  })
+
+  it("keeps a Volley only for the step it was fired in", () => {
+    const { battle } = facingOff(60)
+    step(battle)
+    // Both of them: each is standing still with the other in front of it.
+    expect(battle.volleys).toHaveLength(2)
+    step(battle)
+    expect(battle.volleys).toHaveLength(0)
   })
 })

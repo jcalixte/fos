@@ -55,6 +55,29 @@ export interface Unit {
   route: Vec2[]
   /** The Initiative rule currently suspending the Order, by name. */
   suspendedBy: string | null
+  /** Seconds until the Unit can fire again. Counts down whatever it is doing. */
+  reload: number
+}
+
+/**
+ * One discharge: every musket or gun that bore, all at once. It is an event and
+ * not a state — the simulation keeps a Volley only for the step it happened in,
+ * long enough for the renderer to raise a flash off it (F13).
+ */
+export interface Volley {
+  id: string
+  /** Battle time, in seconds. */
+  at: number
+  unitId: UnitId
+  targetId: UnitId
+  /** Centre of the Face that fired, in metres. */
+  from: Vec2
+  /** Where the fire went, in radians. */
+  direction: number
+  /** Metres of Face that fired, which is how wide the flash is. */
+  width: number
+  /** Men the target lost to it. */
+  casualties: number
 }
 
 export type OrderKind = "move" | "form" | "halt"
@@ -146,6 +169,8 @@ export interface Battle {
   armies: Army[]
   units: Unit[]
   couriers: Courier[]
+  /** Fired this step only, and cleared at the top of the next one. */
+  volleys: Volley[]
   dispatches: Dispatch[]
   crossings: Crossing[]
   keyGround: KeyGround[]

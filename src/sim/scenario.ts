@@ -96,6 +96,7 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    reload: 0,
   }
 }
 
@@ -155,6 +156,7 @@ export function assemble(scenario: AssembledScenario): Battle {
     armies,
     units,
     couriers: [],
+    volleys: [],
     dispatches: [],
     crossings,
     keyGround: file.keyGround,

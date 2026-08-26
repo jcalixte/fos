@@ -1,5 +1,6 @@
 import { averageCostUnder, cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import { baseSpeed, beginChange, frontage, intendedFormation, unitFootprint } from "./formation"
+import { resolveFire } from "./fighting"
 import { applyInitiative } from "./initiative"
 import { advanceCouriers } from "./orders"
 import { describeFormation, type Battle, type Unit, type Vec2 } from "./types"
@@ -232,17 +233,43 @@ function firePlan(battle: Battle): void {
   battle.plan = battle.plan.filter((p) => p.at > battle.time)
 }
 
+/**
+ * A Unit with nobody left is off the Field. It is here under protest: with C7
+ * Morale unbuilt there is nothing between a battalion and annihilation, and F10
+ * is explicit that a Unit reaching 0 Strength is a bug. Until Break and Rout
+ * exist this is the only end a firefight has, and clearing the Unit at least
+ * keeps a battalion of no men from standing there returning fire.
+ */
+function clearTheDestroyed(battle: Battle): void {
+  const gone = battle.units.filter((u) => u.strength <= 0)
+  if (gone.length === 0) return
+  for (const unit of gone) {
+    battle.dispatches.push({
+      at: battle.time,
+      unitId: unit.id,
+      text: `${unit.name} was destroyed where it stood`,
+    })
+  }
+  battle.units = battle.units.filter((u) => u.strength > 0)
+}
+
 /** One fixed step. Never call this with anything but STEP. */
 export function step(battle: Battle): void {
   battle.time += STEP
+  battle.volleys = []
   releaseArrivals(battle)
   firePlan(battle)
   advanceCouriers(battle, STEP)
   for (const unit of battle.units) {
     applyInitiative(unit, battle)
     advanceFormationChange(battle, unit, STEP)
+    const was = unit.position
     if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
+    // Fire comes after the march, so what a Unit shoots at is where it ended
+    // the step — and whether it marched at all is what says if it shot.
+    resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)
   }
+  clearTheDestroyed(battle)
 }
 
 export function isOver(battle: Battle): boolean {

@@ -39,6 +39,7 @@ function battalion(): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    reload: 0,
   }
 }
 
@@ -49,6 +50,7 @@ function battle(field: Field, units: Unit[]): Battle {
     armies: [{ id: "french", name: "French", colour: 0x2f4d8f, headquarters: null }],
     units,
     couriers: [],
+    volleys: [],
     dispatches: [],
     crossings: [],
     keyGround: [],

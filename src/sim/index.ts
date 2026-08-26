@@ -1,5 +1,6 @@
 export * from "./battle"
 export * from "./field"
+export * from "./fighting"
 export * from "./formation"
 export * from "./ground"
 export * from "./initiative"
