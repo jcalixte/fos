@@ -47,3 +47,11 @@
   --btn-rest-fg: #…;
 }
 */
+
+/* A sideways-scrolling strip whose controls simply stop dead at the edge reads
+   as "there is nothing else", which is how the Unit bar lost its buttons in the
+   first place. Fading the last of it says otherwise. The fade costs nothing
+   when everything fits, because the strip's own end is background by then. */
+.fade-x-end {
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+}

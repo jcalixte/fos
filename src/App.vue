@@ -143,8 +143,10 @@ onBeforeUnmount(() => {
       />
     </main>
 
+    <!-- A fixed height, not a minimum: the Field is laid out to fit whatever is
+         left over, so a bar that grows or shrinks slides the whole map. -->
     <footer
-      class="flex min-h-16 shrink-0 items-center border-t border-base-content/10 bg-base-200 px-5 py-3"
+      class="flex h-24 shrink-0 items-center border-t border-base-content/10 bg-base-200 px-5"
     >
       <UnitCard
         v-if="selected"
