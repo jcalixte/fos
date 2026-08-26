@@ -1,6 +1,6 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
 import { bodyCount, faces, figureSlots, fireZone, footprint, poseFootprint } from "@/sim/formation"
-import type { Battle, Field, KeyGround, Vec2 } from "@/sim/types"
+import type { Battle, Field, FormationName, KeyGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
 import { buildContourCanvas, buildTerrainCanvas } from "./terrain"
@@ -37,8 +37,8 @@ export interface ViewState {
   headquarters: Vec2 | null
   keyGround: KeyGround[]
   deploymentZone: [number, number, number, number] | null
-  /** The Order being drawn but not yet issued. */
-  drag: { at: Vec2; facing: number } | null
+  /** The Order being drawn but not yet issued, shown as it will arrive. */
+  drag: { at: Vec2; facing: number; formation: FormationName } | null
   /** Deployment: the Unit or Headquarters being placed. */
   placing: { id: string; at: Vec2 } | null
   armyColours: Record<string, number>
@@ -489,7 +489,7 @@ export class BattleView {
     if (view.drag) {
       const unit = units.find((u) => u.id === view.selected)
       if (unit) {
-        const shape = footprint(unit.arm, unit.formation, unit.strength)
+        const shape = footprint(unit.arm, view.drag.formation, unit.strength)
         g.moveTo(unit.position.x, unit.position.y)
           .lineTo(view.drag.at.x, view.drag.at.y)
           .stroke({ width: mpp * 1.5, color: 0xf5e6a8, alpha: 0.6 })

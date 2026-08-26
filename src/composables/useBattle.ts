@@ -3,7 +3,7 @@ import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
 import { BattleRunner } from "@/sim/runner"
 import { issueOrder } from "@/sim/orders"
-import { poseFootprint } from "@/sim/formation"
+import { canFire, FIGHTING_FORMATION, poseFootprint } from "@/sim/formation"
 import type { Dispatch, FormationName, Grade, OrderBody, Vec2 } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
 import { bearing, distance } from "@/sim/vec"
@@ -245,14 +245,26 @@ export function useBattle(scenarioPath: string) {
     }
     if (hit) {
       ui.selected = hit.id
-      ui.arrivalFormation = hit.formation
+      // Seed from what the Unit is standing in, unless that is a travelling
+      // Formation — Initiative puts Units into column on its own, and seeding
+      // from it would quietly order the next move to *arrive* in column, which
+      // is a battalion standing at its destination unable to fire.
+      ui.arrivalFormation = canFire(hit.arm, hit.formation)
+        ? hit.formation
+        : FIGHTING_FORMATION[hit.arm]
       dragFrom = null
       return
     }
     const from = commandable()
     if (from) {
       dragFrom = point
-      viewState.drag = { at: point, facing: unitById(ui.selected)?.facing ?? 0 }
+      viewState.drag = {
+        at: point,
+        facing: from?.facing ?? 0,
+        // The preview stands in the Formation it will arrive in, not the one
+        // it is standing in now — that is what the player is deciding.
+        formation: ui.arrivalFormation ?? from?.formation ?? "line",
+      }
     }
   }
 
@@ -264,10 +276,11 @@ export function useBattle(scenarioPath: string) {
       return
     }
     if (!dragFrom || !viewState.drag) return
+    const dragged = unitById(ui.selected)
     viewState.drag.facing =
-      distance(dragFrom, point) > AIM_THRESHOLD
-        ? bearing(dragFrom, point)
-        : (unitById(ui.selected)?.facing ?? 0)
+      distance(dragFrom, point) > AIM_THRESHOLD ? bearing(dragFrom, point) : (dragged?.facing ?? 0)
+    // Re-read every move: the player may pick the arrival Formation mid-drag.
+    viewState.drag.formation = ui.arrivalFormation ?? dragged?.formation ?? "line"
   }
 
   /** Deployment only: arranging the army inside its zone before the clock runs. */
