@@ -19,8 +19,8 @@ Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify
 
 ## What is built
 
-The first milestone, which has no fighting in it on purpose: it exists to answer whether an
-Order that takes a minute and a half to arrive is a game or a nuisance
+The first milestone, which has no fighting in it on purpose: it existed to answer whether an
+Order that takes a minute and a half to arrive is a game or a nuisance. It is a game
 ([DESIGN](./DESIGN.md) §8). Deployment, Orders couriered from a Headquarters, Couriers and
 Ghosts on the Field, Formation geometry and the morph between Formations, routing that funnels
 to Crossings, Initiative as an ordered rule list, Arrivals, and the Dispatch feed.

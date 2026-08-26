@@ -740,8 +740,13 @@ Milestone 1 only, on the bridge-march fixture.
 | 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
 | 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 
-Whether the delay is *fun* is the thing rank 1 actually asks, and that is still unanswered —
-the number being right is only the precondition.
+Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
+it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
+downstream reopens, so the cascade stands as scored.
+
+Two of §9's triggers are still unmeasured, and both are cheap: how many order-cycles a 20-minute
+battle allows to the far flank, and whether the fixture resolves much the same with no Orders
+issued at all.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 
