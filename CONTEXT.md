@@ -91,7 +91,10 @@ _Avoid_: terrain type, tile type, biome, surface
 **Crossing**:
 A passable strip through otherwise impassable terrain — a bridge, a ford, a gorge. Impassability
 comes from Ground or from gradient, so a defile between cliffs is a Crossing exactly as a bridge
-over a river is. A Crossing is narrow enough that only a march column fits on it.
+over a river is. A Crossing has a width, and a Unit gets through it only if its Frontage is no
+wider: a bridge deck admits a march column and nothing else, while the Osteria gorge would let an
+attack column through. So "only a column crosses" is a consequence of the gap, not a rule about
+Formations.
 _Avoid_: bridge (a bridge is one kind of Crossing), path, passage, chokepoint, defile
 
 **Height**:
@@ -257,7 +260,8 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Formation** determines the slots that a Unit's **Figures** are drawn in
 - A **Formation** and a facing give a Unit its **Footprint** on the **Field**
 - **Ground** and **Height** reach a Unit only through the cells under its **Footprint**
-- A **Crossing** is the only way a Unit passes impassable **Ground**, and only in march column
+- A **Crossing** is the only way a Unit passes impassable **Ground**, and only if its **Frontage**
+  fits the gap
 - A **Unit** given somewhere to be finds its own **Route** there, funnelling to **Crossings**
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one

@@ -93,6 +93,31 @@ export function passable(field: Field, index: number): boolean {
   return Number.isFinite(GROUND_COST[ground])
 }
 
+/**
+ * How wide the way through is, in metres, measured across the direction of
+ * travel rather than along it. A Crossing is a gap in something impassable and
+ * the gap has a width: a bridge deck is one cell, the Osteria gorge several.
+ *
+ * Read off the mask rather than authored, so it holds however the Crossing was
+ * painted (ADR-0005) and whichever way a Unit comes at it.
+ */
+export function crossingWidth(field: Field, cx: number, cy: number, heading: number): number {
+  const alongX = Math.abs(Math.cos(heading)) >= Math.abs(Math.sin(heading))
+  const dx = alongX ? 0 : 1
+  const dy = alongX ? 1 : 0
+  let cells = 1
+  for (const sign of [1, -1]) {
+    for (let i = 1; ; i++) {
+      const nx = cx + dx * sign * i
+      const ny = cy + dy * sign * i
+      if (!inBounds(field, nx, ny)) break
+      if (!isCrossing(field, cellIndex(field, nx, ny))) break
+      cells++
+    }
+  }
+  return cells * field.cellSize
+}
+
 export function opaqueAt(field: Field, index: number): boolean {
   const ground = GROUNDS[field.ground[index]] ?? "open"
   return GROUND_OPAQUE[ground]

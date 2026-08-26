@@ -1,14 +1,15 @@
-import { cellAt, cellIndex, inBounds, isCrossing } from "./field"
+import { cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import {
   baseSpeed,
   beginChange,
   canFire,
   FIGHTING_FORMATION,
+  frontage,
   intendedFormation,
   TRAVELLING_FORMATION,
 } from "./formation"
 import type { Battle, FormationName, Unit } from "./types"
-import { distance } from "./vec"
+import { bearing, distance } from "./vec"
 
 /**
  * C2 Initiative.
@@ -62,12 +63,17 @@ function routeRemaining(unit: Unit): number {
   return total
 }
 
-/** True if the Unit's Route enters a Crossing within the lookahead. */
-function crossingAhead(unit: Unit, battle: Battle): boolean {
-  if (unit.route.length === 0) return false
+/**
+ * Metres of gap where the Unit's Route enters a Crossing within the lookahead,
+ * or null if it meets none. The width is what the rule needs: whether to file
+ * into column is a question about the gap, not about there being one.
+ */
+function crossingAhead(unit: Unit, battle: Battle): number | null {
+  if (unit.route.length === 0) return null
   const field = battle.field
   const target = unit.route[0]
   const span = distance(unit.position, target)
+  const heading = bearing(unit.position, target)
   const steps = Math.ceil(Math.min(span, CROSSING_LOOKAHEAD) / field.cellSize)
   for (let i = 0; i <= steps; i++) {
     const t = span === 0 ? 0 : Math.min(1, (i * field.cellSize) / span)
@@ -77,9 +83,11 @@ function crossingAhead(unit: Unit, battle: Battle): boolean {
     }
     const { cx, cy } = cellAt(field, p)
     if (!inBounds(field, cx, cy)) continue
-    if (isCrossing(field, cellIndex(field, cx, cy))) return true
+    if (isCrossing(field, cellIndex(field, cx, cy))) {
+      return crossingWidth(field, cx, cy, heading)
+    }
   }
-  return false
+  return null
 }
 
 /** A Form Order pins the Formation; Initiative does not argue with the player. */
@@ -122,6 +130,26 @@ function deployInto(unit: Unit): FormationName {
  */
 export const RULES: InitiativeRule[] = [
   {
+    // First, and not guarded by the enemy being away, unlike every other
+    // marching rule. A Unit too wide for the gap is stopped dead at the mouth
+    // of it, so if deploying outranked this a battalion sent over a bridge with
+    // the enemy within cannon shot would stand on the near bank in line for the
+    // rest of the battle. Forming column to cross under fire is the period's
+    // answer and its cost is the point — Lodi and Arcole were both that.
+    //
+    // It only fires when the Unit does not fit: a gorge wide enough for an
+    // attack column lets one through in attack column.
+    name: "squeezed into march column for the crossing",
+    applies: (unit, battle) => {
+      if (pinned(unit)) return null
+      if (intendedFormation(unit) === travelling(unit)) return null
+      const gap = crossingAhead(unit, battle)
+      if (gap === null) return null
+      if (frontage(unit.arm, intendedFormation(unit), unit.strength) <= gap) return null
+      return { formation: travelling(unit) }
+    },
+  },
+  {
     // Above the travelling rules, because coming out of column outranks any
     // reason to be in one. This rule acts, so it suspends the Order and the
     // Unit stands still to drill — which is right: it cannot march and form
@@ -152,16 +180,6 @@ export const RULES: InitiativeRule[] = [
       if (unit.order?.order.body.kind !== "move") return null
       if (routeRemaining(unit) <= 0) return null
       if (baseSpeed(unit.arm, intendedFormation(unit)) > 0) return null
-      return { formation: travelling(unit) }
-    },
-  },
-  {
-    name: "squeezed into march column for the crossing",
-    applies: (unit, battle) => {
-      if (pinned(unit)) return null
-      if (enemyNear(unit, battle)) return null
-      if (intendedFormation(unit) === travelling(unit)) return null
-      if (!crossingAhead(unit, battle)) return null
       return { formation: travelling(unit) }
     },
   },

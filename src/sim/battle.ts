@@ -1,8 +1,8 @@
-import { averageCostUnder } from "./field"
+import { averageCostUnder, cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import { baseSpeed, beginChange, frontage, intendedFormation, unitFootprint } from "./formation"
 import { applyInitiative } from "./initiative"
 import { advanceCouriers } from "./orders"
-import { describeFormation, type Battle, type Unit } from "./types"
+import { describeFormation, type Battle, type Unit, type Vec2 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
 import { route as findRoute } from "./routing"
 
@@ -84,6 +84,28 @@ function advanceFormationChange(battle: Battle, unit: Unit, dt: number): void {
   })
 }
 
+/**
+ * True if the Unit fits through the Crossing it is about to step onto. A
+ * battalion in line is 140m across and a bridge deck is 8m wide: it does not
+ * get over by being ordered to, it files into column first.
+ *
+ * Frontage against the gap, so one rule passes a column of files over a
+ * footbridge and a whole attack column through a gorge, with nothing authored
+ * per Formation (F8).
+ *
+ * In play it is Initiative that forms the column, well before the Unit reaches
+ * the bank — so this is the backstop that makes "only a column crosses" a rule
+ * of the Field rather than a habit of the rule list. Exported to be tested for
+ * exactly that reason: nothing in a normal march makes it fire.
+ */
+export function admits(battle: Battle, unit: Unit, at: Vec2, heading: number): boolean {
+  const field = battle.field
+  const { cx, cy } = cellAt(field, at)
+  if (!inBounds(field, cx, cy)) return true
+  if (!isCrossing(field, cellIndex(field, cx, cy))) return true
+  return unitFootprint(unit).width <= crossingWidth(field, cx, cy, heading)
+}
+
 function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   const live = unit.order
   if (!live) return
@@ -121,17 +143,20 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     const dressing =
       unit.route.length === 1 &&
       toWaypoint <= dressingGround(unit, body.arrivalFacing) + ARRIVAL_RANGE
-    turnToward(battle, unit, dressing ? body.arrivalFacing : bearing(unit.position, waypoint), dt)
-    if (toWaypoint <= stride) {
-      unit.position = { ...waypoint }
-      unit.route.shift()
-    } else {
-      const heading = bearing(unit.position, waypoint)
-      unit.position = {
-        x: unit.position.x + Math.cos(heading) * stride,
-        y: unit.position.y + Math.sin(heading) * stride,
-      }
-    }
+    const heading = bearing(unit.position, waypoint)
+    turnToward(battle, unit, dressing ? body.arrivalFacing : heading, dt)
+    const next =
+      toWaypoint <= stride
+        ? { ...waypoint }
+        : {
+            x: unit.position.x + Math.cos(heading) * stride,
+            y: unit.position.y + Math.sin(heading) * stride,
+          }
+    // Held at the mouth of a Crossing it does not fit through. Initiative is
+    // what gets it into column; until then it stands, and so does the Order.
+    if (!admits(battle, unit, next, heading)) return
+    unit.position = next
+    if (toWaypoint <= stride) unit.route.shift()
     return
   }
 

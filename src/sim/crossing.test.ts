@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { STEP, step } from "./battle"
+import { admits, STEP, step } from "./battle"
 import { cellAt, cellIndex } from "./field"
 import { GROUNDS } from "./ground"
 import { issueOrder } from "./orders"
@@ -106,6 +106,65 @@ describe("the bridge march", () => {
     expect(distance(unit.position, destination)).toBeLessThan(10)
     expect(unit.formation).toBe("line")
     expect(said.at(-1)).toBe("1er/4e de Ligne is in position, line")
+  })
+
+  it("will not let a Formation onto a Crossing it does not fit through", () => {
+    const { field } = bridgeField()
+    const unit = battalion()
+    const b = battle(field, [unit])
+    const deck = { x: 800, y: 596 }
+    // The deck is one cell, eight metres. A battalion in line is 144m across.
+    expect(admits(b, { ...unit, formation: "line" }, deck, 0)).toBe(false)
+    expect(admits(b, { ...unit, formation: "attack-column" }, deck, 0)).toBe(false)
+    expect(admits(b, { ...unit, formation: "march-column" }, deck, 0)).toBe(true)
+    // Off the Crossing the question does not arise: open ground admits anything.
+    expect(admits(b, { ...unit, formation: "line" }, { x: 400, y: 596 }, 0)).toBe(true)
+  })
+
+  it("lets a wider gap through a wider Formation, without being told which", () => {
+    // The bridge deck is one cell and only a march column fits. Widen the way
+    // through to seven cells — a gorge rather than a bridge — and an attack
+    // column 44m across has no reason to file into column for it. Nothing here
+    // is authored per Formation: it is Frontage against the gap (F8).
+    const { field } = bridgeField()
+    for (let cy = 71; cy <= 77; cy++) {
+      for (let d = -4; d <= 4; d++) field.crossing[cellIndex(field, 100 + d, cy)] = 1
+    }
+    const unit = {
+      ...battalion(),
+      formation: "attack-column" as const,
+      position: { x: 700, y: 596 },
+    }
+    const b = battle(field, [unit])
+    // Short of DEPLOY_RANGE, so no rule about covering ground fires either.
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 860, y: 596 },
+          arrivalFacing: 0,
+          arrivalFormation: "attack-column",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    let over = false
+    while (b.time < 1200 && unit.order) {
+      step(b)
+      const { cx } = cellAt(field, unit.position)
+      if (cx >= 98 && cx <= 102) {
+        over = true
+        expect(unit.formation).toBe("attack-column")
+      }
+    }
+    expect(over).toBe(true)
+    expect(distance(unit.position, { x: 860, y: 596 })).toBeLessThan(10)
+    expect(b.dispatches.map((d) => d.text)).not.toContain(
+      "1er/4e de Ligne squeezed into march column for the crossing",
+    )
   })
 
   it("takes longer to reach a Unit on the far flank than one at hand", () => {
