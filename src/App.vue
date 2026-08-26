@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
             {{ ui.running ? "pause" : "resume" }}
           </button>
           <button
-            v-for="tempo in [1, 2, 4]"
+            v-for="tempo in [1, 2, 4, 8]"
             :key="tempo"
             type="button"
             class="btn btn-xs"

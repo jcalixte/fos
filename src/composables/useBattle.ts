@@ -42,7 +42,7 @@ export function useBattle(scenarioPath: string) {
     scenarioSummary: "",
     time: 0,
     clock: 0,
-    tempo: 1,
+    tempo: 4,
     running: false,
     ordersInFlight: 0,
     units: [],
@@ -87,6 +87,7 @@ export function useBattle(scenarioPath: string) {
       view.value = v
 
       const r = markRaw(new BattleRunner(battle))
+      r.tempo = ui.tempo
       runner.value = r
 
       viewState.playerArmy = player.id
