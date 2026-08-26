@@ -190,4 +190,54 @@ describe("the bridge march", () => {
     // 1500m of it, at 13 m/s, is the better part of two minutes.
     expect(farAt).toBeGreaterThan(90)
   })
+
+  it("crosses in column with the enemy in reach, rather than forming and re-forming at the mouth", () => {
+    // The rule that squeezes a Unit into column for a Crossing is deliberately
+    // not guarded by the enemy being away — crossing under fire is the period's
+    // answer. So the rule that deploys a Unit caught on the march must give way
+    // to it, or the two take turns and the battalion never sets foot on the deck.
+    const { field } = bridgeField()
+    const skirmishers: Unit = {
+      ...battalion(),
+      id: "fr-9e",
+      name: "9e Légère",
+      strength: 500,
+      formation: "open-order",
+      position: { x: 700, y: 596 },
+    }
+    // Within ENGAGEMENT_RANGE of the bank, and beyond either side's range, so
+    // it is the threat that is being tested and not the firefight.
+    const austrian: Unit = {
+      ...battalion(),
+      id: "au-1",
+      army: "austrian",
+      name: "IR 14",
+      position: { x: 700, y: 776 },
+    }
+    const b = battle(field, [skirmishers, austrian])
+    const destination = { x: 1000, y: 596 }
+    skirmishers.order = {
+      order: {
+        id: "o1",
+        unitId: skirmishers.id,
+        body: { kind: "move", destination, arrivalFacing: 0, arrivalFormation: "open-order" },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+
+    let over = false
+    while (b.time < 1800 && skirmishers.order) {
+      step(b)
+      const { cx } = cellAt(field, skirmishers.position)
+      if (cx >= 98 && cx <= 102) over = true
+    }
+    const said = b.dispatches.map((d) => d.text)
+    const times = (text: string) => said.filter((t) => t === text).length
+    expect(times("9e Légère squeezed into march column for the crossing")).toBe(1)
+    expect(times("9e Légère deployed, the enemy too close to stay on the march")).toBeLessThan(2)
+    expect(over).toBe(true)
+    expect(skirmishers.order).toBeNull()
+    expect(distance(skirmishers.position, destination)).toBeLessThan(10)
+  })
 })

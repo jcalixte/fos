@@ -90,6 +90,17 @@ function crossingAhead(unit: Unit, battle: Battle): number | null {
   return null
 }
 
+/**
+ * True if a Crossing ahead would stop the Unit in the Formation given. Frontage
+ * against the gap — the same question `admits` asks at the mouth of it, asked
+ * early enough for the rule list to do something about the answer.
+ */
+function squeezedBy(unit: Unit, battle: Battle, formation: FormationName): boolean {
+  const gap = crossingAhead(unit, battle)
+  if (gap === null) return false
+  return frontage(unit.arm, formation, unit.strength) > gap
+}
+
 /** A Form Order pins the Formation; Initiative does not argue with the player. */
 function pinned(unit: Unit): boolean {
   return unit.order?.order.body.kind === "form"
@@ -143,9 +154,7 @@ export const RULES: InitiativeRule[] = [
     applies: (unit, battle) => {
       if (pinned(unit)) return null
       if (intendedFormation(unit) === travelling(unit)) return null
-      const gap = crossingAhead(unit, battle)
-      if (gap === null) return null
-      if (frontage(unit.arm, intendedFormation(unit), unit.strength) <= gap) return null
+      if (!squeezedBy(unit, battle, intendedFormation(unit))) return null
       return { formation: travelling(unit) }
     },
   },
@@ -159,6 +168,12 @@ export const RULES: InitiativeRule[] = [
       if (pinned(unit)) return null
       if (canFire(unit.arm, intendedFormation(unit))) return null
       if (!enemyNear(unit, battle)) return null
+      // Not at the mouth of a gap the deploying Formation will not fit through.
+      // The Unit would be stopped dead on the near bank and the rule above
+      // would file it straight back into column, the two rules taking turns
+      // while the enemy watched. Crossing in column under threat is what the
+      // rule above is for, and going over unable to fire is the cost of it.
+      if (squeezedBy(unit, battle, deployInto(unit))) return null
       return { formation: deployInto(unit) }
     },
   },
