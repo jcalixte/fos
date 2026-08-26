@@ -15,6 +15,7 @@ import {
 } from "./formation"
 import { GROUND_COST, GROUNDS, movementCost } from "./ground"
 import { aim, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
+import { canRally, describeMorale, isRouting, shake } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
@@ -36,6 +37,9 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     route: [],
     suspendedBy: null,
     reload: 0,
+    morale: 1,
+    moraleCeiling: 1,
+    routing: null,
     ...overrides,
   }
 }
@@ -763,5 +767,143 @@ describe("C6 Fighting", () => {
     expect(battle.volleys).toHaveLength(2)
     step(battle)
     expect(battle.volleys).toHaveLength(0)
+  })
+})
+
+describe("C7 Morale", () => {
+  /** Two battalions eighty metres apart, with room behind them to run. */
+  function firefight(overrides: Partial<Unit> = {}) {
+    const french = battalion({ id: "fr", position: { x: 1000, y: 1000 }, ...overrides })
+    const austrian = battalion({
+      id: "au",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 1080, y: 1000 },
+      facing: Math.PI,
+      ...overrides,
+    })
+    const battle = emptyBattle(blankField(250, 250), [french, austrian])
+    return { french, austrian, battle }
+  }
+
+  /** Fight it out until somebody Breaks, and say who did and what it cost. */
+  function untilSomebodyBreaks(overrides: Partial<Unit> = {}) {
+    const { french, austrian, battle } = firefight(overrides)
+    while (battle.time < 1800 && !isRouting(french) && !isRouting(austrian)) step(battle)
+    const broken = isRouting(french) ? french : austrian
+    return { battle, broken, lost: 1 - broken.strength / 700 }
+  }
+
+  it("Breaks a battalion inside F10's band, at a fifth of its men and not at all of them", () => {
+    const { broken, lost } = untilSomebodyBreaks()
+    expect(isRouting(broken)).toBe(true)
+    expect(lost).toBeGreaterThan(0.15)
+    expect(lost).toBeLessThan(0.3)
+  })
+
+  it("makes a conscript battalion Break sooner than an elite one", () => {
+    const conscript = untilSomebodyBreaks({ grade: "conscript" })
+    const elite = untilSomebodyBreaks({ grade: "elite" })
+    expect(conscript.lost).toBeLessThan(elite.lost)
+    expect(conscript.battle.time).toBeLessThan(elite.battle.time)
+  })
+
+  it("says why, in the words of the rule that fired", () => {
+    const { battle, broken } = untilSomebodyBreaks()
+    const said = battle.dispatches.filter((d) => d.unitId === broken.id).at(-1)?.text
+    expect(said).toBe(`${broken.name} broke, and is running for the rear`)
+  })
+
+  it("runs from what broke it, shedding men, and fires at nothing while it goes", () => {
+    const { battle, broken } = untilSomebodyBreaks()
+    const enemy = battle.units.find((u) => u.army !== broken.army)!
+    const before = { gap: distance(broken.position, enemy.position), strength: broken.strength }
+    expect(aim(battle, broken)).toBeNull()
+    for (let i = 0; i < 300; i++) step(battle)
+    expect(distance(broken.position, enemy.position)).toBeGreaterThan(before.gap)
+    expect(broken.strength).toBeLessThan(before.strength)
+    expect(battle.volleys.every((v) => v.unitId !== broken.id)).toBe(true)
+  })
+
+  it("holds a Routing Unit out of the marching rules, mob before bridge", () => {
+    const { broken } = untilSomebodyBreaks()
+    expect(broken.suspendedBy).toBe("broke, and is running for the rear")
+  })
+
+  it("is deaf while it Routs: the rider finds nobody to hand the Order to", () => {
+    const { battle, broken } = untilSomebodyBreaks()
+    issueOrder(battle, broken.id, { kind: "halt" }, { ...broken.position })
+    for (let i = 0; i < 20; i++) step(battle)
+    expect(battle.couriers).toHaveLength(0)
+    expect(broken.order).toBeNull()
+    expect(battle.dispatches.at(-1)?.text).toContain("found nobody to take it")
+  })
+
+  it("Rallies once it is clear and steady, and pays for it with the Ceiling", () => {
+    const { battle, broken } = untilSomebodyBreaks()
+    while (battle.time < 1800 && isRouting(broken) && battle.units.includes(broken)) step(battle)
+    expect(isRouting(broken)).toBe(false)
+    expect(canRally(battle, broken)).toBe(false)
+    // It Breaks sooner the next time, because it can never be as steady again.
+    expect(broken.moraleCeiling).toBeLessThan(1)
+    expect(broken.morale).toBeLessThanOrEqual(broken.moraleCeiling)
+  })
+
+  it("takes a Rout that runs off the Field out of the battle", () => {
+    // The conscripts have the edge of the Field at their backs and elite
+    // infantry in front of them, so it is settled which way this goes.
+    const { french, austrian, battle } = firefight()
+    french.grade = "conscript"
+    french.position = { x: 60, y: 1000 }
+    austrian.grade = "elite"
+    austrian.position = { x: 140, y: 1000 }
+    while (battle.time < 1800 && battle.units.length === 2) step(battle)
+    expect(battle.units).toHaveLength(1)
+    expect(battle.dispatches.at(-1)?.text).toContain("quit the Field")
+  })
+
+  it("costs more Morale from behind than in the teeth, casualties being equal", () => {
+    const front = battalion({ position: { x: 500, y: 500 } })
+    const behind = battalion({ position: { x: 500, y: 500 } })
+    shake(front, 30, { x: 600, y: 500 })
+    shake(behind, 30, { x: 400, y: 500 })
+    expect(behind.morale).toBeLessThan(front.morale)
+  })
+
+  it("thins a shaken battalion's fire, which is the only way Grade reaches lethality", () => {
+    const steady = battalion({ id: "s" })
+    const shaken = battalion({ id: "k", morale: 0.2 })
+    const target = battalion({
+      id: "t",
+      army: "austrian",
+      position: { x: 160, y: 100 },
+      facing: Math.PI,
+    })
+    const battle = emptyBattle(blankField(60, 40), [steady, shaken, target])
+    expect(volleyCasualties(shaken, aim(battle, shaken)!)).toBeLessThan(
+      volleyCasualties(steady, aim(battle, steady)!) * 0.8,
+    )
+  })
+
+  it("gives a conscript and an elite battalion the same Volley, Morale being equal", () => {
+    const conscript = battalion({ id: "c", grade: "conscript" })
+    const elite = battalion({ id: "e", grade: "elite" })
+    const target = battalion({
+      id: "t",
+      army: "austrian",
+      position: { x: 160, y: 100 },
+      facing: Math.PI,
+    })
+    const battle = emptyBattle(blankField(60, 40), [conscript, elite, target])
+    expect(volleyCasualties(conscript, aim(battle, conscript)!)).toBeCloseTo(
+      volleyCasualties(elite, aim(battle, elite)!),
+    )
+  })
+
+  it("reports Morale in words, never as a bar to count down", () => {
+    expect(describeMorale(battalion())).toBe("steady")
+    expect(describeMorale(battalion({ morale: 0.6 }))).toBe("wavering")
+    expect(describeMorale(battalion({ morale: 0.3 }))).toBe("shaken")
+    expect(describeMorale(battalion({ morale: 0.1 }))).toBe("on the point of breaking")
   })
 })

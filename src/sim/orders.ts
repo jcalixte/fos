@@ -8,6 +8,7 @@ import {
   type UnitId,
   type Vec2,
 } from "./types"
+import { isRouting } from "./morale"
 import { distance, normalise, scale, sub } from "./vec"
 
 /**
@@ -90,6 +91,17 @@ export function advanceCouriers(battle: Battle, dt: number): void {
 }
 
 function deliver(battle: Battle, unit: Unit, order: Order): void {
+  // Routing Units are deaf. The rider finds a mob going the other way and there
+  // is nobody to hand it to, so the Order is lost rather than banked — a Unit
+  // that Rallies is not still carrying orders written before it broke.
+  if (isRouting(unit)) {
+    battle.dispatches.push({
+      at: battle.time,
+      unitId: unit.id,
+      text: `${unit.name} is routing; its Order found nobody to take it`,
+    })
+    return
+  }
   unit.order = { order, arrivedAt: battle.time }
   unit.route = []
   // A new Order clears whatever Initiative was holding the Unit back: the rule

@@ -8,6 +8,7 @@ import {
   intendedFormation,
   TRAVELLING_FORMATION,
 } from "./formation"
+import { breakUnit, canRally, hasBroken, isRouting, rally } from "./morale"
 import type { Battle, FormationName, Unit } from "./types"
 import { bearing, distance } from "./vec"
 
@@ -26,8 +27,13 @@ import { bearing, distance } from "./vec"
  */
 
 export interface InitiativeAction {
-  /** The Formation the Unit adopts on its own account. */
-  formation: FormationName
+  /** The Formation the Unit adopts on its own account, if the rule changes it. */
+  formation?: FormationName
+  /**
+   * What the rule does to the Unit's obedience. Only Morale reaches this far: a
+   * Rout is a Unit that has stopped listening, which no Formation rule can say.
+   */
+  obedience?: "break" | "rally"
 }
 
 export interface InitiativeRule {
@@ -134,12 +140,36 @@ function deployInto(unit: Unit): FormationName {
 }
 
 /**
- * The list, in priority order: how a Unit chooses to travel, and when it stops
- * travelling. Return fire, forming square against cavalry, Breaking, Routing
- * and Rallying join above these when C6 and C7 land — order matters, and the
- * fighting rules outrank the marching ones.
+ * The list, in priority order: whether a Unit is still obeying anybody at all,
+ * then how it chooses to travel and when it stops travelling. Forming square
+ * against cavalry joins in the middle when the Charge lands — order matters, and
+ * Morale outranks everything, because a battalion that has broken is not going
+ * to file into column for the bridge on the way past.
  */
 export const RULES: InitiativeRule[] = [
+  {
+    // Above Breaking, so a Unit that has run itself steady again comes back
+    // under command rather than being held by the rule that broke it. It picks
+    // its Arm's fighting Formation and takes the drill to get there — a mob does
+    // not re-form for nothing, and the ground it lost is what the Rout cost.
+    name: "rallied, clear of the enemy and back under command",
+    applies: (unit, battle) => {
+      if (!canRally(battle, unit)) return null
+      return { formation: FIGHTING_FORMATION[unit.arm], obedience: "rally" }
+    },
+  },
+  {
+    // First of everything else, and it stays matched for as long as the Unit is
+    // Routing — which is what keeps the marching rules off a mob. Morale creeps
+    // back while it runs, so the test is "is it Routing", not "is its Morale
+    // gone": otherwise the first tick of recovery would hand the battalion back
+    // to the rule that files it into column.
+    name: "broke, and is running for the rear",
+    applies: (unit) => {
+      if (!isRouting(unit) && !hasBroken(unit)) return null
+      return { obedience: "break" }
+    },
+  },
   {
     // First, and not guarded by the enemy being away, unlike every other
     // marching rule. A Unit too wide for the gap is stopped dead at the mouth
@@ -220,7 +250,13 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     const action = rule.applies(unit, battle)
     if (!action) continue
     if (unit.suspendedBy === rule.name) return
-    if (!beginChange(unit, action.formation)) return
+    const reformed = action.formation ? beginChange(unit, action.formation) : false
+    // A rule that only re-forms the Unit has done nothing if the Unit is already
+    // standing that way, and must not claim the Order. A rule that changes what
+    // the Unit is *obeying* has always done something.
+    if (action.obedience === "break") breakUnit(battle, unit)
+    else if (action.obedience === "rally") rally(unit)
+    else if (!reformed) return
     unit.suspendedBy = rule.name
     battle.dispatches.push({
       at: battle.time,

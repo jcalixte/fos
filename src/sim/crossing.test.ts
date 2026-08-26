@@ -40,6 +40,9 @@ function battalion(): Unit {
     route: [],
     suspendedBy: null,
     reload: 0,
+    morale: 1,
+    moraleCeiling: 1,
+    routing: null,
   }
 }
 

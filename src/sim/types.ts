@@ -57,6 +57,23 @@ export interface Unit {
   suspendedBy: string | null
   /** Seconds until the Unit can fire again. Counts down whatever it is doing. */
   reload: number
+  /**
+   * Willingness to stay and fight, 0 to 1. The real health bar: a Unit is
+   * beaten when this gives out, and never when its Strength runs down.
+   */
+  morale: number
+  /** The highest Morale it can recover to. Every Rally lowers it. */
+  moraleCeiling: number
+  /** Set once the Unit has Broken. A Routing Unit is deaf to Orders. */
+  routing: Rout | null
+}
+
+/** What a Unit is doing after its Morale gave out. */
+export interface Rout {
+  /** The way it is running, in radians. Away from whatever broke it. */
+  heading: number
+  /** Battle time it Broke, in seconds. */
+  brokeAt: number
 }
 
 /**

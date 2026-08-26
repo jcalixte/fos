@@ -1,4 +1,5 @@
 import { unitSpeed } from "./battle"
+import { describeMorale } from "./morale"
 import { ghosts, type Ghost } from "./orders"
 import type { Battle, FormationName, Unit, Vec2, Volley } from "./types"
 
@@ -23,6 +24,13 @@ export interface UnitSnapshot {
   changeProgress: number
   suspendedBy: string | null
   hasOrder: boolean
+  /**
+   * How the Unit is holding up, in words. T11 gave up the countable bar on
+   * purpose, so the screen never sees the number behind this.
+   */
+  morale: string
+  /** True while it is Routing: out of command, and running. */
+  routing: boolean
   /**
    * Metres per second over the ground it is standing on, in the Formation it is
    * standing in. Drawn from the simulation rather than recomputed, because the
@@ -68,6 +76,8 @@ export function snapshot(battle: Battle): BattleSnapshot {
         : 0,
       suspendedBy: unit.suspendedBy,
       hasOrder: unit.order !== null,
+      morale: describeMorale(unit),
+      routing: unit.routing !== null,
       speed: unitSpeed(battle, unit),
     })),
     couriers: battle.couriers.map((courier) => ({

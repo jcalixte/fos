@@ -2,6 +2,7 @@ import { averageCostUnder, cellAt, cellIndex, crossingWidth, inBounds, isCrossin
 import { baseSpeed, beginChange, frontage, intendedFormation, unitFootprint } from "./formation"
 import { resolveFire } from "./fighting"
 import { applyInitiative } from "./initiative"
+import { advanceRout, hasQuitTheField, isRouting, recover } from "./morale"
 import { advanceCouriers } from "./orders"
 import { describeFormation, type Battle, type Unit, type Vec2 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
@@ -234,23 +235,28 @@ function firePlan(battle: Battle): void {
 }
 
 /**
- * A Unit with nobody left is off the Field. It is here under protest: with C7
- * Morale unbuilt there is nothing between a battalion and annihilation, and F10
- * is explicit that a Unit reaching 0 Strength is a bug. Until Break and Rout
- * exist this is the only end a firefight has, and clearing the Unit at least
- * keeps a battalion of no men from standing there returning fire.
+ * Units that are out of the battle: the ones that ran off the edge of the Field,
+ * and the ones with nobody left.
+ *
+ * The second is a backstop and is meant to stay unreachable — F10 is explicit
+ * that a Unit reaching 0 Strength is a bug, and Morale is what makes it one. A
+ * battalion Breaks at a fifth of its men, so the only way to see that Dispatch
+ * now is a Rout that shed itself away without ever getting clear.
  */
-function clearTheDestroyed(battle: Battle): void {
-  const gone = battle.units.filter((u) => u.strength <= 0)
+function clearTheGone(battle: Battle): void {
+  const gone = battle.units.filter((u) => u.strength <= 0 || hasQuitTheField(battle, u))
   if (gone.length === 0) return
   for (const unit of gone) {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
-      text: `${unit.name} was destroyed where it stood`,
+      text:
+        unit.strength <= 0
+          ? `${unit.name} was destroyed where it stood`
+          : `${unit.name} quit the Field`,
     })
   }
-  battle.units = battle.units.filter((u) => u.strength > 0)
+  battle.units = battle.units.filter((u) => !gone.includes(u))
 }
 
 /** One fixed step. Never call this with anything but STEP. */
@@ -263,13 +269,19 @@ export function step(battle: Battle): void {
   for (const unit of battle.units) {
     applyInitiative(unit, battle)
     advanceFormationChange(battle, unit, STEP)
-    const was = unit.position
-    if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
-    // Fire comes after the march, so what a Unit shoots at is where it ended
-    // the step — and whether it marched at all is what says if it shot.
-    resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)
+    if (isRouting(unit)) {
+      // A Rout obeys nothing and fires at nothing. It runs.
+      advanceRout(battle, unit, STEP)
+    } else {
+      const was = unit.position
+      if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
+      // Fire comes after the march, so what a Unit shoots at is where it ended
+      // the step — and whether it marched at all is what says if it shot.
+      resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)
+    }
+    recover(battle, unit, STEP)
   }
-  clearTheDestroyed(battle)
+  clearTheGone(battle)
 }
 
 export function isOver(battle: Battle): boolean {

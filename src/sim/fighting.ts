@@ -1,4 +1,5 @@
 import { fireZone, footprint, grid, type FireZone } from "./formation"
+import { fireEffect, isRouting, shake } from "./morale"
 import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
 
 /**
@@ -77,9 +78,6 @@ const HIT_PER_BODY: Record<Arm, number> = { infantry: 0.035, cavalry: 0, artille
 
 /** How much of that is left at the far edge of the Formation's reach. */
 const HIT_AT_RANGE = 0.3
-
-/** Steadiness under fire, which is most of what marksmanship was. */
-const HIT_BY_GRADE: Record<Grade, number> = { conscript: 0.85, line: 1, elite: 1.15 }
 
 /** A Face that bears on an enemy, and how much of it does. */
 export interface Aim {
@@ -160,6 +158,8 @@ function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
 export function aim(battle: Battle, unit: Unit): Aim | null {
   if (unit.changing) return null
   if (unit.strength <= 0) return null
+  // A mob running for the rear is not delivering Volleys.
+  if (isRouting(unit)) return null
   const zone = fireZone(unit.arm, unit.formation, unit.strength)
   if (!zone) return null
   const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
@@ -196,9 +196,14 @@ export function bodiesInPath(target: Unit, direction: number): number {
   return Math.max(1, g.ranks * Math.abs(dot(shot, along)) + g.files * Math.abs(dot(shot, across)))
 }
 
+/**
+ * Grade is deliberately not in here. It buys rate of fire and the steadiness to
+ * keep firing as the Unit is shot at, and it reaches lethality only through
+ * Morale — never as a multiplier on the Volley itself.
+ */
 function hitPerBody(unit: Unit, gap: number, range: number): number {
   const falloff = 1 - (1 - HIT_AT_RANGE) * Math.min(1, gap / range)
-  return HIT_PER_BODY[unit.arm] * falloff * HIT_BY_GRADE[unit.grade]
+  return HIT_PER_BODY[unit.arm] * falloff * fireEffect(unit)
 }
 
 /**
@@ -246,6 +251,9 @@ export function resolveFire(battle: Battle, unit: Unit, dt: number, halted: bool
 
   const casualties = Math.min(shot.target.strength, volleyCasualties(unit, shot))
   shot.target.strength -= casualties
+  // Casualties cost the target Morale as well as men, and cost it more from off
+  // its Face. Morale is what decides its fate; the men are just the bill (F10).
+  shake(shot.target, casualties, unit.position)
   unit.reload = reloadSeconds(unit.arm, unit.grade)
 
   const zone = fireZone(unit.arm, unit.formation, unit.strength)

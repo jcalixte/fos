@@ -1,4 +1,5 @@
 import { makeField } from "./field"
+import { FULL_MORALE } from "./morale"
 import type {
   Arm,
   Arrival,
@@ -97,6 +98,9 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     route: [],
     suspendedBy: null,
     reload: 0,
+    morale: FULL_MORALE,
+    moraleCeiling: FULL_MORALE,
+    routing: null,
   }
 }
 
