@@ -744,6 +744,13 @@ Rank 1's real question — whether the delay is *fun* — was answered by playin
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
 downstream reopens, so the cascade stands as scored.
 
+C6's first cut measures one more thing, which is not in the table because it is F9's clock rather
+than a ranked target. Two lines standing eighty metres apart take about 9% off each other in the
+first minute and half their strength in ten — and then neither of them dies, because the exchange
+thins out with the Frontage it is fired from. F10's Break band of 15–30% is crossed inside three
+minutes. So Morale is not a tuning knob on fire at all; it is the only thing that can *end* a
+firefight, and without it one simply runs to the end of the clock.
+
 Two of §9's triggers are still unmeasured, and both are cheap: how many order-cycles a 20-minute
 battle allows to the far flank, and whether the fixture resolves much the same with no Orders
 issued at all.
@@ -802,6 +809,23 @@ issued at all.
 - **"Only a march column crosses" was authored as a rule about Formations.** It is a fact about
   the gap: a bridge deck is 8m and a line is 140m. Stated as Frontage against the width of the
   Crossing, which is also the only version the Osteria gorge does not contradict.
+
+- **Fire was counted with an overlap that guns do not obey.** How many weapons bear was
+  Frontage against Frontage for everything that shoots — right for a musket, which points
+  wherever its rank points, and wrong for a gun, which is traversed onto what it is firing at. It
+  had five of a battery's eight guns shooting at open ground either side of a column, and made a
+  column the safest place on the Field to stand in front of artillery. Split by weapon and not by
+  Formation: laid pieces bear whole, levelled ones bear by overlap.
+- **A shot's chance of hitting was flat, so depth only told against round shot.** One hit chance
+  per Arm, with the target's depth entering only through what a ball could plough. That left the
+  hazard of standing deep as an artillery problem alone — but a musket ball that misses the front
+  rank of a column has eight more ranks to find. The chance is now per body and compounded over
+  everything in the shot's path, which also gives enfilade fire its lethality with no rule for it.
+- **"A line beats a column" was assumed to mean it kills more.** It does not. Two thirds of the
+  line's muskets are pointed past a column, and the third that bears finds three times the depth;
+  the two very nearly cancel. What the column loses is the *exchange* — it can only reply with
+  the muskets its own Frontage carries. The period's lesson stands, for a different reason than
+  the one the design had written down.
 
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 
