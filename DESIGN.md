@@ -788,6 +788,21 @@ issued at all.
 - **G4 had no functions.** "A battle has a shape" survived the whole functions pass unserved, and was only filled when Rivoli proved unauthorable without **Arrival** — which then ranked third overall.
 - **Rivoli was claimed to test everything.** It under-tests Formation play and cavalry badly, because its slopes leave little manoeuvrable ground. Resolved with two nominals and purpose-built fixtures.
 - **Three terms were tourism, not domain.** "Point of interest" → **Key Ground**; "smog" → **Powder Smoke**; "event feed" → **Dispatch**.
+- **Terrain reached a Unit through a square the size of its longest side.** A battalion in line
+  is 140m across and 4m deep, and the Footprint was sampled as a 140m square: 361 cells, 18 of
+  them under the battalion. Nine tenths of what slowed a line down was ground it was not standing
+  on. Now sampled along the Unit's own axes, the way its slots are laid out.
+- **One Ground cost was doing two jobs.** As an A\* weight, marsh at 3.5 is right and should push a
+  Route round it. As a divisor on speed it put a battalion in line at 0.23 m/s — 14m a minute, on
+  a 30-minute clock, a Unit that has stopped. Split: routing keeps the full weight, speed takes
+  half the malus and the road keeps its whole bonus.
+- **A battery In Battery was merely slow, not stationary.** 0.2 m/s meant guns could be dragged
+  into position off their limbers, which is not a thing that happens. Now zero, with an Initiative
+  rule that hitches up to move and the wheel floor standing in for the traverse.
+- **"Only a march column crosses" was authored as a rule about Formations.** It is a fact about
+  the gap: a bridge deck is 8m and a line is 140m. Stated as Frontage against the width of the
+  Crossing, which is also the only version the Osteria gorge does not contradict.
+
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 
 ---
