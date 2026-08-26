@@ -513,7 +513,10 @@ export class BattleView {
     g.rect(-width / 2, -depth / 2, width, depth).fill({ color: colour, alpha: 0.85 })
     g.stroke({ width: line * 1.2, color: 0xffffff, alpha: 0.35 })
     // The Face is what a Charge resolves against, so it is what gets the ink.
-    const faceCount = faces(unit.arm, unit.changingTo ?? unit.formation)
+    // A Routing Unit is drawn without one: it has stopped presenting a front to
+    // anybody, and losing the white edge is what makes a mob read as a mob at a
+    // glance rather than as a column marching the other way.
+    const faceCount = unit.routing ? 0 : faces(unit.arm, unit.changingTo ?? unit.formation)
     if (faceCount > 0) {
       g.moveTo(-width / 2, -depth / 2).lineTo(width / 2, -depth / 2)
       if (faceCount === 4) {
@@ -522,6 +525,11 @@ export class BattleView {
         g.moveTo(-width / 2, depth / 2).lineTo(-width / 2, -depth / 2)
       }
       g.stroke({ width: line * 2.4, color: 0xffffff, alpha: 0.8 })
+    }
+    if (unit.routing) {
+      const pad = 3 * line
+      g.rect(-width / 2 - pad, -depth / 2 - pad, width + pad * 2, depth + pad * 2)
+      g.stroke({ width: line * 2, color: 0xd8632f, alpha: 0.9 })
     }
     if (selected) {
       const pad = 6 * line

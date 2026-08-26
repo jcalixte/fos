@@ -22,6 +22,8 @@ const width = computed(() =>
   Math.round(frontage(props.unit.arm, props.unit.formation, props.unit.strength)),
 )
 const busy = computed(() => props.unit.changingTo !== null)
+/** A Routing Unit is deaf, so offering it buttons would be a lie. */
+const deaf = computed(() => props.unit.routing || props.disabled)
 
 /**
  * Metres a minute over the ground it is on. Shown because the ground can halve
@@ -62,11 +64,16 @@ const label = describeFormation
             {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men · {{ width }}m frontage ·
             <span v-if="pace === 0">does not move</span>
             <span v-else :class="hobbled ? 'text-warning' : ''">{{ pace }}m a minute</span>
+            ·
+            <!-- Morale in words. T11 gave up the bar the player could count
+                 down on purpose; how a battalion is holding up is the reading. -->
+            <span :class="unit.morale === 'steady' ? '' : 'text-warning'">{{ unit.morale }}</span>
           </p>
         </div>
 
         <p class="min-w-52 text-xs">
-          <span v-if="busy" class="text-warning">
+          <span v-if="unit.routing" class="text-error">routing — out of command</span>
+          <span v-else-if="busy" class="text-warning">
             taking up {{ label(unit.changingTo!) }} — {{ remaining }}s
           </span>
           <span v-else-if="unit.suspendedBy" class="text-warning">
@@ -87,17 +94,12 @@ const label = describeFormation
             type="button"
             class="btn btn-xs"
             :class="unit.formation === option ? 'btn-primary' : 'btn-ghost'"
-            :disabled="disabled"
+            :disabled="deaf"
             @click="emit('form', option)"
           >
             {{ label(option) }}
           </button>
-          <button
-            type="button"
-            class="btn btn-ghost btn-xs"
-            :disabled="disabled"
-            @click="emit('halt')"
-          >
+          <button type="button" class="btn btn-ghost btn-xs" :disabled="deaf" @click="emit('halt')">
             halt
           </button>
         </div>
