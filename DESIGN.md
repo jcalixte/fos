@@ -731,6 +731,18 @@ Component Σ = Σ(function Σ from §5 × strength), so priorities are carried d
 | 9 | F14 interpolation | zero judder at 10Hz sim / 60fps render | any scenario | Raise the sim to 20Hz. Costs determinism nothing; costs CPU almost nothing at 40 bodies. |
 | 10 | F17 Field authoring | a Field in under an hour | Rivoli — hand-painting 200m of relief | Build the tile editor after all, reinstating the cost ADR-0003 flagged. |
 
+### Measured so far
+
+Milestone 1 only, on the bridge-march fixture.
+
+| Rank | Target | Measured | Where |
+|------|--------|----------|-------|
+| 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
+| 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
+
+Whether the delay is *fun* is the thing rank 1 actually asks, and that is still unanswered —
+the number being right is only the precondition.
+
 ## 9. Tradeoffs — Got / Paid / ADR
 
 | ID | Tradeoff | Got | Paid | ADR |
