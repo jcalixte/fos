@@ -1,5 +1,13 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
-import { bodyCount, faces, figureSlots, fireZone, footprint, poseFootprint } from "@/sim/formation"
+import {
+  bodyCount,
+  faces,
+  figureSlots,
+  fireZone,
+  footprint,
+  mobRadius,
+  poseFootprint,
+} from "@/sim/formation"
 import { chargeable } from "@/sim/charge"
 import type { Battle, Field, FormationName, HeldGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
@@ -228,7 +236,15 @@ export class BattleView {
     let best: UnitSnapshot | null = null
     let bestDistance = Number.POSITIVE_INFINITY
     for (const unit of units) {
-      const shape = footprint(unit.arm, unit.formation, unit.strength)
+      // A mob is drawn as a disc and has to be grabbed as one: its travelling
+      // Formation is a 157m needle, and nothing that reaches that far is under
+      // the player's finger.
+      const shape = unit.routing
+        ? {
+            width: mobRadius(unit.arm, unit.strength) * 2,
+            depth: mobRadius(unit.arm, unit.strength) * 2,
+          }
+        : footprint(unit.arm, unit.formation, unit.strength)
       const dx = point.x - unit.position.x
       const dy = point.y - unit.position.y
       const cos = Math.cos(-(unit.facing + QUARTER_TURN))
@@ -552,7 +568,7 @@ export class BattleView {
 
       // Rebuild the slot layout only when it has actually changed shape. A Unit
       // simply marching is a container move and nothing else.
-      const key = `${unit.formation}|${unit.changingTo}|${unit.changeProgress.toFixed(3)}|${figureCount}|${figureMetres.toFixed(2)}|${unit.strength}`
+      const key = `${unit.formation}|${unit.changingTo}|${unit.changeProgress.toFixed(3)}|${figureCount}|${figureMetres.toFixed(2)}|${unit.strength}|${unit.routing}`
       if (visual.builtFor !== key) {
         visual.builtFor = key
         this.buildFigures(visual, unit, figureCount, figureMetres, colour)
@@ -601,12 +617,16 @@ export class BattleView {
     colour: number,
     selected: boolean,
   ): void {
-    const shape = poseFootprint(unit)
-    const width = shape.width
-    const depth = shape.depth
     const line = this.metresPerPixel()
     const g = visual.base
     g.clear()
+    if (unit.routing) {
+      this.mobBase(g, unit, colour, selected, line)
+      return
+    }
+    const shape = poseFootprint(unit)
+    const width = shape.width
+    const depth = shape.depth
     // A dark keyline first, so an army colour never has to fight the grass it
     // is standing on to be seen.
     g.rect(-width / 2 - line, -depth / 2 - line, width + line * 2, depth + line * 2)
@@ -614,10 +634,7 @@ export class BattleView {
     g.rect(-width / 2, -depth / 2, width, depth).fill({ color: colour, alpha: 0.85 })
     g.stroke({ width: line * 1.2, color: 0xffffff, alpha: 0.35 })
     // The Face is what a Charge resolves against, so it is what gets the ink.
-    // A Routing Unit is drawn without one: it has stopped presenting a front to
-    // anybody, and losing the white edge is what makes a mob read as a mob at a
-    // glance rather than as a column marching the other way.
-    const faceCount = unit.routing ? 0 : faces(unit.arm, unit.changingTo ?? unit.formation)
+    const faceCount = faces(unit.arm, unit.changingTo ?? unit.formation)
     if (faceCount > 0) {
       g.moveTo(-width / 2, -depth / 2).lineTo(width / 2, -depth / 2)
       if (faceCount === 4) {
@@ -626,11 +643,6 @@ export class BattleView {
         g.moveTo(-width / 2, depth / 2).lineTo(-width / 2, -depth / 2)
       }
       g.stroke({ width: line * 2.4, color: 0xffffff, alpha: 0.8 })
-    }
-    if (unit.routing) {
-      const pad = 3 * line
-      g.rect(-width / 2 - pad, -depth / 2 - pad, width + pad * 2, depth + pad * 2)
-      g.stroke({ width: line * 2, color: 0xd8632f, alpha: 0.9 })
     }
     if (selected) {
       const pad = 6 * line
@@ -673,6 +685,41 @@ export class BattleView {
       const shape = poseFootprint(unit)
       const grown = { width: shape.width + 12 * mpp, depth: shape.depth + 12 * mpp }
       this.strokeFootprint(g, unit.position, unit.facing, grown, 0xe0663c, 0.85, mpp * 2)
+    }
+  }
+
+  /**
+   * A mob: a ragged disc of a Unit, drawn where a block would be. No keyline
+   * rectangle, no Face and no dressed edge — a Routing Unit has stopped
+   * presenting a front to anybody, and the shape is what says so at a glance
+   * rather than a colour the player has to learn. Two arcs off centre for the
+   * edge, so the crowd does not read as a tidy counter.
+   */
+  private mobBase(
+    g: Graphics,
+    unit: UnitSnapshot,
+    colour: number,
+    selected: boolean,
+    line: number,
+  ): void {
+    const r = mobRadius(unit.arm, unit.strength)
+    g.circle(0, 0, r + line).stroke({ width: line * 2.5, color: 0x11150f, alpha: 0.7 })
+    // Thinner than a block's fill: a crowd is gaps, and the Figures on top of
+    // it are what there is to count.
+    g.circle(0, 0, r).fill({ color: colour, alpha: 0.45 })
+    g.circle(0, 0, r).stroke({ width: line * 1.2, color: 0xd8632f, alpha: 0.9 })
+    g.arc(-r * 0.18, r * 0.12, r * 0.92, 0.6, 3.4).stroke({
+      width: line * 1.6,
+      color: 0xd8632f,
+      alpha: 0.55,
+    })
+    g.arc(r * 0.2, -r * 0.1, r * 0.86, 3.6, 6.1).stroke({
+      width: line * 1.6,
+      color: 0xd8632f,
+      alpha: 0.4,
+    })
+    if (selected) {
+      g.circle(0, 0, r + 6 * line).stroke({ width: line * 2, color: 0xf5e6a8, alpha: 0.95 })
     }
   }
 

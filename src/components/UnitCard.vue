@@ -83,7 +83,14 @@ const label = describeFormation
         <div class="min-w-56">
           <p class="text-sm font-semibold">{{ unit.name }}</p>
           <p class="text-xs text-base-content/60">
-            {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men · {{ width }}m frontage ·
+            {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men ·
+            <!-- A mob has no front to measure. It is held in its travelling
+                 Formation underneath so that a Rally has something to come back
+                 to, and reading that Formation's Frontage out loud told the
+                 player a running crowd was 3m wide. -->
+            <span v-if="unit.routing">no front, a mob</span>
+            <span v-else>{{ width }}m frontage</span>
+            ·
             <span v-if="pace === 0">does not move</span>
             <span v-else :class="hobbled ? 'text-warning' : ''">{{ pace }}m a minute</span>
             ·

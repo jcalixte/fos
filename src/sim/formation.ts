@@ -276,6 +276,62 @@ export function slotAt(arm: Arm, formation: FormationName, strength: number, ind
   }
 }
 
+/**
+ * The room a body in a mob takes, as a multiple of the room it takes on the
+ * march. A Rout is not dressed and not covering its file: the men are running,
+ * and they are running in each other's way.
+ */
+const MOB_SPREAD = 4
+
+/** Golden angle: the one that fills a disc without ever laying down a rank. */
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
+
+/**
+ * Unevenness, and deliberately not randomness. A mob has to look like a crowd
+ * and be the same crowd on every replay of the same seed (F18), so each body is
+ * shoved off its place by a hash of its own index and nothing else.
+ */
+function stray(i: number): number {
+  const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453
+  return x - Math.floor(x)
+}
+
+/**
+ * How far a mob spreads: the disc that holds what the Unit has left at mob
+ * spacing. Derived from Strength, so a Rout shedding men visibly thins as it
+ * runs rather than carrying a fixed blob to the edge of the Field.
+ */
+export function mobRadius(arm: Arm, strength: number): number {
+  const travelling = spec(arm, TRAVELLING_FORMATION[arm])
+  const perBody = travelling.spacing * travelling.rankDepth * MOB_SPREAD
+  return Math.sqrt((bodies(arm, strength) * perBody) / Math.PI)
+}
+
+/**
+ * Where a mob's Figures stand: a ragged disc with no ranks, no files and no
+ * Face. The Formation grammar cannot say this — every Formation in it is a grid
+ * of ranks and files, which is the point of a Formation — so a Rout is drawn
+ * from here instead, and a battalion that broke stops looking like a battalion.
+ *
+ * Drawn from the Figure count rather than sampled out of the body slots the way
+ * `figureSlots` does it. There is no layout underneath to sample: what the
+ * Figures stand for is a crowd, and a crowd is however many of them there are.
+ */
+export function mobSlots(arm: Arm, strength: number, figures: number): Vec2[] {
+  const count = Math.max(1, Math.min(figures, bodies(arm, strength)))
+  const radius = mobRadius(arm, strength)
+  const out: Vec2[] = []
+  for (let f = 0; f < count; f++) {
+    // Square root, so the crowd fills the disc evenly instead of ringing it,
+    // and the shove is inward only — a mob spreads as far as it spreads, and
+    // the disc it is said to cover is the disc it stands in.
+    const reach = radius * Math.sqrt((f + 0.5) / count) * (0.55 + stray(f) * 0.45)
+    const angle = f * GOLDEN_ANGLE + stray(f + 977) * 0.8
+    out.push({ x: Math.cos(angle) * reach, y: Math.sin(angle) * reach })
+  }
+  return out
+}
+
 /** Every slot, front rank first. */
 export function slots(arm: Arm, formation: FormationName, strength: number): Vec2[] {
   const n = bodies(arm, strength)
@@ -398,6 +454,12 @@ export interface FormationPose {
   changingTo: FormationName | null
   /** 0 to 1 through the change. */
   changeProgress: number
+  /**
+   * A Rout holds no Formation at all. It is here rather than in the Formation
+   * itself because a mob is not a drill: nothing can be ordered into it, and a
+   * Formation the Roster offers is a thing the player may ask for.
+   */
+  routing: boolean
 }
 
 export function poseOf(unit: Unit): FormationPose {
@@ -407,6 +469,7 @@ export function poseOf(unit: Unit): FormationPose {
     formation: unit.changing?.from ?? unit.formation,
     changingTo: unit.changing?.to ?? null,
     changeProgress: unit.changing ? Math.min(1, unit.changing.elapsed / unit.changing.duration) : 0,
+    routing: unit.routing !== null,
   }
 }
 
@@ -416,6 +479,7 @@ export function poseOf(unit: Unit): FormationPose {
  * folds into a square across the change's full duration rather than popping.
  */
 export function figureSlots(pose: FormationPose, figures: number): Vec2[] {
+  if (pose.routing) return mobSlots(pose.arm, pose.strength, figures)
   const n = bodies(pose.arm, pose.strength)
   const count = Math.max(1, Math.min(figures, n))
   const t = pose.changingTo ? Math.min(1, pose.changeProgress) : 0

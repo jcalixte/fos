@@ -10,6 +10,7 @@ import {
   figureSlots,
   fireZone,
   frontage,
+  mobRadius,
   poseOf,
   slots,
   spanAlong,
@@ -127,6 +128,49 @@ describe("C3 Formation Geometry", () => {
     const line = frontage("infantry", "line", 700)
     const column = frontage("infantry", "attack-column", 700)
     expect(column).toBeLessThan(line / 2)
+  })
+
+  it("stands a Rout in a mob, which is no Formation and is drawn as none", () => {
+    // A mob is not in the Formation grammar and cannot be: every Formation
+    // there is a grid of ranks and files, and the player may order any of them.
+    // So a Rout is a pose instead, and this is what makes a battalion that
+    // broke stop looking like a battalion — it kept its travelling Formation
+    // before, which is a 2.8m by 157m needle, and a needle turning on the spot
+    // reads as a fan spinning rather than as men running.
+    const mob = {
+      arm: "infantry",
+      strength: 700,
+      formation: "march-column",
+      changingTo: null,
+      changeProgress: 0,
+      routing: true,
+    } as const
+    const column = { ...mob, routing: false }
+    const spread = (pose: typeof mob | typeof column) => {
+      const slots = figureSlots(pose, 60)
+      return {
+        across: Math.max(...slots.map((p) => Math.abs(p.x))) * 2,
+        deep: Math.max(...slots.map((p) => Math.abs(p.y))) * 2,
+        slots,
+      }
+    }
+    const crowd = spread(mob)
+    const marching = spread(column)
+    // The column is a needle and the mob is round: as broad as it is deep,
+    // within a fifth either way.
+    expect(marching.deep).toBeGreaterThan(marching.across * 10)
+    expect(crowd.across).toBeGreaterThan(crowd.deep * 0.8)
+    expect(crowd.across).toBeLessThan(crowd.deep * 1.25)
+    // And nobody stands outside the disc the Unit is said to cover.
+    const r = mobRadius("infantry", 700)
+    for (const slot of crowd.slots) expect(Math.hypot(slot.x, slot.y)).toBeLessThanOrEqual(r)
+
+    // Uneven, and the same unevenness every time: a replay draws the same
+    // crowd, and no two men stand in a rank with each other (F18).
+    expect(figureSlots(mob, 60)).toEqual(crowd.slots)
+    expect(new Set(crowd.slots.map((p) => p.y.toFixed(3))).size).toBe(crowd.slots.length)
+    // It thins as it sheds men rather than carrying one blob off the Field.
+    expect(mobRadius("infantry", 350)).toBeLessThan(mobRadius("infantry", 700))
   })
 
   it("gives a square four Faces and a march column none", () => {
