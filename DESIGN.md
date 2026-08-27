@@ -797,12 +797,22 @@ centres, so no Unit can stand on both.
 
 Two pieces rather than one is the part that is about F11 and not about this Field. With the clock
 deciding nearly every battle, a single piece makes every result binary; two allow a 1–1 that falls
-through to condition and a 2–0 that reads as a day's work. **Unmeasured, and the thing to watch on
-the next run:** whether the French can cross a one-column bridge and clear a garrisoned hamlet
-inside thirty minutes at all. If they cannot, every battle ends 1–1 and the hamlet is scenery.
+through to condition and a 2–0 that reads as a day's work. **The question two pieces raise:**
+whether the French can cross a one-column bridge and clear a garrisoned hamlet inside thirty
+minutes at all. If they cannot, every battle ends 1–1 and the hamlet is scenery.
+
+**The French can be over the bridge and into the hamlet inside the clock, which is what the second
+Key Ground was waiting on.** Now that the fixture carries a Plan for each army, the question runs
+headless from the other end: take the Austrian, leave it silent, and the French Plan puts the guns
+in battery at 3:26, the leading battalion across and in line on the far bank at 8:53, the hamlet's
+garrison broken at 9:30 and off the Field at 14:36. At the clock the French hold both pieces, and
+it cost them two of their five battalions routed. So the hamlet is not scenery, and an Austrian who
+does nothing loses 2–0 — which is the whole of what the far bank needed before it was worth
+playing.
 
 One of §9's triggers is still unmeasured: how many order-cycles a 20-minute battle allows to the
-far flank.
+far flank. So is the Austrian end of this one: the French Plan is authored intent and cannot read
+a defence, so what a defended crossing costs it is a thing to watch rather than a thing measured.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 

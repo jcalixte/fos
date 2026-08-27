@@ -1,7 +1,8 @@
 # Field of Strategy III
 
 Real-time tactical battles of the Napoleonic era, seen from above in 2D. The player is the
-army commander: they deploy their army before the battle and issue Orders during it.
+army commander: they take one of the Scenario's two armies, deploy it before the battle, and
+issue Orders during it.
 
 ## Language
 
@@ -158,7 +159,7 @@ cancelling it.
 _Avoid_: AI, autonomy, behaviour, reflex
 
 **Scenario**:
-An authored battle: a Field, both armies, the enemy's Plan, and what counts as winning.
+An authored battle: a Field, both armies, a Plan for each of them, and what counts as winning.
 _Avoid_: level, mission, map, match, stage
 
 **Roster**:
@@ -168,9 +169,15 @@ than containing them. Authoring rule: size a Unit so its Frontage lands in rough
 split anything wider.
 _Avoid_: army list, order of battle, force, lineup
 
+**Taking an Army**:
+Which of a Scenario's two armies the player commands, answered before Deployment and never
+revisited: an army is arranged by the hand that will command it. Taking one drops its half of
+the Plan, since an army that is commanded cannot also be driven.
+_Avoid_: side, faction, team, picking a colour
+
 **Deployment**:
-The paused phase before a battle in which the player arranges their army inside a zone and
-sites the Headquarters. No Orders are given; nothing is being commanded yet.
+The paused phase before a battle in which the player arranges the army they have taken inside a
+zone and sites the Headquarters. No Orders are given; nothing is being commanded yet.
 _Avoid_: setup, placement, pre-battle, draft
 
 **Arrival**:
@@ -217,8 +224,10 @@ the day.
 _Avoid_: score, summary, results screen, scoreboard, stats
 
 **Plan**:
-The enemy army's authored intent — Orders fired by clock time or by trigger. There is no
-planning intelligence behind it; the tactical competence lives in each Unit's Initiative.
+An army's authored intent — Orders fired by clock time or by trigger. A Scenario carries one for
+each army and only the one the player has not taken is ever fired, so either army can be played
+and the other has an afternoon of its own. There is no planning intelligence behind it; the
+tactical competence lives in each Unit's Initiative.
 _Avoid_: AI, script, strategy, behaviour tree
 
 **Order**:
@@ -296,7 +305,9 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Unit** given somewhere to be finds its own **Route** there, funnelling to **Crossings**
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
-- A **Scenario** carries a **Field**, two **Rosters**, the enemy's **Plan**, a clock, and its **Key Ground**
+- A **Scenario** carries a **Field**, two **Rosters**, a **Plan** for each army, a clock, and its **Key Ground**
+- The player takes one **Army** before **Deployment**; the **Plan** written for it is dropped, and
+  the one written for the other is what it fights the afternoon to
 - A battle ends when the **Scenario** clock runs out — and then the **Key Ground** is counted, and
   where it is even, what each army has left — or at an **Army Break**, which takes every **Unit**
   of an army, or when the player chooses to **Break Off**

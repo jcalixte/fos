@@ -1,7 +1,7 @@
 # Field of Strategy III
 
 Real-time tactical battles of the Napoleonic era, seen from above in 2D. You are the army
-commander: you deploy your army, then issue Orders that take time to arrive.
+commander: you take one of the two armies, deploy it, then issue Orders that take time to arrive.
 
 ## Run it
 
@@ -49,6 +49,11 @@ the only other ending a rule reaches — an army with nothing left in hand, ever
 or gone, quits the Field. That is a floor and not a race: an army a third gone is hurt and not
 beaten, and it has the rest of the afternoon to show it ([ADR-0006](./docs/adr/0006-a-battle-ends-on-the-clock.md)).
 Neither way is annihilation.
+
+Either army, taken before Deployment. The bridge march is authored from both ends: the Austrians
+have a Headquarters behind the ridge and ground of their own to arrange on, and the French advance
+guard has a Plan that crosses and goes for the hamlet. A Scenario carries a Plan for each army and
+fires only the one the player has not taken — command it, and its Plan is dropped.
 
 Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
