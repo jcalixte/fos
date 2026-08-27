@@ -284,6 +284,9 @@ _Avoid_: game speed, time scale, simulation speed
 - An **Order** given to several **Units** at once sends a **Courier** to each, so they arrive apart
 - An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**
 - A **Move** carries a destination, an arrival facing and an arrival **Formation**
+- A **Move** onto the ground a **Unit** already stands on is how it is turned where it is:
+  guns In Battery traverse rather than wheel, and it needs no **Order** of its own because a
+  **Move** already carries a facing — this one simply has no ground in it
 - A **Unit** picks its own travelling **Formation** by **Initiative**, unless a **Form** pins one
 - A **Formation** determines the slots that a Unit's **Figures** are drawn in
 - A **Formation** and a facing give a Unit its **Footprint** on the **Field**

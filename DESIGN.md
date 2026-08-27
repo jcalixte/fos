@@ -861,7 +861,20 @@ far flank.
   half the malus and the road keeps its whole bonus.
 - **A battery In Battery was merely slow, not stationary.** 0.2 m/s meant guns could be dragged
   into position off their limbers, which is not a thing that happens. Now zero, with an Initiative
-  rule that hitches up to move and the wheel floor standing in for the traverse.
+  rule that hitches up to move.
+- **The traverse was a wheel with the numbers filed off.** Standing the battery's turn on the
+  wheel floor made the time it takes fall out of Frontage, which is right for a wheel and wrong
+  for a traverse: a wheel is paid for in ground, by the outer flank walking the arc, and a
+  traverse is paid for in men, by every crew handspiking its own piece at once. Twelve guns are
+  216m of front, so a quarter turn cost seven minutes of a thirty-minute battle and got worse the
+  bigger the battery. Now a rate scaled by **Grade** — it is drill, not marching — and derived
+  from the Formation having no speed rather than authored, so nothing declares it twice.
+- **The one Order guns can obey was unreachable.** The sim would traverse a battery on a **Move**
+  onto the ground it stands on, and had a test saying so, but every Order comes from a drag begun
+  on bare ground and a six-gun battery covers 108m of it. The player could only ever order the
+  guns somewhere else, which limbers them. Two gestures now issue it — a drag off the Unit's own
+  body, and a **point** button armed like a Charge — and both read the bearing from the Unit's
+  centre, because a press on a battery's flank is a destination fifty metres away.
 - **"Only a march column crosses" was authored as a rule about Formations.** It is a fact about
   the gap: a bridge deck is 8m and a line is 140m. Stated as Frontage against the width of the
   Crossing, which is also the only version the Osteria gorge does not contradict.
