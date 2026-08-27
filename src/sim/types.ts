@@ -25,6 +25,24 @@ export type FormationName =
 export type ArmyId = string
 export type UnitId = string
 
+/**
+ * How far a Unit may act on its own account, as an ordered ladder from giving
+ * ground to taking it. Every rung but `hold-ground` is bounded in metres from
+ * the Post (ADR-0007).
+ */
+export type Latitude = "stand-off" | "hold-ground" | "close-up" | "follow-up"
+
+/**
+ * A Unit's Standing Order: the brief it consults whenever no Order covers the
+ * case. Two questions and not one, because the feet and the fire are not rungs
+ * of the same ladder — a Unit may be told to close up and to hold its fire.
+ */
+export interface Standing {
+  latitude: Latitude
+  /** True while the Unit is not to open fire at all. */
+  holdFire: boolean
+}
+
 /** A Formation change under way. Nothing pops: C3 morphs the slots across it. */
 export interface FormationChange {
   from: FormationName
@@ -55,6 +73,21 @@ export interface Unit {
   route: Vec2[]
   /** The Initiative rule currently suspending the Order, by name. */
   suspendedBy: string | null
+  /** What the Unit does when no Order covers the case (ADR-0007). */
+  standing: Standing
+  /**
+   * The ground the Unit was given: its last Move Order's destination, where it
+   * was last halted, or where it was deployed. Latitude is measured from here,
+   * so this is what stops a Unit acting on its own account from choosing
+   * different ground rather than merely drifting off the ground it was given.
+   */
+  post: Vec2
+  /**
+   * Ground the Unit is walking to on its own account, under its Standing Order,
+   * or null. Set by the Initiative rule that is holding the Order suspended —
+   * so unlike every other suspension, this one is not a Unit standing still.
+   */
+  shift: Vec2 | null
   /** Seconds until the Unit can fire again. Counts down whatever it is doing. */
   reload: number
   /**
@@ -137,7 +170,7 @@ export interface Volley {
   casualties: number
 }
 
-export type OrderKind = "move" | "form" | "charge" | "halt"
+export type OrderKind = "move" | "form" | "charge" | "halt" | "standing"
 
 export interface MoveOrder {
   kind: "move"
@@ -167,7 +200,18 @@ export interface HaltOrder {
   kind: "halt"
 }
 
-export type OrderBody = MoveOrder | FormOrder | ChargeOrder | HaltOrder
+/**
+ * A new brief, and the one Order that leaves the Unit doing what it was doing:
+ * it says what the Unit may do unbidden, which is a different question from
+ * what it is under orders to do now.
+ */
+export interface StandingOrder {
+  kind: "standing"
+  latitude: Latitude
+  holdFire: boolean
+}
+
+export type OrderBody = MoveOrder | FormOrder | ChargeOrder | HaltOrder | StandingOrder
 
 export interface Order {
   id: string

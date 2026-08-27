@@ -36,7 +36,7 @@ import {
   recover,
   shareGone,
 } from "./morale"
-import { advanceCouriers, ARRIVAL_RANGE } from "./orders"
+import { advanceCouriers, ARRIVAL_RANGE, postOf } from "./orders"
 import {
   describeFormation,
   type ArmyId,
@@ -239,6 +239,30 @@ function advanceCharge(battle: Battle, unit: Unit, body: ChargeOrder, dt: number
   runOn(battle, unit, bearing(unit.position, target.position), pace, dt, true)
 }
 
+/**
+ * Walk a Unit on its own account, under its Standing Order. Not a march and not
+ * an Order: there is no Route and no pathfinding behind it, because Latitude is
+ * spent a hundred metres at a time and a battalion picking its way round a wood
+ * to give ground has stopped watching the enemy. It stops dead at anything it
+ * cannot walk into, the same answer a Charge gets, and it comes round onto the
+ * way it is going as it walks — so a Unit that gives ground turns its back to
+ * do it.
+ *
+ * A Unit re-forming has halted, here as everywhere: it cannot drill and walk at
+ * once, whoever told it to.
+ */
+function shiftGround(battle: Battle, unit: Unit, dt: number): void {
+  if (!unit.shift || unit.changing) return
+  runOn(
+    battle,
+    unit,
+    bearing(unit.position, unit.shift),
+    baseSpeed(unit.arm, unit.formation),
+    dt,
+    true,
+  )
+}
+
 function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   const live = unit.order
   if (!live) return
@@ -248,6 +272,11 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     unit.route = []
     return
   }
+
+  // A brief is applied where it lands and never becomes the Order a Unit is
+  // working on, so this is unreachable — and it is here to keep it that way, in
+  // the one place a live Order is read.
+  if (body.kind === "standing") return
 
   if (body.kind === "form") {
     unit.route = []
@@ -327,8 +356,12 @@ function releaseArrivals(battle: Battle): void {
   for (const arrival of due) {
     const unit = arrival.unit
     unit.position = { ...arrival.entry }
+    // It was never deployed, so the ground it walked on from is the ground it
+    // was given until an Order gives it another.
+    unit.post = { ...arrival.entry }
     battle.units.push(unit)
     if (arrival.order) {
+      unit.post = postOf(unit, arrival.order) ?? unit.post
       unit.order = {
         order: {
           id: `a${battle.nextId++}`,
@@ -354,6 +387,13 @@ function firePlan(battle: Battle): void {
   for (const planned of due) {
     const unit = battle.units.find((u) => u.id === planned.unitId)
     if (!unit) continue
+    // A brief the Plan gives is applied where it lands, the same as one a rider
+    // brings: it says what the Unit does unbidden and leaves the march alone.
+    if (planned.body.kind === "standing") {
+      unit.standing = { latitude: planned.body.latitude, holdFire: planned.body.holdFire }
+      continue
+    }
+    unit.post = postOf(unit, planned.body) ?? unit.post
     // The enemy's Plan is authored intent, not a Courier ride: it stands in for
     // orders given before the clock started.
     unit.order = {
@@ -413,6 +453,9 @@ export function step(battle: Battle): void {
     } else {
       const was = unit.position
       if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
+      // Suspended, and walking anyway: the Latitude rules are the only ones
+      // that hold an Order back and still move the Unit (ADR-0007).
+      else if (unit.shift) shiftGround(battle, unit, STEP)
       // Fire comes after the march, so what a Unit shoots at is where it ended
       // the step — and whether it marched at all is what says if it shot.
       resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)

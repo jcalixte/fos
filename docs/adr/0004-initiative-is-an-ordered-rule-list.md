@@ -37,3 +37,9 @@ list of things he was permitted to do unbidden, which is why the concept carries
 Initiative is also kept strictly *defensive*: it returns fire, forms square, breaks, routs, rallies
 and picks a travelling Formation. It never advances, never takes ground, never chooses an objective.
 That boundary is what stops good Initiative from making the player redundant.
+
+**Amended by [ADR-0007](./0007-a-standing-order-sets-a-units-latitude.md).** A Unit's Standing
+Order can now let it give or take ground, and what stops Initiative making the player redundant is
+no longer that boundary but a leash: every act a Unit takes on its own account is bounded in metres
+from the ground the player last gave it. Never choosing an objective still holds, and it is the
+half of the old clause that was load-bearing.

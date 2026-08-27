@@ -5,6 +5,7 @@ import { GROUNDS } from "./ground"
 import { unitWeight } from "./morale"
 import { issueOrder } from "./orders"
 import { blankField } from "./scenario"
+import { defaultStanding } from "./standing"
 import type { Battle, Field, Unit } from "./types"
 import { distance } from "./vec"
 
@@ -40,6 +41,9 @@ function battalion(): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    standing: defaultStanding(),
+    post: { x: 280, y: 470 },
+    shift: null,
     reload: 0,
     morale: 1,
     moraleCeiling: 1,

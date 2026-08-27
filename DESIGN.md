@@ -548,7 +548,7 @@ player already knows what a square is for.
 |-----|---------------------------------------------|:---:|--------|
 | F1  | Deliver an Order on courier time            |  →  | courier 13 m/s: 200m ≈ 15s, 1500m ≈ 115s |
 | F2  | Show every pending Order on the Field       |  →  | 100% drawn as Courier + Ghost; zero hidden timers |
-| F3  | Cover the gaps with Initiative              |  ↑  | never idle under threat — return fire, form square, Break, Rout, Rally, pick travelling Formation |
+| F3  | Cover the gaps with Initiative              |  ↑  | never idle under threat — return fire, form square, Break, Rout, Rally, pick travelling Formation, and give or take as much ground as the Standing Order allows |
 | F4  | Route a Unit to any reachable point         |  →  | funnels to Crossings; no manual waypointing required; pathfind under 5ms on 250×250 |
 
 **Legibility** — serves G2
@@ -597,7 +597,7 @@ player already knows what a square is for.
 - **G1** commander, not puppeteer  _W:10_
   - **F1** Deliver an Order on courier time — **How**: an Order is a message stamped with an arrival time, never a call on a Unit → C1, C8
   - **F2** Show every pending Order — **How**: draw the Courier riding and a Ghost at its destination → C11, C15
-  - **F3** Cover the gaps with Initiative — **How**: ordered priority rule list, first match wins, *suspending* the live Order rather than cancelling it → C2 _(rejected: behaviour tree, utility scoring — see T14)_
+  - **F3** Cover the gaps with Initiative — **How**: ordered priority rule list, first match wins, *suspending* the live Order rather than cancelling it, gated by the Unit's Standing Order and leashed in metres from its Post → C2 _(rejected: behaviour tree, utility scoring — see T14; unbounded hunting — see T16)_
   - **F4** Route a Unit anywhere reachable — **How**: A* over cells with Ground and gradient costs, string-pulled to a few waypoints; Crossings funnel for free because water costs ∞ and a bridge cell does not → C5, C4
 - **G2** reads at a glance  _W:9_
   - **F5** Formation readable from silhouette — **How**: the four infantry Formations already have distinct outlines; draw an army-coloured base with Figures as texture, and floor a Figure at 3px so a line never collapses to 2px → C3, C10
@@ -648,7 +648,7 @@ player already knows what a square is for.
 
 The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter.
 
-**F3 Initiative × G1 the commander fantasy** — the most dangerous tension in the design, and it isn't function-versus-function at all. *The better Initiative gets, the less the player matters.* If battalions reliably do the right thing on their own, the honest question is why you're there. The resolution: **Initiative is strictly defensive.** It preserves — returns fire, forms square, breaks, routs, rallies, picks a travelling Formation. It never advances, never takes ground, never chooses an objective, never exploits. Every act of *intent* stays yours and costs a courier ride.
+**F3 Initiative × G1 the commander fantasy** — the most dangerous tension in the design, and it isn't function-versus-function at all. *The better Initiative gets, the less the player matters.* If battalions reliably do the right thing on their own, the honest question is why you're there. The resolution was **Initiative is strictly defensive** — it preserves and never advances — and it is now **Initiative is leashed**: how much a Unit may do unbidden is its Standing Order, and every step it takes on its own account is bounded in metres from its Post, the ground the player last gave it ([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). A Unit drifts a hundred metres off what it was given; it never picks something else. Choosing the ground is the act of *intent*, it is still yours, and it still costs a Courier ride.
 
 **F8 geometry-derived × F10 / F11 hitting the targets** — F8 wants zero hard-coded Formation constants; F10 wants Units breaking at 15–30% casualties and F11 wants battles landing in 20–40 minutes. With everything derived, there are almost no knobs left to hit those numbers with. Resolution: **geometry sets relative effect, a small set of global scalars sets absolute magnitude.** The moment a *per-Formation* constant is needed, F8 has failed and we should know it.
 
@@ -665,7 +665,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 | ID  | Component            | Owns                                                                  | ADR |
 |-----|----------------------|-----------------------------------------------------------------------|-----|
 | C1  | Order Delivery       | Orders, Couriers, the arrival queue, suspend and resume                | [0002](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md) |
-| C2  | Initiative Rules     | the ordered rule list and its thresholds by Grade                      | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md) |
+| C2  | Initiative Rules     | the ordered rule list, its thresholds by Grade, and the Latitude that gates it | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md), [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
 | C3  | Formation Geometry   | slot layouts, Frontage, Footprint, Faces, wheeling, morphing           | [0001](./docs/adr/0001-unit-is-always-a-battalion.md) |
 | C4  | Field                | cell grid, Ground, Height, gradient, impassability, Concealment         | — |
 | C5  | Routing              | A* over cells, string-pulling, funnelling to Crossings                  | — |
@@ -778,8 +778,9 @@ has to buy with a Move Order first.
 could have returned.** Run headless for the full thirty minutes with the player silent, the
 Austrian Plan breaks two French-facing battalions eight minutes apart and both Rally; neither army
 gets anywhere near having nothing left in hand; and nothing ever crosses the river. The battle ends
-undecided with the bridge held by nobody. Initiative preserves and does not advance, exactly as
-§6 requires it to, and taking the ground is entirely the player's.
+undecided with the bridge held by nobody. Taking the ground was entirely the player's — though
+every Unit on that run stood at `hold ground`, which was the only rung there was, and the run is
+worth repeating against an army briefed to follow up.
 
 **Nobody came within the bridge's radius on that run — the nearest formed Unit stopped 111m off a
 90m radius.** The Austrian Plan parks its covering battalion short of the crossing, which is what
@@ -833,11 +834,12 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
 | T12 | Unit sized by a Frontage band, not a historical title | one model across every army and campaign | an Austrian cavalry regiment is four Units, which reads oddly on a roster | [0001](./docs/adr/0001-unit-is-always-a-battalion.md) |
 | T13 | No save | no serialisation of simulation state at all | a 40-minute battle is all-or-nothing | — |
 | T14 | Rule list over behaviour tree or utility scoring | every autonomous act has a nameable cause, so F7 is free; deterministic; authorable as data | no subtlety and no coordination between Units; the list grows long and order-sensitive | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md) |
+| T16 | A Latitude ladder leashed to the Post, over Initiative that never advances | a Unit answers what it can see without a ninety-second Courier ride for a hundred metres of ground; the brief scales with the Field where the Courier does not | the rule list now reads differently on different Units, so a Dispatch's cause has two halves; a rung can be set and forgotten, and hold fire will be | [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
 
 ### Tensions being watched (unresolved by design)
 
-- **Initiative versus player agency.** Held at bay by keeping Initiative strictly defensive — it preserves, never advances. **Trigger to revisit:** a playtest where the battle resolves much the same whether the player issues Orders or not. *Measured on the fixture and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.*
+- **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Trigger to revisit:** a playtest where the battle resolves much the same whether the player issues Orders or not — now to be run with an army briefed at `follow up` and not only at the default, since that is the rung with something to prove. *Measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.*
 - **Courier delay versus battle length.** Both tuned against Castiglione, in opposite directions. **Trigger:** when a 20-minute battle allows fewer than about three order-cycles to the far flank.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
 - **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.

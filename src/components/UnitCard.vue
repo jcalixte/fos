@@ -2,7 +2,8 @@
 import { computed } from "vue"
 import { canCharge } from "@/sim/charge"
 import { baseSpeed, drillSeconds, formationsFor, frontage } from "@/sim/formation"
-import { describeFormation, type FormationName, type Grade } from "@/sim/types"
+import { describeLatitude, LATITUDES } from "@/sim/standing"
+import { describeFormation, type FormationName, type Grade, type Latitude } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
 
 const props = defineProps<{
@@ -23,6 +24,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   form: [formation: FormationName]
   arrivalFormation: [formation: FormationName]
+  latitude: [latitude: Latitude]
+  holdFire: [held: boolean]
   charge: []
   point: []
   halt: []
@@ -69,7 +72,17 @@ const remaining = computed(() => {
   return Math.max(0, Math.round(total * (1 - props.unit.changeProgress)))
 })
 
+/**
+ * The Standing Order is offered at Deployment as well as in the battle, unlike
+ * everything else on this row. It is the brief a subordinate is given before he
+ * marches, so the hour of arranging the army is exactly when it is given — and
+ * given there it costs nothing, where in the battle it costs a Courier like any
+ * other Order.
+ */
+const rungs = LATITUDES
+
 const label = describeFormation
+const rung = describeLatitude
 </script>
 
 <template>
@@ -113,6 +126,9 @@ const label = describeFormation
           </span>
           <span v-else-if="unit.suspendedBy" class="text-warning">
             {{ unit.suspendedBy }}
+          </span>
+          <span v-else-if="unit.standing.holdFire" class="text-warning">
+            in {{ label(unit.formation) }}, holding its fire
           </span>
           <span v-else class="text-base-content/60">
             in {{ label(unit.formation) }}{{ unit.hasOrder ? ", under orders" : "" }}
@@ -175,6 +191,34 @@ const label = describeFormation
             @click="emit('charge')"
           >
             {{ arming ? "pick a target" : "charge" }}
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs tracking-wide text-base-content/50 uppercase">Standing</span>
+          <button
+            v-for="option in rungs"
+            :key="`rung-${option}`"
+            type="button"
+            class="btn btn-xs"
+            :class="unit.standing.latitude === option ? 'btn-primary' : 'btn-ghost'"
+            :disabled="deaf"
+            @click="emit('latitude', option)"
+          >
+            {{ rung(option) }}
+          </button>
+          <!-- Its own button and not a fifth rung: what a Unit does with its
+               feet and what it does with its muskets are different questions,
+               and a battalion may be told to close up and to hold its fire. -->
+          <button
+            type="button"
+            class="btn btn-xs"
+            :class="unit.standing.holdFire ? 'btn-warning' : 'btn-ghost'"
+            :disabled="deaf"
+            title="it will not open fire at all, at any range, until this is lifted"
+            @click="emit('holdFire', !unit.standing.holdFire)"
+          >
+            hold fire
           </button>
         </div>
 

@@ -153,10 +153,30 @@ _Avoid_: event, log line, notification, message, feed
 
 **Initiative**:
 The judgement a Unit exercises when no Order covers its situation — returning fire, forming square
-against oncoming cavalry, Breaking, Routing, choosing what to march in. It only ever preserves: it
-never advances, takes ground or picks an objective, and it suspends a live Order rather than
-cancelling it.
+against oncoming cavalry, Breaking, Routing, choosing what to march in, and giving or taking as
+much ground as its Standing Order allows. It never picks an objective, and it suspends a live
+Order rather than cancelling it.
 _Avoid_: AI, autonomy, behaviour, reflex
+
+**Standing Order**:
+The brief a Unit carries and consults all afternoon, rather than an Order it carries out once: how
+much Latitude it has, and whether it is to hold its fire. Given free at Deployment, because that
+is the hour a subordinate is briefed in, and couriered like anything else after. Arriving, it
+changes what the Unit does unbidden and never what it is doing under orders.
+_Avoid_: stance, posture, mode, rules of engagement, doctrine
+
+**Latitude**:
+How far a Unit may act on its own account, as one rung of an ordered ladder: **stand off** gives
+ground rather than be closed with, **hold ground** moves neither way, **close up** may advance to
+bring an enemy under its fire, and **follow up** may advance after one that is giving way. Every
+rung but the lowest is bounded in metres from the Post ([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)).
+_Avoid_: aggression, stance, autonomy, ROE
+
+**Post**:
+The ground a Unit was given: the destination of its last Move Order, where it was last halted, or
+where it was deployed. It is what Latitude is measured from, so it is the whole of the difference
+between a battalion that may shift a hundred metres and one that may go hunting.
+_Avoid_: anchor, home, station, waypoint
 
 **Scenario**:
 An authored battle: a Field, both armies, a Plan for each of them, and what counts as winning.
@@ -291,7 +311,8 @@ _Avoid_: game speed, time scale, simulation speed
 - An **Order**'s delay is the ride a **Courier** makes from the **Headquarters** to the **Unit**
 - Every **Order** in flight is a **Courier** visibly on the **Field**, and a **Ghost** where it leads
 - An **Order** given to several **Units** at once sends a **Courier** to each, so they arrive apart
-- An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**
+- An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**, or a
+  new **Standing Order**
 - A **Move** carries a destination, an arrival facing and an arrival **Formation**
 - A **Move** onto the ground a **Unit** already stands on is how it is turned where it is:
   guns In Battery traverse rather than wheel, and it needs no **Order** of its own because a
@@ -305,6 +326,10 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Unit** given somewhere to be finds its own **Route** there, funnelling to **Crossings**
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
+- A **Unit**'s **Standing Order** says how much its **Initiative** is permitted, and is the one
+  instruction that arrives without disturbing what the **Unit** is already doing
+- **Latitude** is spent in metres from the **Post**, so a **Unit** acting on its own account can
+  drift from the ground it was given and can never choose different ground
 - A **Scenario** carries a **Field**, two **Rosters**, a **Plan** for each army, a clock, and its **Key Ground**
 - The player takes one **Army** before **Deployment**; the **Plan** written for it is dropped, and
   the one written for the other is what it fights the afternoon to

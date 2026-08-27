@@ -1,7 +1,7 @@
 import { unitSpeed } from "./battle"
 import { describeMorale } from "./morale"
 import { ghosts, type Ghost } from "./orders"
-import type { Battle, Contact, FormationName, Unit, Vec2, Volley } from "./types"
+import type { Battle, Contact, FormationName, Standing, Unit, Vec2, Volley } from "./types"
 
 /**
  * What the renderer is allowed to see. The simulation runs at 10Hz and the
@@ -24,6 +24,10 @@ export interface UnitSnapshot {
   changeProgress: number
   suspendedBy: string | null
   hasOrder: boolean
+  /** The brief it is carrying: how much Latitude it has, and its fire. */
+  standing: Standing
+  /** True while it is walking somewhere on its own account, not under Orders. */
+  shifting: boolean
   /**
    * How the Unit is holding up, in words. T11 gave up the countable bar on
    * purpose, so the screen never sees the number behind this.
@@ -82,6 +86,8 @@ export function snapshot(battle: Battle): BattleSnapshot {
         : 0,
       suspendedBy: unit.suspendedBy,
       hasOrder: unit.order !== null,
+      standing: { ...unit.standing },
+      shifting: unit.shift !== null,
       morale: describeMorale(unit),
       routing: unit.routing !== null,
       charging: unit.charging?.targetId ?? null,

@@ -1,4 +1,5 @@
 import { chargersOf } from "./charge"
+import { aim } from "./fighting"
 import { cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import {
   allows,
@@ -11,8 +12,9 @@ import {
   TRAVELLING_FORMATION,
 } from "./formation"
 import { breakUnit, canRally, hasBroken, isRouting, rally } from "./morale"
+import { leash } from "./standing"
 import type { Battle, FormationName, Unit, Vec2 } from "./types"
-import { bearing, distance } from "./vec"
+import { bearing, distance, normalise, scale, sub } from "./vec"
 
 /**
  * C2 Initiative.
@@ -20,9 +22,12 @@ import { bearing, distance } from "./vec"
  * An ordered priority list, evaluated each tick, first match wins (ADR-0004).
  * The rule that fires *is* the reason, so a Dispatch explains itself for free.
  *
- * Initiative is strictly defensive: it preserves — it never advances, never
- * takes ground, never picks an objective. That boundary is what stops good
- * Initiative from making the player redundant.
+ * How much of it a Unit is permitted is its Standing Order, and above `hold
+ * ground` that includes giving and taking ground (ADR-0007). What Initiative
+ * never does at any rung is pick an objective: every step a Unit takes on its
+ * own account is bounded in metres from its Post, which is the ground the
+ * player last gave it. It drifts off what it was given; it cannot choose
+ * something else.
  *
  * It suspends the live Order rather than cancelling it. Cancelling would leave
  * a battalion standing in an empty field until a new Order rode out to it.
@@ -31,6 +36,12 @@ import { bearing, distance } from "./vec"
 export interface InitiativeAction {
   /** The Formation the Unit adopts on its own account, if the rule changes it. */
   formation?: FormationName
+  /**
+   * Ground the Unit walks to on its own account, if the rule moves it. Only the
+   * Latitude rules reach this, and it is re-read every tick: what a Unit is
+   * giving ground to, or closing on, is moving too.
+   */
+  march?: Vec2
   /**
    * What the rule does to the Unit's obedience. Only Morale reaches this far: a
    * Rout is a Unit that has stopped listening, which no Formation rule can say.
@@ -188,6 +199,80 @@ function chargedByCavalry(unit: Unit, battle: Battle): boolean {
 }
 
 /**
+ * Metres a Unit standing off lets an enemy come to before it gives ground. Well
+ * short of ENGAGEMENT_RANGE, because a screen that backed away from everything
+ * it could see would never observe anything; well outside the hundred and fifty
+ * of a Charge's run-in, because inside that a battalion is not standing off, it
+ * is being caught.
+ */
+const STANDOFF_RANGE = 200
+
+/** Metres of ground below which taking a step is not worth suspending an Order for. */
+const WORTH_MOVING = 2
+
+/** The nearest enemy that `want` accepts, within `range`, or null. */
+function nearestEnemy(
+  unit: Unit,
+  battle: Battle,
+  range: number,
+  want: (other: Unit) => boolean,
+): Unit | null {
+  let found: Unit | null = null
+  let nearest = range
+  for (const other of battle.units) {
+    if (other.army === unit.army) continue
+    if (!want(other)) continue
+    const gap = distance(unit.position, other.position)
+    if (gap > nearest) continue
+    nearest = gap
+    found = other
+  }
+  return found
+}
+
+/**
+ * Where the Unit may walk to, given where it wants to go and what its Standing
+ * Order allows: `to` itself while that is inside the leash, the point on the way
+ * there where the leash runs out otherwise, and null where there is no step in
+ * it worth taking.
+ *
+ * A Unit already outside its leash gets nothing rather than being walked back
+ * toward its Post. The leash bounds what a Unit may *do* and not where it may
+ * be — a regiment that charged three hundred metres out stays there until it is
+ * ordered, because nothing should undo the player's Order on its own account.
+ */
+function leashed(unit: Unit, to: Vec2): Vec2 | null {
+  const bound = leash(unit.standing.latitude)
+  const spent = distance(unit.post, unit.position)
+  if (spent >= bound) return null
+  const reach = distance(unit.post, to)
+  const target =
+    reach <= bound
+      ? to
+      : (() => {
+          const out = scale(normalise(sub(to, unit.post)), bound)
+          return { x: unit.post.x + out.x, y: unit.post.y + out.y }
+        })()
+  return distance(unit.position, target) < WORTH_MOVING ? null : target
+}
+
+/** True where the Unit's brief lets it take ground rather than only hold it. */
+function mayAdvance(unit: Unit): boolean {
+  return unit.standing.latitude === "close-up" || unit.standing.latitude === "follow-up"
+}
+
+/**
+ * True where the Unit is free to spend its Latitude at all: not committed to a
+ * Charge, and not part-way through an Order that says where to be. A brief fills
+ * the gaps between Orders and never argues with one — a battalion that closed up
+ * on its own while marching somewhere would be choosing its own ground, which is
+ * the one thing no rung buys.
+ */
+function unoccupied(unit: Unit): boolean {
+  return unit.charging === null && unit.order?.order.body.kind !== "move"
+}
+
+/**
  * The Formation to deploy into when caught travelling. The Order's arrival
  * Formation is the player's own answer, so use it when it can fight; a Unit
  * ordered to arrive in column still has to survive the last three hundred
@@ -269,6 +354,34 @@ export const RULES: InitiativeRule[] = [
     },
   },
   {
+    // Under the square, and over everything about how a Unit travels. Giving
+    // ground is preservation and belongs with the rules that preserve: a screen
+    // exists to watch and not to be fixed, and a Unit that means to keep its
+    // distance has to be moving before the distance is gone.
+    //
+    // It is not an escape and cannot be. Horse at the gallop makes seven metres
+    // a second against a battalion's one, so standing off buys ground and time
+    // against infantry and buys only the choice of where to be caught against
+    // cavalry. What it does buy everywhere is that the Unit was not standing
+    // still when it was reached.
+    //
+    // It wheels and marches rather than backing away facing the enemy, so a
+    // Unit that gives ground turns its back to do it — which is the cost, and
+    // what makes standing off a decision rather than a free setting.
+    name: "gave ground rather than be closed with",
+    applies: (unit, battle) => {
+      if (unit.standing.latitude !== "stand-off") return null
+      if (unit.charging !== null) return null
+      // A mob is nothing to give ground to, and something that has recoiled is
+      // going the other way already.
+      const enemy = nearestEnemy(unit, battle, STANDOFF_RANGE, (other) => !isRouting(other))
+      if (!enemy) return null
+      const away = scale(normalise(sub(unit.position, enemy.position)), STANDOFF_RANGE)
+      const to = leashed(unit, { x: unit.position.x + away.x, y: unit.position.y + away.y })
+      return to ? { march: to } : null
+    },
+  },
+  {
     // First of the marching rules, and not guarded by the enemy being away,
     // unlike every other one. A Unit too wide for the gap is stopped dead at the mouth
     // of it, so if deploying outranked this a battalion sent over a bridge with
@@ -342,6 +455,55 @@ export const RULES: InitiativeRule[] = [
       return { formation: travelling(unit) }
     },
   },
+  {
+    // Last but one, under every rule that keeps a Unit out of trouble. Taking
+    // ground is the least urgent thing a Unit does unbidden: squaring, forming
+    // column for a bridge and deploying against what is already in reach all
+    // come first, and a Unit that has closed up into a Formation it cannot
+    // fight from has closed up for nothing.
+    //
+    // What it buys is the hundred metres between a battalion and a battery on
+    // the next rise — an enemy in reach of the Unit and the Unit out of reach
+    // of him, which before this cost ninety seconds of Courier to answer with
+    // a hundred metres of ground. It stops the moment anything bears, because
+    // bringing them under fire is the whole of the reason.
+    //
+    // Nothing here for cavalry, which fires at nothing: horse closes by being
+    // let go at somebody, and that is a Charge and the player's to give. That
+    // gap is where a countercharge rule would sit if one is ever written.
+    name: "closed up to bring them under its fire",
+    applies: (unit, battle) => {
+      if (!mayAdvance(unit)) return null
+      if (!unoccupied(unit)) return null
+      if (!canFire(unit.arm, intendedFormation(unit))) return null
+      if (aim(battle, unit)) return null
+      const enemy = nearestEnemy(unit, battle, ENGAGEMENT_RANGE, (other) => !isRouting(other))
+      if (!enemy) return null
+      const to = leashed(unit, enemy.position)
+      return to ? { march: to } : null
+    },
+  },
+  {
+    // Last of all, and the only rung that acts on an enemy who has already been
+    // beaten. Three hundred metres of ground taken off a Unit that is running,
+    // which is ground the player would otherwise have to spend an Order on at
+    // the one moment there is something better to do with it.
+    //
+    // It is a follow-up and not a Pursuit: a mob runs at two and a half metres
+    // a second and a battalion walks at one, so nothing here rides anybody down
+    // — the Unit takes the ground the enemy left and keeps him under fire while
+    // he is on it. Pursuit proper denies a Rally and costs the pursuer, and it
+    // is not built.
+    name: "followed up as they gave way",
+    applies: (unit, battle) => {
+      if (unit.standing.latitude !== "follow-up") return null
+      if (!unoccupied(unit)) return null
+      const enemy = nearestEnemy(unit, battle, ENGAGEMENT_RANGE, isRouting)
+      if (!enemy) return null
+      const to = leashed(unit, enemy.position)
+      return to ? { march: to } : null
+    },
+  },
 ]
 
 /**
@@ -352,14 +514,18 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
   for (const rule of RULES) {
     const action = rule.applies(unit, battle)
     if (!action) continue
+    // Re-aimed before anything else, and before the rule is asked whether it is
+    // already the one holding the Order: a Unit giving ground to something that
+    // is following it has to keep reading where it went.
+    unit.shift = action.march ?? null
     if (unit.suspendedBy === rule.name) return
     const reformed = action.formation ? beginChange(unit, action.formation) : false
     // A rule that only re-forms the Unit has done nothing if the Unit is already
     // standing that way, and must not claim the Order. A rule that changes what
-    // the Unit is *obeying* has always done something.
+    // the Unit is *obeying*, or walks it somewhere, has always done something.
     if (action.obedience === "break") breakUnit(battle, unit)
     else if (action.obedience === "rally") rally(unit)
-    else if (!reformed) return
+    else if (!reformed && !action.march) return
     unit.suspendedBy = rule.name
     battle.dispatches.push({
       at: battle.time,
@@ -368,6 +534,7 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     })
     return
   }
+  unit.shift = null
   if (unit.suspendedBy !== null && unit.changing === null) {
     unit.suspendedBy = null
   }

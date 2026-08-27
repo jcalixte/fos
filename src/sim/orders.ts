@@ -9,6 +9,7 @@ import {
   type Vec2,
 } from "./types"
 import { isRouting } from "./morale"
+import { describeStanding } from "./standing"
 import { bearing, distance, normalise, scale, sub } from "./vec"
 
 /**
@@ -73,7 +74,24 @@ function describe(battle: Battle, body: OrderBody, unit: Unit): string {
       return `${unit.name} received its Order: go at ${named(battle, body.targetId)}`
     case "halt":
       return `${unit.name} received its Order: halt`
+    case "standing":
+      // Read as a brief and not as an act, because that is what it is: nothing
+      // the Unit is doing now changes when this arrives.
+      return `${unit.name} received its Order: from here on, ${describeStanding(body)}`
   }
+}
+
+/**
+ * The ground an Order gives a Unit, or null where it gives it none. This is the
+ * Post that Latitude is measured from: a Move gives the ground it names, a Halt
+ * gives the ground the Unit is standing on, and nothing else gives any — a
+ * Charge in particular leaves the Post where it was, so a regiment let go and
+ * blown three hundred metres out has not thereby been posted there.
+ */
+export function postOf(unit: Unit, body: OrderBody): Vec2 | null {
+  if (body.kind === "move") return { ...body.destination }
+  if (body.kind === "halt") return { ...unit.position }
+  return null
 }
 
 /** What the Order names, as the Dispatch should read it. */
@@ -126,6 +144,20 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
     })
     return
   }
+  // The one Order that leaves the Unit doing what it was doing. A brief says
+  // what the Unit may do unbidden, which is a different question from what it
+  // is under orders to do now — and a rider arriving with a new brief that
+  // stopped a march would make the useful instruction the expensive one.
+  if (order.body.kind === "standing") {
+    unit.standing = { latitude: order.body.latitude, holdFire: order.body.holdFire }
+    battle.dispatches.push({
+      at: battle.time,
+      unitId: unit.id,
+      text: describe(battle, order.body, unit),
+    })
+    return
+  }
+  unit.post = postOf(unit, order.body) ?? unit.post
   unit.order = { order, arrivedAt: battle.time }
   unit.route = []
   // A rider arriving with anything else puts down whatever the Unit was
@@ -133,9 +165,11 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
   // so in practice a Courier is never in time to call one back — the delay does
   // the committing, rather than a rule making the Unit deaf.
   unit.charging = null
-  // A new Order clears whatever Initiative was holding the Unit back: the rule
-  // will fire again on the next tick if it still applies.
+  // A new Order clears whatever Initiative was holding the Unit back, and the
+  // ground it was walking to on its own account with it: the rule will fire
+  // again on the next tick if it still applies.
   unit.suspendedBy = null
+  unit.shift = null
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,

@@ -41,12 +41,13 @@ import {
 } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { armyReturns } from "./return"
+import { defaultStanding, leash } from "./standing"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Grade, Unit } from "./types"
 import { distance } from "./vec"
 
 function battalion(overrides: Partial<Unit> = {}): Unit {
-  return {
+  const unit: Unit = {
     id: "u1",
     army: "french",
     name: "12e Ligne",
@@ -60,6 +61,9 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    standing: defaultStanding(),
+    post: { x: 100, y: 100 },
+    shift: null,
     reload: 0,
     morale: 1,
     moraleCeiling: 1,
@@ -67,6 +71,10 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     charging: null,
     ...overrides,
   }
+  // Posted where it is put, unless the fixture says otherwise. Latitude is
+  // measured from the Post, so a Unit placed anywhere else would start the test
+  // with its leash already spent.
+  return { ...unit, post: overrides.post ?? { ...unit.position } }
 }
 
 /**
@@ -679,6 +687,139 @@ describe("C2 Initiative", () => {
     for (let i = 0; i < 10; i++) step(battle)
     expect(unit.changing?.to).toBe("square")
     expect(unit.suspendedBy).toBeNull()
+  })
+})
+
+describe("C2 Initiative — the Standing Order", () => {
+  /** A Unit of yours, an enemy `gap` metres due east of it, and a Field to fight on. */
+  function facing(gap: number, mine: Partial<Unit> = {}, theirs: Partial<Unit> = {}) {
+    const unit = battalion({ position: { x: 100, y: 100 }, ...mine })
+    const enemy = battalion({
+      id: "au",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 100 + gap, y: 100 },
+      facing: Math.PI,
+      ...theirs,
+    })
+    return { unit, enemy, battle: emptyBattle(blankField(200, 40), [unit, enemy]) }
+  }
+
+  it("holds its ground by default, whatever comes into reach", () => {
+    const { unit, battle } = facing(250)
+    const stood = { ...unit.position }
+    for (let i = 0; i < 600; i++) step(battle)
+    expect(unit.standing).toEqual(defaultStanding())
+    expect(distance(unit.position, stood)).toBe(0)
+  })
+
+  it("closes up to bring them under its fire, and stops when the leash runs out", () => {
+    const { unit, battle } = facing(280, { standing: { latitude: "close-up", holdFire: false } })
+    for (let i = 0; i < 3000; i++) step(battle)
+    expect(unit.suspendedBy).toBeNull()
+    expect(unit.position.x).toBeGreaterThan(150)
+    // The leash is measured from the Post and never from where the Unit ended
+    // up: a hundred metres of ground, and the enemy still out of its reach.
+    expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("close-up") + 1)
+    expect(aim(battle, unit)).toBeNull()
+  })
+
+  it("closing up stops the moment anything bears, well short of the leash", () => {
+    const { unit, battle } = facing(180, { standing: { latitude: "close-up", holdFire: false } })
+    for (let i = 0; i < 3000; i++) step(battle)
+    expect(aim(battle, unit)?.target.id).toBe("au")
+    expect(distance(unit.position, unit.post)).toBeLessThan(leash("close-up"))
+  })
+
+  it("gives ground rather than be closed with, and no more than its leash", () => {
+    const { unit, enemy, battle } = facing(150, {
+      standing: { latitude: "stand-off", holdFire: false },
+    })
+    for (let i = 0; i < 3000; i++) step(battle)
+    // Out past the range it means to keep, and stopped there — it gives ground
+    // to keep its distance, not to leave the battle.
+    expect(distance(unit.position, enemy.position)).toBeGreaterThan(150)
+    expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("stand-off"))
+  })
+
+  it("follows up as they give way, and only a Unit told it may", () => {
+    for (const latitude of ["hold-ground", "follow-up"] as const) {
+      const { unit, battle } = facing(
+        200,
+        { standing: { latitude, holdFire: false } },
+        { routing: { heading: 0, brokeAt: 0 }, morale: 0.05 },
+      )
+      const stood = { ...unit.position }
+      for (let i = 0; i < 2000; i++) step(battle)
+      const taken = unit.position.x - stood.x
+      if (latitude === "hold-ground") expect(taken).toBe(0)
+      else {
+        expect(taken).toBeGreaterThan(10)
+        expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("follow-up") + 1)
+      }
+    }
+  })
+
+  it("holds its fire when it is told to, at any range", () => {
+    const { unit, battle } = facing(60, { standing: { latitude: "hold-ground", holdFire: true } })
+    // It has a target and its muskets are loaded. It is the Order that stops it.
+    expect(aim(battle, unit)?.target.id).toBe("au")
+    for (let i = 0; i < 600; i++) step(battle)
+    expect(battle.volleys.filter((v) => v.unitId === unit.id)).toHaveLength(0)
+    expect(unit.reload).toBe(0)
+
+    unit.standing = { latitude: "hold-ground", holdFire: false }
+    step(battle)
+    expect(battle.volleys.some((v) => v.unitId === unit.id)).toBe(true)
+  })
+
+  it("takes a new brief by Courier, and the brief leaves the march alone", () => {
+    const { unit, battle } = facing(2000)
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 600, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    unit.post = { x: 600, y: 100 }
+    issueOrder(
+      battle,
+      unit.id,
+      { kind: "standing", latitude: "close-up", holdFire: true },
+      {
+        x: 100,
+        y: 300,
+      },
+    )
+    for (let i = 0; i < 600 && battle.couriers.length > 0; i++) step(battle)
+    expect(battle.couriers).toHaveLength(0)
+    expect(unit.standing).toEqual({ latitude: "close-up", holdFire: true })
+    // Still marching where it was sent. A brief says what a Unit does unbidden,
+    // which is a different question from what it is under orders to do now.
+    expect(unit.order?.order.body.kind).toBe("move")
+  })
+
+  it("posts a Unit where its Move Order sent it, so the leash is spent from there", () => {
+    const { unit, battle } = facing(2000, {
+      standing: { latitude: "close-up", holdFire: false },
+    })
+    issueOrder(
+      battle,
+      unit.id,
+      { kind: "move", destination: { x: 400, y: 100 }, arrivalFacing: 0, arrivalFormation: "line" },
+      { x: 100, y: 100 },
+    )
+    for (let i = 0; i < 6000; i++) step(battle)
+    expect(unit.order).toBeNull()
+    expect(unit.post).toEqual({ x: 400, y: 100 })
   })
 })
 

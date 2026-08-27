@@ -1,5 +1,6 @@
 import { makeField } from "./field"
 import { FULL_MORALE, unitWeight } from "./morale"
+import { defaultStanding } from "./standing"
 import type {
   Arm,
   Arrival,
@@ -101,6 +102,9 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     order: null,
     route: [],
     suspendedBy: null,
+    standing: defaultStanding(),
+    post: entry.position ? { ...entry.position } : { x: 0, y: 0 },
+    shift: null,
     reload: 0,
     morale: FULL_MORALE,
     moraleCeiling: FULL_MORALE,
