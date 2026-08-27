@@ -188,6 +188,66 @@ describe("the bridge march", () => {
     )
   })
 
+  it("does not deploy for an enemy it can see when the bridge it cannot see is nearer", () => {
+    // The band between the two horizons. The battalion is marching in column
+    // with the enemy inside ENGAGEMENT_RANGE and the deck two hundred metres
+    // off — near enough that it will have to file into column for it, far
+    // enough that the lookahead the squeezing rule uses cannot see it.
+    //
+    // Reading only the lookahead, the deploying rule formed line here, the
+    // squeezing rule undid it eighty metres later, and the far bank made line
+    // of it a third time: three drills and the best part of two minutes
+    // standing still, inside the enemy's reach, to arrive as it set off. So the
+    // deploying rule looks as far for a Crossing as it does for the enemy, and
+    // the battalion crosses in the column it is already in.
+    const { field } = bridgeField()
+    const unit = {
+      ...battalion(),
+      formation: "march-column" as const,
+      position: { x: 500, y: 596 },
+    }
+    const austrian: Unit = {
+      ...battalion(),
+      id: "au-1",
+      army: "austrian",
+      name: "IR 14",
+      position: { x: 850, y: 700 },
+    }
+    const b = battle(field, [unit, austrian])
+    const destination = { x: 1100, y: 596 }
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: { kind: "move", destination, arrivalFacing: 0, arrivalFormation: "line" },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+
+    // The deck is cells 96 to 104 on row 74. Where the Unit stood when it chose
+    // to deploy is the whole assertion: on the far side of it, not short of it.
+    const deployedAt: number[] = []
+    let said = 0
+    while (b.time < 1800 && unit.order) {
+      step(b)
+      while (said < b.dispatches.length) {
+        const text = b.dispatches[said++].text
+        if (!text.endsWith("the enemy too close to stay on the march")) continue
+        deployedAt.push(cellAt(field, unit.position).cx)
+      }
+    }
+
+    expect(deployedAt).toHaveLength(1)
+    expect(deployedAt[0]).toBeGreaterThan(104)
+    expect(b.dispatches.map((d) => d.text)).not.toContain(
+      "1er/4e de Ligne squeezed into march column for the crossing",
+    )
+    expect(unit.order).toBeNull()
+    expect(unit.formation).toBe("line")
+    expect(distance(unit.position, destination)).toBeLessThan(10)
+  })
+
   it("takes longer to reach a Unit on the far flank than one at hand", () => {
     const { field } = bridgeField()
     const near = battalion()

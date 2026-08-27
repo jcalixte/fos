@@ -11,7 +11,7 @@ import {
   TRAVELLING_FORMATION,
 } from "./formation"
 import { breakUnit, canRally, hasBroken, isRouting, rally } from "./morale"
-import type { Battle, FormationName, Unit } from "./types"
+import type { Battle, FormationName, Unit, Vec2 } from "./types"
 import { bearing, distance } from "./vec"
 
 /**
@@ -47,7 +47,12 @@ export interface InitiativeRule {
 /** Metres of Route left below which a Unit is deploying, not travelling. */
 const DEPLOY_RANGE = 180
 
-/** How far ahead a Unit looks for the mouth of a Crossing. */
+/**
+ * How far ahead a Unit looks for the mouth of a Crossing before filing into
+ * column for it. Short on purpose: a battalion forms column on the bank, not
+ * half a mile out, and the ground it spends in column is ground it cannot
+ * fight over.
+ */
 const CROSSING_LOOKAHEAD = 120
 
 /**
@@ -61,6 +66,24 @@ const CROSSING_LOOKAHEAD = 120
  */
 const ENGAGEMENT_RANGE = 300
 
+/**
+ * How far ahead a Crossing still governs the choice of Formation — as against
+ * CROSSING_LOOKAHEAD, which is only how late a Unit leaves forming the column.
+ * Two questions, two horizons: "should I file into column now" is asked at the
+ * bank, and "is this a place worth deploying at all" has to be asked as far out
+ * as the reason to deploy reaches.
+ *
+ * So it is ENGAGEMENT_RANGE, and not a number of its own. Where the two
+ * disagreed there was a band of ground — everything between a hundred and
+ * twenty metres and three hundred — in which a Unit could see the enemy and
+ * could not see the bridge. A battalion marching up deployed into line for the
+ * enemy at three hundred metres, marched eighty metres at line's pace, and
+ * filed straight back into column at a hundred and twenty for the deck: two
+ * drills and a minute standing still to arrive in the Formation it set off in,
+ * and it spent that minute inside the enemy's reach.
+ */
+const CROSSING_HORIZON = ENGAGEMENT_RANGE
+
 /** Route left, in metres, following the waypoints rather than the crow. */
 function routeRemaining(unit: Unit): number {
   if (unit.route.length === 0) return 0
@@ -72,39 +95,65 @@ function routeRemaining(unit: Unit): number {
 }
 
 /**
- * Metres of gap where the Unit's Route enters a Crossing within the lookahead,
- * or null if it meets none. The width is what the rule needs: whether to file
- * into column is a question about the gap, not about there being one.
+ * The ground the Unit still has to walk, as points to walk it by. The Route
+ * when it has one, and the Order's destination when it has not: Initiative runs
+ * before the march each tick, so a Unit that stepped onto its last waypoint on
+ * the previous tick is carrying an empty Route and would otherwise be blind for
+ * that tick to the Crossing it is standing on.
  */
-function crossingAhead(unit: Unit, battle: Battle): number | null {
-  if (unit.route.length === 0) return null
+function pathAhead(unit: Unit): Vec2[] {
+  if (unit.route.length > 0) return unit.route
+  const body = unit.order?.order.body
+  return body?.kind === "move" ? [body.destination] : []
+}
+
+/**
+ * Metres of gap where the Unit's Route enters a Crossing within `horizon`, or
+ * null if it meets none. The width is what the rules need: whether to file into
+ * column is a question about the gap, not about there being one.
+ *
+ * It walks the whole Route and not the first leg of it. A string-pulled Route
+ * puts a waypoint at the mouth of a bridge, so reading one leg meant a Unit
+ * could only ever see the Crossing it was already aimed at, and the horizon
+ * that matters is longer than a leg.
+ */
+function crossingWithin(unit: Unit, battle: Battle, horizon: number): number | null {
   const field = battle.field
-  const target = unit.route[0]
-  const span = distance(unit.position, target)
-  const heading = bearing(unit.position, target)
-  const steps = Math.ceil(Math.min(span, CROSSING_LOOKAHEAD) / field.cellSize)
-  for (let i = 0; i <= steps; i++) {
-    const t = span === 0 ? 0 : Math.min(1, (i * field.cellSize) / span)
-    const p = {
-      x: unit.position.x + (target.x - unit.position.x) * t,
-      y: unit.position.y + (target.y - unit.position.y) * t,
+  let from = unit.position
+  let walked = 0
+  for (const target of pathAhead(unit)) {
+    const span = distance(from, target)
+    const heading = bearing(from, target)
+    const steps = Math.ceil(Math.min(span, horizon - walked) / field.cellSize)
+    for (let i = 0; i <= steps; i++) {
+      const t = span === 0 ? 0 : Math.min(1, (i * field.cellSize) / span)
+      const p = { x: from.x + (target.x - from.x) * t, y: from.y + (target.y - from.y) * t }
+      const { cx, cy } = cellAt(field, p)
+      if (!inBounds(field, cx, cy)) continue
+      if (isCrossing(field, cellIndex(field, cx, cy))) {
+        return crossingWidth(field, cx, cy, heading)
+      }
     }
-    const { cx, cy } = cellAt(field, p)
-    if (!inBounds(field, cx, cy)) continue
-    if (isCrossing(field, cellIndex(field, cx, cy))) {
-      return crossingWidth(field, cx, cy, heading)
-    }
+    walked += span
+    if (walked >= horizon) return null
+    from = target
   }
   return null
 }
 
 /**
- * True if a Crossing ahead would stop the Unit in the Formation given. Frontage
- * against the gap — the same question `admits` asks at the mouth of it, asked
- * early enough for the rule list to do something about the answer.
+ * True if a Crossing within `horizon` would stop the Unit in the Formation
+ * given. Frontage against the gap — the same question `admits` asks at the
+ * mouth of it, asked early enough for the rule list to do something about the
+ * answer. How early is the caller's to say, and the two callers differ.
  */
-function squeezedBy(unit: Unit, battle: Battle, formation: FormationName): boolean {
-  const gap = crossingAhead(unit, battle)
+function squeezedBy(
+  unit: Unit,
+  battle: Battle,
+  formation: FormationName,
+  horizon: number,
+): boolean {
+  const gap = crossingWithin(unit, battle, horizon)
   if (gap === null) return false
   return frontage(unit.arm, formation, unit.strength) > gap
 }
@@ -204,11 +253,18 @@ export const RULES: InitiativeRule[] = [
       if (pinned(unit)) return null
       if (!allows(unit.arm, "square")) return null
       if (!chargedByCavalry(unit, battle)) return null
-      // Not at the mouth of a gap a square will not fit through, for the same
-      // reason the deploying rule is not: it would be stopped on the bank in a
-      // Formation that cannot cross, and the rule below would file it straight
-      // back into column.
-      if (squeezedBy(unit, battle, "square")) return null
+      // Not at the mouth of a gap a square will not fit through: it would be
+      // stopped on the bank in a Formation that cannot cross, and the rule
+      // below would file it straight back into column.
+      //
+      // The short lookahead, not CROSSING_HORIZON, and the difference is the
+      // point. The deploying rule gives a bridge three hundred metres of
+      // deference because arriving deployed a minute later costs nothing much.
+      // Squaring costs everything if it comes late, so this one refuses only
+      // where the square would physically not get over — a battalion three
+      // hundred metres short of a bridge with horse coming on makes square and
+      // files into column afterwards.
+      if (squeezedBy(unit, battle, "square", CROSSING_LOOKAHEAD)) return null
       return { formation: "square" }
     },
   },
@@ -226,7 +282,7 @@ export const RULES: InitiativeRule[] = [
     applies: (unit, battle) => {
       if (pinned(unit)) return null
       if (intendedFormation(unit) === travelling(unit)) return null
-      if (!squeezedBy(unit, battle, intendedFormation(unit))) return null
+      if (!squeezedBy(unit, battle, intendedFormation(unit), CROSSING_LOOKAHEAD)) return null
       return { formation: travelling(unit) }
     },
   },
@@ -240,12 +296,17 @@ export const RULES: InitiativeRule[] = [
       if (pinned(unit)) return null
       if (canFire(unit.arm, intendedFormation(unit))) return null
       if (!enemyNear(unit, battle)) return null
-      // Not at the mouth of a gap the deploying Formation will not fit through.
-      // The Unit would be stopped dead on the near bank and the rule above
-      // would file it straight back into column, the two rules taking turns
-      // while the enemy watched. Crossing in column under threat is what the
-      // rule above is for, and going over unable to fire is the cost of it.
-      if (squeezedBy(unit, battle, deployInto(unit))) return null
+      // Nowhere on the near side of a gap the deploying Formation will not fit
+      // through — CROSSING_HORIZON, so the bridge is visible as far out as the
+      // enemy that is the reason to deploy at all. Otherwise the two rules take
+      // turns while the enemy watches: line for him, column for the deck, line
+      // again on the far bank, three drills where one would have done.
+      //
+      // So a Unit with a bridge ahead of it crosses in the column it is
+      // marching in and deploys once it is over. Going over unable to fire is
+      // the cost of the bridge, and it is cheaper than being caught mid-drill
+      // on the bank. Crossing under threat is what the rule above is for.
+      if (squeezedBy(unit, battle, deployInto(unit), CROSSING_HORIZON)) return null
       return { formation: deployInto(unit) }
     },
   },
