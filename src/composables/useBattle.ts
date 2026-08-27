@@ -1,7 +1,7 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
-import { rememberBattle } from "@/scenario/catalogue"
+import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
 import { concede, isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
 import { isRiding, rideTo, sendOrder } from "@/sim/headquarters"
@@ -22,7 +22,13 @@ import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
 import { takeCommand, type ScenarioFile } from "@/sim/scenario"
 import { bearing, distance } from "@/sim/vec"
 
-export type Phase = "menu" | "loading" | "command" | "deployment" | "battle" | "over"
+/**
+ * How far along a battle is. It starts at `loading` and never goes back: there
+ * is no phase for *not being in a battle*, because that is the router's answer
+ * and not this composable's — a Field exists for exactly as long as the page
+ * showing it does.
+ */
+export type Phase = "loading" | "command" | "deployment" | "battle" | "over"
 
 /** Metres of drag below which the player is placing, not aiming. */
 const AIM_THRESHOLD = 24
@@ -68,7 +74,12 @@ export interface BattleUi {
    * direction and not a destination.
    */
   pointing: boolean
-  arrivalFormation: FormationName | null
+  /**
+   * The Formation the player has asked each Unit for, by Unit. What a Move
+   * arrives in is read off here and never off the Unit, so the last thing the
+   * player said is the thing that happens.
+   */
+  ordered: Record<string, FormationName>
   dispatches: Dispatch[]
   gradeNames: Record<string, Record<Grade, string>>
   /** Both armies, as they are offered before one of them is taken. */
@@ -101,7 +112,7 @@ export interface BattleUi {
 /** A Battle Ui as it stands with no Scenario on the Field. */
 function blankUi(): BattleUi {
   return {
-    phase: "menu",
+    phase: "loading",
     error: null,
     scenarioName: "",
     scenarioSummary: "",
@@ -115,7 +126,7 @@ function blankUi(): BattleUi {
     selected: null,
     arming: false,
     pointing: false,
-    arrivalFormation: null,
+    ordered: {},
     dispatches: [],
     gradeNames: {},
     armies: [],
@@ -150,8 +161,8 @@ export function useBattle() {
   const runner = shallowRef<BattleRunner | null>(null)
   /** The decoded Scenario, kept for the half of it an Army is read out of. */
   let scenario: ScenarioFile | null = null
-  /** Where the Scenario on the Field was loaded from, so it can be remembered. */
-  let scenarioPath = ""
+  /** The name the URL knows this battle by, so it can be remembered. */
+  let battleId = ""
 
   const ui = reactive<BattleUi>(blankUi())
 
@@ -240,17 +251,18 @@ export function useBattle() {
   let loads = 0
 
   /**
-   * Put a Scenario on the Field. `army` takes it in the same breath, skipping
-   * the offer — that is the shortcut back onto a Field under work, and it is
-   * the only way the first decision of a battle is ever made for the player.
+   * Put a Scenario on the Field, named as the URL names it. `army` takes it in
+   * the same breath, skipping the offer — that is the shortcut back onto a
+   * Field under work, and it is the only way the first decision of a battle is
+   * ever made for the player.
    */
-  async function start(host: HTMLElement, path: string, army?: string): Promise<void> {
+  async function start(host: HTMLElement, id: string, army?: string): Promise<void> {
     const load = ++loads
     ui.phase = "loading"
     ui.error = null
-    scenarioPath = path
+    battleId = id
     try {
-      const loaded = await loadScenario(path)
+      const loaded = await loadScenario(scenarioPath(id))
       if (load !== loads) return
       const battle = loaded.battle
       scenario = loaded.file
@@ -297,9 +309,10 @@ export function useBattle() {
   }
 
   /**
-   * Take the army off this Field and go back to the menu. Whatever the battle
-   * had reached is gone: nothing here is saved, and there is nothing to come
-   * back to.
+   * Put the Field away and leave nothing behind. Whatever the battle had
+   * reached is gone: nothing here is saved, and there is nothing to come back
+   * to. Only a load that failed calls this — otherwise a Field is put away by
+   * the page holding it being taken down.
    */
   function leave(): void {
     loads++
@@ -309,7 +322,7 @@ export function useBattle() {
     view.value = null
     runner.value = null
     scenario = null
-    scenarioPath = ""
+    battleId = ""
     Object.assign(ui, blankUi())
     Object.assign(viewState, blankViewState())
   }
@@ -359,17 +372,28 @@ export function useBattle() {
   }
 
   /**
-   * The arrival Formation the player most likely wants for this Unit: what it
-   * is standing in, unless that is a travelling Formation — Initiative puts
-   * Units into column on its own, and seeding from it would quietly order the
-   * next move to *arrive* in column, which is a battalion standing at its
-   * destination unable to fire.
+   * The Formation a Move arrives in: the last one the player asked this Unit
+   * for, and never the one it happens to be standing in. Initiative files a
+   * battalion into march column to cover the ground on its own account, and
+   * reading the Formation off the Unit would quietly turn that into an Order to
+   * *arrive* in column — a battalion standing on its destination unable to
+   * fire, which nobody asked for. Reading it off the player instead means a
+   * battalion told to make square and then sent somewhere goes there to make
+   * square, which is what pressing the two buttons in that order says.
+   *
+   * A Unit the player has never spoken to falls back to what it is standing in,
+   * or to its Arm's fighting Formation when that cannot fight.
    */
-  function seedArrival(unit: UnitSnapshot | null): void {
-    if (!unit) return
-    ui.arrivalFormation = canFire(unit.arm, unit.formation)
-      ? unit.formation
-      : FIGHTING_FORMATION[unit.arm]
+  function arrivalFormation(unit: UnitSnapshot | Unit | null): FormationName {
+    if (!unit) return "line"
+    const asked = ui.ordered[unit.id]
+    if (asked) return asked
+    return canFire(unit.arm, unit.formation) ? unit.formation : FIGHTING_FORMATION[unit.arm]
+  }
+
+  /** Remember what the player asked for, once a rider has taken it. */
+  function remember(unitId: string, formation: FormationName): void {
+    ui.ordered = { ...ui.ordered, [unitId]: formation }
   }
 
   function unitById(id: string | null): UnitSnapshot | null {
@@ -395,19 +419,13 @@ export function useBattle() {
     viewState.deploymentZone = mine.deploymentZone ?? null
     takeCommand(r.battle, mine.id)
     ui.phase = "deployment"
-    rememberBattle({ path: scenarioPath, army: mine.id })
+    rememberBattle({ battle: battleId, army: mine.id })
   }
 
   function beginBattle(): void {
     const r = runner.value
     if (!r) return
     ui.phase = "battle"
-    // Deployment hides the arrival Formation — there is no arrival to dress for
-    // while the army is still being arranged — so a Unit selected in that phase
-    // reaches the first minute of the battle with nothing chosen. Seed it here
-    // or the row opens blank and the first Order arrives in whatever the Unit
-    // happens to be standing in, which is not what the player read.
-    seedArrival(unitById(ui.selected))
     viewState.deploymentZone = null
     r.running = true
   }
@@ -504,7 +522,7 @@ export function useBattle() {
       kind: "move",
       destination: { ...unit.position },
       arrivalFacing: facing,
-      arrivalFormation: ui.arrivalFormation ?? unit.formation,
+      arrivalFormation: arrivalFormation(unit),
     })
   }
 
@@ -529,6 +547,7 @@ export function useBattle() {
   function deployFormation(formation: FormationName): void {
     const unit = deployable()
     if (!unit || !allows(unit.arm, formation) || unit.formation === formation) return
+    remember(unit.id, formation)
     unit.formation = formation
     // Nothing has stepped yet, so there is no change under way to abandon —
     // cleared rather than trusted, because a half-formed battalion at
@@ -550,6 +569,10 @@ export function useBattle() {
    * Form up, by whichever means the phase allows: an Order once the clock runs,
    * and a hand on the map before it does. The screen presses one button either
    * way and has no business knowing which of the two it got.
+   *
+   * It is also the whole of what the player ever says about Formation: a Move
+   * given after it arrives in what was asked for here, so telling a battalion
+   * to make square and then sending it somewhere sends it there to make square.
    */
   function form(formation: FormationName): void {
     if (ui.phase === "deployment") {
@@ -610,17 +633,21 @@ export function useBattle() {
       : null
   }
 
-  function order(body: OrderBody): void {
+  /** True if a rider took it. False is nothing said, and nothing remembered. */
+  function order(body: OrderBody): boolean {
     const r = runner.value
-    if (!r || !ui.selected || ui.phase !== "battle") return
+    if (!r || !ui.selected || ui.phase !== "battle") return false
     // An enemy Unit can be selected to read it, never to order it about.
-    if (!commandable()) return
+    if (!commandable()) return false
     const hq = headquarters()
-    if (!hq) return
+    if (!hq) return false
     // Nothing to say if there is nobody to carry it: a staff in the saddle
     // sends no riders, and the Field and the panel both say so while it is.
-    if (!sendOrder(r.battle, hq, ui.selected, body)) return
+    if (!sendOrder(r.battle, hq, ui.selected, body)) return false
+    if (body.kind === "move") remember(ui.selected, body.arrivalFormation)
+    if (body.kind === "form") remember(ui.selected, body.formation)
     ui.dispatches = [...r.battle.dispatches]
+    return true
   }
 
   /** Metres, from a pointer event. */
@@ -758,14 +785,13 @@ export function useBattle() {
       const again = hit.id === ui.selected
       if (!again) setArming(false)
       ui.selected = hit.id
-      seedArrival(hit)
       dragFrom = null
       if (again && ui.phase === "battle" && !hit.routing) {
         turning = { from: point, centre: { ...hit.position } }
         viewState.drag = {
           at: turning.centre,
           facing: hit.facing,
-          formation: ui.arrivalFormation ?? hit.formation,
+          formation: arrivalFormation(hit),
         }
       }
       return
@@ -777,8 +803,8 @@ export function useBattle() {
         at: point,
         facing: from?.facing ?? 0,
         // The preview stands in the Formation it will arrive in, not the one
-        // it is standing in now — that is what the player is deciding.
-        formation: ui.arrivalFormation ?? from?.formation ?? "line",
+        // it is standing in now — that is what the Order says.
+        formation: arrivalFormation(from),
       }
     }
   }
@@ -813,15 +839,14 @@ export function useBattle() {
       viewState.drag.facing = pointed(turning, point)
         ? bearing(turning.centre, point)
         : (unit?.facing ?? 0)
-      viewState.drag.formation = ui.arrivalFormation ?? unit?.formation ?? "line"
+      viewState.drag.formation = arrivalFormation(unit)
       return
     }
     if (!dragFrom || !viewState.drag) return
     const dragged = unitById(ui.selected)
     viewState.drag.facing =
       distance(dragFrom, point) > AIM_THRESHOLD ? bearing(dragFrom, point) : (dragged?.facing ?? 0)
-    // Re-read every move: the player may pick the arrival Formation mid-drag.
-    viewState.drag.formation = ui.arrivalFormation ?? dragged?.formation ?? "line"
+    viewState.drag.formation = arrivalFormation(dragged)
   }
 
   /** Deployment only: arranging the army inside its zone before the clock runs. */
@@ -948,7 +973,7 @@ export function useBattle() {
       kind: "move",
       destination: dragFrom,
       arrivalFacing: facing,
-      arrivalFormation: ui.arrivalFormation ?? unit?.formation ?? "line",
+      arrivalFormation: arrivalFormation(unit),
     })
     dragFrom = null
     viewState.drag = null
@@ -965,15 +990,18 @@ export function useBattle() {
     setArming(false)
   }
 
-  onBeforeUnmount(() => {
-    cancelAnimationFrame(frame)
-    view.value?.destroy()
-  })
+  /**
+   * A Field lives exactly as long as the page showing it. `leave` and not a
+   * narrower teardown, because it is the thing that bumps the load counter: a
+   * player who walks out while a Scenario is still decoding would otherwise
+   * have it finish into a page that is gone, mounting a renderer onto a
+   * detached host and starting a frame loop nothing is left to stop.
+   */
+  onBeforeUnmount(leave)
 
   return {
     ui,
     start,
-    leave,
     commandArmy,
     beginBattle,
     setTempo,
@@ -983,6 +1011,7 @@ export function useBattle() {
     breakOff,
     order,
     form,
+    arrivalFormation,
     brief,
     armCharge,
     armPoint,

@@ -6,14 +6,9 @@ const props = defineProps<{
   battles: CatalogueEntry[]
   /** The last battle taken, if it is still on offer. */
   last: LastBattle | null
-  /** Why the last attempt to put a Scenario on the Field came to nothing. */
+  /** Why the list of battles on offer came to nothing. */
   error: string | null
   loading: boolean
-}>()
-
-const emit = defineEmits<{
-  take: [path: string]
-  resume: [last: LastBattle]
 }>()
 
 /**
@@ -24,7 +19,7 @@ const emit = defineEmits<{
  */
 const resumable = computed(() => {
   if (!props.last) return null
-  const battle = props.battles.find((b) => b.path === props.last?.path)
+  const battle = props.battles.find((b) => b.id === props.last?.battle)
   const army = battle?.armies.find((a) => a.id === props.last?.army)
   return battle && army ? { battle, army } : null
 })
@@ -45,23 +40,26 @@ function day(seconds: number): string {
       </p>
 
       <div v-if="error" class="mt-5 rounded-box border border-error/40 bg-error/10 p-4">
-        <p class="text-sm font-semibold text-error">The Scenario would not load</p>
+        <p class="text-sm font-semibold text-error">The battles would not load</p>
         <p class="mt-1 font-mono text-xs text-base-content/70">{{ error }}</p>
       </div>
 
       <!-- Straight back in, put above the list rather than in it: it is not a
            battle on offer, it is the last one, and the whole point of it is not
            having to find it again. -->
-      <button
+      <RouterLink
         v-if="resumable"
-        type="button"
         class="mt-5 btn btn-primary btn-block justify-start"
-        @click="emit('resume', { path: resumable.battle.path, army: resumable.army.id })"
+        :to="{
+          name: 'battle',
+          params: { battle: resumable.battle.id },
+          query: { army: resumable.army.id },
+        }"
       >
         <span class="truncate">
           Straight back in — {{ resumable.battle.name }}, as the {{ resumable.army.name }}
         </span>
-      </button>
+      </RouterLink>
       <p v-if="resumable" class="mt-1.5 text-xs text-base-content/45">
         Skips the offer and takes the same army again, so a change can be tried on the same ground
         in one press.
@@ -73,12 +71,11 @@ function day(seconds: number): string {
       </p>
 
       <div class="mt-6 grid gap-3">
-        <button
+        <RouterLink
           v-for="battle in battles"
-          :key="battle.path"
-          type="button"
+          :key="battle.id"
           class="rounded-box border border-base-content/15 bg-base-200 p-4 text-left transition hover:border-primary hover:bg-base-100"
-          @click="emit('take', battle.path)"
+          :to="{ name: 'battle', params: { battle: battle.id } }"
         >
           <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span class="text-sm font-semibold">{{ battle.name }}</span>
@@ -100,7 +97,7 @@ function day(seconds: number): string {
           <span class="mt-2 block text-xs leading-relaxed text-base-content/70">
             {{ battle.summary }}
           </span>
-        </button>
+        </RouterLink>
       </div>
     </div>
   </div>

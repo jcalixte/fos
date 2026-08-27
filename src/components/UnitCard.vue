@@ -10,7 +10,12 @@ import type { UnitSnapshot } from "@/sim/snapshot"
 const props = defineProps<{
   unit: UnitSnapshot
   gradeName: string
-  arrivalFormation: FormationName | null
+  /**
+   * The Formation the player has asked this Unit for, which is what a Move
+   * given now would arrive in. Usually the one it is standing in; different
+   * while it is drilling towards it, and while Initiative has it in column.
+   */
+  orderedFormation: FormationName
   /** What it is committed to a Charge on, by name. Null when it is not. */
   chargingName: string | null
   /** A Charge is armed on this Unit and waiting to be aimed. */
@@ -24,7 +29,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   form: [formation: FormationName]
-  arrivalFormation: [formation: FormationName]
   latitude: [latitude: Latitude]
   holdFire: [held: boolean]
   charge: []
@@ -43,11 +47,10 @@ const deaf = computed(() => props.unit.routing || props.disabled)
 const mounted = computed(() => canCharge(props.unit.arm) && !props.unit.charging)
 
 /**
- * Halting, charging and choosing an arrival Formation are all Orders, and there
- * are no Orders at Deployment — nothing is marching to be halted, no rider will
- * carry anything until the clock runs, and a Unit standing in its zone has no
- * arrival to dress for. Hidden rather than disabled: a greyed row the player can
- * never reach in this phase reads as something broken.
+ * Halting, pointing and charging are all Orders, and there are no Orders at
+ * Deployment — nothing is marching to be halted and no rider will carry
+ * anything until the clock runs. Hidden rather than disabled: a greyed row the
+ * player can never reach in this phase reads as something broken.
  */
 const orderable = computed(() => !props.deploying)
 
@@ -85,6 +88,28 @@ const rungs = LATITUDES
 const label = describeFormation
 const rung = describeLatitude
 const explain = explainLatitude
+
+/**
+ * Filled for the Formation the Unit is in, outlined for the one it is under
+ * orders to hold when that is a different thing. Both at once when they agree,
+ * which is the common case and reads as a single lit button.
+ */
+function formClass(option: FormationName): string {
+  const standing = props.unit.formation === option
+  const ordered = props.orderedFormation === option
+  if (standing && ordered) return "btn-primary"
+  if (standing) return "btn-primary btn-dash"
+  if (ordered) return "btn-primary btn-outline"
+  return "btn-ghost"
+}
+
+function formTip(option: FormationName): string {
+  if (props.deploying) return `stand in ${label(option)}`
+  if (props.orderedFormation === option && props.unit.formation !== option) {
+    return `already asked for — a Move given now arrives in ${label(option)}`
+  }
+  return `form ${label(option)}, and arrive in it wherever it is sent next`
+}
 </script>
 
 <template>
@@ -141,17 +166,24 @@ const explain = explainLatitude
       <div class="flex items-center gap-x-6">
         <div class="flex items-center gap-2">
           <span class="text-xs tracking-wide text-base-content/50 uppercase">Form</span>
-          <button
-            v-for="option in options"
-            :key="`form-${option}`"
-            type="button"
-            class="btn btn-xs"
-            :class="unit.formation === option ? 'btn-primary' : 'btn-ghost'"
-            :disabled="deaf"
-            @click="emit('form', option)"
-          >
-            {{ label(option) }}
-          </button>
+          <!-- Two states and not one, because a Unit is not always standing
+               in what it was told to stand in: filled is the Formation it is in
+               now, outlined the one it is under orders to hold — what it is
+               drilling towards, or what it will re-form into at the end of a
+               march Initiative has put it in column for. The outline is also
+               the answer to "what will it arrive in", which is why there is no
+               longer a second row asking. -->
+          <HelpTip v-for="option in options" :key="`form-${option}`" :tip="formTip(option)">
+            <button
+              type="button"
+              class="btn btn-xs"
+              :class="formClass(option)"
+              :disabled="deaf"
+              @click="emit('form', option)"
+            >
+              {{ label(option) }}
+            </button>
+          </HelpTip>
         </div>
 
         <!-- Halt, point and charge are not Formations, and stood inside the
@@ -229,21 +261,6 @@ const explain = explainLatitude
               hold fire
             </button>
           </HelpTip>
-        </div>
-
-        <div v-if="orderable" class="flex items-center gap-2">
-          <span class="text-xs tracking-wide text-base-content/50 uppercase">Arrive in</span>
-          <button
-            v-for="option in options"
-            :key="`arrive-${option}`"
-            type="button"
-            class="btn btn-xs"
-            :class="arrivalFormation === option ? 'btn-primary btn-outline' : 'btn-ghost'"
-            :disabled="disabled"
-            @click="emit('arrivalFormation', option)"
-          >
-            {{ label(option) }}
-          </button>
         </div>
       </div>
     </div>
