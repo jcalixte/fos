@@ -240,6 +240,18 @@ export interface Army {
    * there, the reason a Unit still on the road counts toward it.
    */
   weight: number
+  /**
+   * Men the whole Roster put on the Field, fixed at Deployment like `weight`
+   * and for the same reason. What a battle cost is read against this, so a
+   * Unit that never arrived is counted as having been the army's to lose.
+   */
+  strength: number
+  /**
+   * Units the whole Roster mustered, fixed at Deployment beside the other two.
+   * Unweighted, because it is only ever counted against what is left in order
+   * to say how many the army no longer has — `weight` is what decides anything.
+   */
+  units: number
 }
 
 /**

@@ -126,6 +126,8 @@ export function assemble(scenario: AssembledScenario): Battle {
       colour: Number.parseInt(a.colour.replace("#", ""), 16),
       headquarters: a.headquarters ? { army: a.id, position: { ...a.headquarters } } : null,
       weight: 0,
+      strength: 0,
+      units: 0,
     }
     armies.push(army)
     const roster = rosters[a.roster]
@@ -137,6 +139,8 @@ export function assemble(scenario: AssembledScenario): Battle {
       // lowering what it is measured against, and one still on the road is
       // already counted.
       army.weight += unitWeight(unit)
+      army.strength += unit.strength
+      army.units += 1
       if (entry.arrival) {
         arrivals.push({
           at: entry.arrival.at,

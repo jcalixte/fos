@@ -38,6 +38,7 @@ import {
   unitWeight,
 } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
+import { armyReturns } from "./return"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
 import { distance } from "./vec"
@@ -80,8 +81,12 @@ function armiesOf(units: Unit[]): Battle["armies"] {
       colour: 0x2c7c40,
       headquarters: null,
       weight: 0,
+      strength: 0,
+      units: 0,
     }
     army.weight += unitWeight(unit)
+    army.strength += unit.strength
+    army.units += 1
     seen.set(unit.army, army)
   }
   return [...seen.values()]
@@ -1173,7 +1178,7 @@ describe("C6 Fighting — the Charge", () => {
 
 describe("C7 Army Break, and C8 the end of a battle", () => {
   function army(id: string, name: string, weight: number): Battle["armies"][number] {
-    return { id, name, colour: 0, headquarters: null, weight }
+    return { id, name, colour: 0, headquarters: null, weight, strength: 0, units: weight }
   }
 
   /** `count` line battalions of one army, spread far enough apart to be alone. */
@@ -1426,5 +1431,88 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     battle.clock = 1
     while (!isOver(battle) && battle.time < 10) step(battle)
     expect(battle.outcome?.winner).toBe("french")
+  })
+})
+
+describe("the Return", () => {
+  function army(
+    id: string,
+    name: string,
+    weight: number,
+    strength: number,
+  ): Battle["armies"][number] {
+    // Every battalion in these fixtures is line Grade, so one Unit weighs one
+    // and the count and the weight are the same number.
+    return { id, name, colour: 0x2f4d8f, headquarters: null, weight, strength, units: weight }
+  }
+
+  function brigade(id: string, at: number, count: number): Unit[] {
+    return Array.from({ length: count }, (_, i) =>
+      battalion({ id: `${id}${i}`, army: id, position: { x: at, y: 100 + i * 160 } }),
+    )
+  }
+
+  it("separates Units in hand from Units running, and counts the men against what was mustered", () => {
+    const french = brigade("french", 200, 4)
+    const battle = emptyBattle(blankField(200, 120), french, [army("french", "French", 4, 2800)])
+    french[0].routing = { heading: 0, brokeAt: 0 }
+    french[1].strength -= 200
+
+    const [row] = armyReturns(battle)
+    expect(row.inHand).toBe(3)
+    expect(row.running).toBe(1)
+    expect(row.mustered).toBe(2800)
+    expect(row.mustered - row.strength).toBe(200)
+    expect(row.spent).toBeCloseTo(0.25, 5)
+    expect(row.gone).toBe(0)
+  })
+
+  it("counts a Unit that ran clean off the Field as gone", () => {
+    const french = brigade("french", 200, 3)
+    // Four mustered and three still somewhere: the fourth ran off the edge and
+    // was cleared, which leaves nothing behind but the hole in the count.
+    const battle = emptyBattle(blankField(200, 120), french, [army("french", "French", 4, 2800)])
+
+    const [row] = armyReturns(battle)
+    expect(row.inHand).toBe(3)
+    expect(row.running).toBe(0)
+    expect(row.gone).toBe(1)
+    expect(row.spent).toBeCloseTo(0.25, 5)
+  })
+
+  it("counts a Unit still on the road as mustered and not as in hand", () => {
+    const french = brigade("french", 200, 2)
+    const battle = emptyBattle(blankField(200, 120), french, [army("french", "French", 3, 2100)])
+    battle.arrivals = [
+      {
+        at: 600,
+        unit: battalion({ id: "fr9", army: "french" }),
+        entry: { x: 0, y: 0 },
+        order: null,
+      },
+    ]
+
+    const [row] = armyReturns(battle)
+    expect(row.inHand).toBe(2)
+    // Two of three on the Field and the third on the road, so nothing is gone.
+    expect(row.gone).toBe(0)
+    expect(row.spent).toBeCloseTo(0, 5)
+  })
+
+  it("names the Key Ground under the army that ended on it", () => {
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...brigade("french", 200, 1), ...brigade("austrian", 700, 1)],
+      [army("french", "French", 1, 700), army("austrian", "Austrian", 1, 700)],
+    )
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 200, y: 100 }, radius: 90, holder: null },
+      { name: "the farm", position: { x: 700, y: 100 }, radius: 90, holder: null },
+    ]
+    step(battle)
+
+    const [french, austrian] = armyReturns(battle)
+    expect(french.keyGround).toEqual(["the bridge"])
+    expect(austrian.keyGround).toEqual(["the farm"])
   })
 })

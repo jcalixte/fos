@@ -61,6 +61,8 @@ function battle(field: Field, units: Unit[]): Battle {
         // What is on the Field is the whole of this fixture's army, so nothing
         // is missing from it and it is nowhere near Army Break.
         weight: units.reduce((total, unit) => total + unitWeight(unit), 0),
+        strength: units.reduce((total, unit) => total + unit.strength, 0),
+        units: units.length,
       },
     ],
     units,
