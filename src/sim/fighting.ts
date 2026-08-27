@@ -50,6 +50,16 @@ const RELOAD_BY_GRADE: Record<Grade, number> = { conscript: 1.1, line: 1, elite:
  *
  * The price is paid here and never on the Volley itself, which stays purely
  * geometric — the same discipline Grade is held to.
+ *
+ * Charged to the Formation and not to the step. Reading whether the Unit had
+ * moved *this tick* meant a screen that halted reloaded as fast as a dressed
+ * battalion, so Open Order kept its 150m reach and its all-round aim and paid
+ * nothing at all for either: parked at 130m it beat a line to death from
+ * outside the line's reach, at a line's own rate of fire, and the one price the
+ * Formation is supposed to carry was refunded the moment it stopped walking.
+ * A skirmisher loads on his own account whether or not his feet are moving,
+ * which is what CONTEXT means by Open Order firing on the move and paying for
+ * it in the reload.
  */
 const RELOAD_ON_THE_MOVE = 2
 
@@ -295,6 +305,11 @@ export function volleyCasualties(unit: Unit, shot: Aim): number {
  * fires on the move, at half the rate, because that is the whole of what the
  * Formation is for. Which Formations those are is derived and not authored.
  *
+ * Two questions off the one word, and only the first of them is about this
+ * step. Whether the Unit may fire at all turns on having its Face dressed, so
+ * it turns on `halted`. What the shot costs in reload turns on how the
+ * Formation loads, which is the same whether its feet are moving or not.
+ *
  * A Unit reloads whatever it is doing, so a battalion arriving in position with
  * loaded muskets fires the moment it dresses, exactly as it should — including
  * a battalion that has spent the afternoon under orders to hold its fire, which
@@ -317,7 +332,8 @@ export function resolveFire(battle: Battle, unit: Unit, dt: number, halted: bool
   // Casualties cost the target Morale as well as men, and cost it more from off
   // its Face. Morale is what decides its fate; the men are just the bill (F10).
   shake(shot.target, casualties, unit.position)
-  unit.reload = reloadSeconds(unit.arm, unit.grade) * (halted ? 1 : RELOAD_ON_THE_MOVE)
+  const looseFile = firesOnTheMove(unit.arm, unit.formation)
+  unit.reload = reloadSeconds(unit.arm, unit.grade) * (looseFile ? RELOAD_ON_THE_MOVE : 1)
 
   const zone = fireZone(unit.arm, unit.formation, unit.strength)
   if (!zone) return

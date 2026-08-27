@@ -1032,6 +1032,39 @@ describe("C6 Fighting", () => {
     expect(shooter.reload).toBeCloseTo(reloadSeconds("infantry", shooter.grade) * 2)
   })
 
+  it("charges a screen the same reload standing still as it does walking", () => {
+    const walking = facingOff(60, {}, { formation: "open-order" })
+    const halted = facingOff(60, {}, { formation: "open-order" })
+    resolveFire(walking.battle, walking.shooter, STEP, false)
+    resolveFire(halted.battle, halted.shooter, STEP, true)
+    // The price is the Formation's, not the step's. Reading whether the Unit had
+    // moved this tick refunded it the moment the screen stopped, which handed
+    // Open Order a line's rate of fire out at 150m where no line can answer.
+    expect(halted.shooter.reload).toBeCloseTo(walking.shooter.reload)
+    expect(halted.shooter.reload).toBeCloseTo(reloadSeconds("infantry", "line") * 2)
+  })
+
+  it("does not charge a dressed battalion for having its feet still", () => {
+    const { battle, shooter } = facingOff(60)
+    resolveFire(battle, shooter, STEP, true)
+    expect(shooter.reload).toBeCloseTo(reloadSeconds("infantry", "line"))
+  })
+
+  it("leaves a screen out-shot by the line it is standing off from", () => {
+    // The whole reason the reload is charged to the Formation: at 120m a screen
+    // fires and nothing can fire back, so what it does per minute out there has
+    // to stay under what a line does inside its own reach.
+    const screen = facingOff(120, {}, { formation: "open-order" })
+    const line = facingOff(60)
+    const perMinute = (u: typeof line.shooter, b: typeof line.battle) =>
+      (volleyCasualties(u, aim(b, u)!) * 60) / u.reload || 0
+    resolveFire(screen.battle, screen.shooter, STEP, true)
+    resolveFire(line.battle, line.shooter, STEP, true)
+    expect(perMinute(screen.shooter, screen.battle)).toBeLessThan(
+      perMinute(line.shooter, line.battle) / 3,
+    )
+  })
+
   it("thins a screen's fire with the range, and not with its own Frontage", () => {
     const near = facingOff(60, {}, { formation: "open-order" })
     const far = facingOff(140, {}, { formation: "open-order" })
