@@ -52,6 +52,8 @@ export interface CourierSnapshot {
   unitId: string
   position: Vec2
   origin: Vec2
+  /** True while he is still held at the Headquarters and has not set off. */
+  held: boolean
 }
 
 export interface BattleSnapshot {
@@ -99,6 +101,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       unitId: courier.order.unitId,
       position: { ...courier.position },
       origin: { ...courier.origin },
+      held: courier.hold > 0,
     })),
     ghosts: ghosts(battle),
     volleys: battle.volleys.map((v) => ({ ...v, from: { ...v.from } })),

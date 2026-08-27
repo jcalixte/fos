@@ -237,12 +237,38 @@ export interface Courier {
   position: Vec2
   /** Where he set off from, kept for drawing the ride. */
   origin: Vec2
+  /**
+   * Seconds he is still held at the Headquarters before he sets off. A harried
+   * staff is slow getting anything out of the door, and the wait is at the table
+   * rather than on the road — so the rider sits where the player can see him
+   * (ADR-0008).
+   */
+  hold: number
 }
 
 /** The player's own position on the Field: courier origin, eye, and a target. */
 export interface Headquarters {
   army: ArmyId
   position: Vec2
+  /**
+   * Ground the staff is riding to, or null while it is standing. While it is
+   * riding, no Courier can leave it at all: there is nobody at the last place
+   * the Orders came from, and the commander is in the saddle (ADR-0008).
+   */
+  destination: Vec2 | null
+  /**
+   * Seconds every Order waits before its rider sets off, whatever the ride
+   * after it. Zero at Deployment, and each Overrun adds to it for good — the
+   * Morale Ceiling's shape, and for the same reason: a staff that has been
+   * ridden over once commands slower for the rest of the afternoon.
+   */
+  surcharge: number
+  /**
+   * True while an enemy Unit is near enough to harry it. Not a fact about the
+   * Headquarters so much as about the ground around it, so it is recomputed
+   * every step rather than set and cleared.
+   */
+  harried: boolean
 }
 
 export interface Dispatch {

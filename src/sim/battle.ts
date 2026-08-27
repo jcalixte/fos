@@ -26,6 +26,7 @@ import {
   struckSide,
 } from "./charge"
 import { resolveFire } from "./fighting"
+import { advanceHeadquarters } from "./headquarters"
 import { applyInitiative } from "./initiative"
 import {
   advanceRout,
@@ -443,6 +444,9 @@ export function step(battle: Battle): void {
   battle.contacts = []
   releaseArrivals(battle)
   firePlan(battle)
+  // Where the Orders come from moves before the Orders do: a staff that has
+  // just been ridden over is not sending anybody this step (ADR-0008).
+  advanceHeadquarters(battle, STEP)
   advanceCouriers(battle, STEP)
   for (const unit of battle.units) {
     applyInitiative(unit, battle)

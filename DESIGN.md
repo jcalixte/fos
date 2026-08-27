@@ -595,7 +595,7 @@ player already knows what a square is for.
 ## 4. Cascade — Goals → Functions → How → Components
 
 - **G1** commander, not puppeteer  _W:10_
-  - **F1** Deliver an Order on courier time — **How**: an Order is a message stamped with an arrival time, never a call on a Unit → C1, C8
+  - **F1** Deliver an Order on courier time — **How**: an Order is a message stamped with an arrival time, never a call on a Unit; the ride is measured from a Headquarters the player may move and the enemy may come at, so *where do I stand* is asked all afternoon and not once (ADR-0008) → C1, C8
   - **F2** Show every pending Order — **How**: draw the Courier riding and a Ghost at its destination → C11, C15
   - **F3** Cover the gaps with Initiative — **How**: ordered priority rule list, first match wins, *suspending* the live Order rather than cancelling it, gated by the Unit's Standing Order and leashed in metres from its Post → C2 _(rejected: behaviour tree, utility scoring — see T14; unbounded hunting — see T16)_
   - **F4** Route a Unit anywhere reachable — **How**: A* over cells with Ground and gradient costs, string-pulled to a few waypoints; Crossings funnel for free because water costs ∞ and a bridge cell does not → C5, C4
@@ -664,7 +664,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 
 | ID  | Component            | Owns                                                                  | ADR |
 |-----|----------------------|-----------------------------------------------------------------------|-----|
-| C1  | Order Delivery       | Orders, Couriers, the arrival queue, suspend and resume                | [0002](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md) |
+| C1  | Order Delivery       | Orders, Couriers, the arrival queue, suspend and resume, and the Headquarters they are ridden from | [0002](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md), [0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md) |
 | C2  | Initiative Rules     | the ordered rule list, its thresholds by Grade, and the Latitude that gates it | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md), [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
 | C3  | Formation Geometry   | slot layouts, Frontage, Footprint, Faces, wheeling, morphing           | [0001](./docs/adr/0001-unit-is-always-a-battalion.md) |
 | C4  | Field                | cell grid, Ground, Height, gradient, impassability, Concealment         | — |
@@ -673,7 +673,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 | C7  | Morale               | Morale, Fatigue, Disorder, Break, Rout, Rally, Morale Ceiling, Army Break | — |
 | C8  | Battle Clock         | fixed timestep, Tempo, Arrivals, Plan triggers, end conditions, seed    | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | C9  | Field Renderer       | terrain drawn from the grid                                            | — |
-| C10 | Unit Renderer        | silhouette, base, Figures, render interpolation                        | — |
+| C10 | Unit Renderer        | silhouette, base, Figures, the Arm/Grade/Morale channels, render interpolation | — |
 | C11 | Effects              | muzzle flash, Powder Smoke, Couriers, Ghosts                           | [0002](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md) |
 | C12 | Dispatch Panel       | the feed, fed by named Initiative rules and sim events                  | — |
 | C13 | Sound                | one sound per event type                                               | — |
@@ -716,6 +716,36 @@ Component Σ = Σ(function Σ from §5 × strength), so priorities are carried d
 
 **The ranking disagrees with the natural build order in one place.** C14 Scenario Loader ranks ninth, but nothing can be tested against Castiglione or Rivoli until it exists. Ranking measures value, not sequencing.
 
+### What the map says about a Unit (C10)
+
+G2 asks that silhouette and colour say what everything is doing. Silhouette is spent on Formation
+(F5) and colour on the army, which leaves three things a player needs and could not get without
+selecting a Unit: what Arm it is, what Grade it is, and how it is holding up. Each gets one channel
+and may not touch another's.
+
+The whole Field is on one screen (T8), so the channels are chosen against the hardest scale rather
+than a comfortable one: at 0.7px/m a battalion in line is 102px by **2.6px**. There is no inside to
+draw in, and hue is unavailable to all three — it says which army, and one of the two armies is
+white (`#e3e7ef`), which also rules out saying anything by paling a Unit out.
+
+| Read | Channel | Drawn as | Why this one |
+|------|---------|----------|--------------|
+| **Arm** | texture along the length | infantry one solid block; cavalry four squadron blocks with 3px intervals; a battery its guns standing apart and no block at all | the length is the only axis with pixels to spend |
+| **Grade** | keyline weight and alpha, in dark ink | elite cut out of the grass with a hard edge, conscript bleeding into it | dark ink is the one thing that reads on a white army and a blue one; pattern closes up at this depth (§10) |
+| **Morale** | the dressed edge's colour, and the Face line breaking | white → `#d8632f`, the orange a mob is already drawn in | the dressing goes all the way round, so a Unit in march column with no Face still says how it is holding up |
+
+Morale's colour is deliberately the mob's own: the Rout stops being a shape changing without warning
+and becomes the end of something the player watched happen. On a white army the ladder runs the
+other way round and still reads — nothing at steady, orange at breaking.
+
+The squadron intervals are cosmetic and have to stay that way. Frontage is C3's, and widening it to
+make room for them would be the renderer deciding how much ground a regiment covers; C10 squeezes
+the Figures into the intervals instead.
+
+Selection, Formation, Strength, army and Routing already hold the gold ring, the silhouette, the
+Figure count, hue and the mob's disc. Between them and the three above, every channel a Unit has is
+now spoken for — which is the cost recorded as T18.
+
 ## 8. Critical performance budget
 
 | Rank | Function | Target | Watched on | If we miss it |
@@ -726,7 +756,7 @@ Component Σ = Σ(function Σ from §5 × strength), so priorities are carried d
 | 4 | F10 Morale | Break at 15–30% casualties; 0 Strength is a bug | Castiglione | Add global Morale scalars. If per-Formation constants are needed, F8 has failed — record it. |
 | 5 | F11 battle length | 20–40 min at Tempo 1 | Castiglione | Raise default Tempo, then shorten the Scenario clock. Both are data. |
 | 6 | F6 Field on one screen | ≤1920m, 60fps | Rivoli — the largest Field in the campaign | Add zoom and pan, and accept that G2's silhouette guarantee weakens with it (T8). |
-| 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. Adding the glyph means G2 is being carried by UI rather than by the game. |
+| 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. Adding the glyph means G2 is being carried by UI rather than by the game. *The base outline is built and its edges are now spent on the Arm, Grade and Morale channels (§7), so the glyph is the only rung left.* |
 | 8 | F4 routing | under 5ms on 250×250 | Rivoli — gorges are the worst case | Precompute a flow field per Crossing. Cheap, and it makes funnelling exact. |
 | 9 | F14 interpolation | zero judder at 10Hz sim / 60fps render | any scenario | Raise the sim to 20Hz. Costs determinism nothing; costs CPU almost nothing at 40 bodies. |
 | 10 | F17 Field authoring | a Field in under an hour | Rivoli — hand-painting 200m of relief | Build the tile editor after all, reinstating the cost ADR-0003 flagged. |
@@ -822,7 +852,7 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
 | T1 | Rigid blocks over agent soldiers | ~40 simulated bodies; no per-man steering, collision or pathing; exact Formations | no emergent melee churn or rout scatter; Contact must be abstract | — |
 | T2 | Figures rigid in their slots | trivial rendering, exact geometry | transitions must be morphed by C3 or Formations visibly pop | — |
 | T3 | Scripted Plan over tactical AI | no planning AI to write; scenarios become authorable content | no adaptation; a battle is fresh once or twice; no skirmish generator | — |
-| T16 | Clock over Army Break as the ending | battle length is a known budget, the same every time; small Rosters stop cutting the afternoon short | Key Ground carries nearly every result and is not yet authored to; a decided battle can leave twenty minutes of dead clock, released only by Break Off | ADR-0006 |
+| T19 | Clock over Army Break as the ending | battle length is a known budget, the same every time; small Rosters stop cutting the afternoon short | Key Ground carries nearly every result and is not yet authored to; a decided battle can leave twenty minutes of dead clock, released only by Break Off | ADR-0006 |
 | T4 | TypeScript over Godot | velocity in a known stack; ships as a link; pure testable sim | no editor for free — mitigated by T5 | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | T5 | Terrain painted as images over a built editor | F17 drops from "build an editor" to "write a loader"; historical maps can be traced | terrain is opaque in diffs and ungreppable | [0005](./docs/adr/0005-terrain-is-authored-as-images.md) |
 | T6 | Three Grades over five | one fewer axis to balance | Jeune and Vieille Garde collapse into one rung | — |
@@ -835,6 +865,8 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
 | T13 | No save | no serialisation of simulation state at all | a 40-minute battle is all-or-nothing | — |
 | T14 | Rule list over behaviour tree or utility scoring | every autonomous act has a nameable cause, so F7 is free; deterministic; authorable as data | no subtlety and no coordination between Units; the list grows long and order-sensitive | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md) |
 | T16 | A Latitude ladder leashed to the Post, over Initiative that never advances | a Unit answers what it can see without a ninety-second Courier ride for a hundred metres of ground; the brief scales with the Field where the Courier does not | the rule list now reads differently on different Units, so a Dispatch's cause has two halves; a rung can be set and forgotten, and hold fire will be | [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
+| T18 | Three map reads on a 2.6px bar, over a panel the player has to open | Arm, Grade and Morale are readable without selecting anything, so G2 covers a Unit and not only its Formation; Morale is on the map at all, where before it appeared only once a Unit had already Broken | every channel a Unit has is now spoken for, so a fourth read has nowhere to go but a glyph; all three are learned rather than labelled, and nothing on screen teaches them | — |
+| T17 | A Headquarters that can be harried and ridden over, against one that can be captured | *where do I stand* becomes a decision the player makes all afternoon; ADR-0002's other half — it can be shot at — is finally built, and off the beaten ground C6 already draws | a flat surcharge compresses the distance gradient F1 rests on, worst for the Orders with the shortest way to go; the enemy pays nothing for any of it until its own Orders are couriered | [0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
 
 ### Tensions being watched (unresolved by design)
@@ -850,6 +882,7 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   which is period-true — frontal assaults on steady lines failed — but it leaves the attack column
   earning its place on speed and on being a poor target rather than on carrying positions.
   **Trigger:** a Castiglione where the column is never the right way to attack.
+- **Command friction is the player's alone.** A Headquarters that is harried or ridden over costs the enemy nothing, because the Plan applies its Orders where they land instead of couriering them — so the whole of ADR-0008 is a rule only one army obeys, drawn only for the army that obeys it. **Trigger:** the first enemy commanded through Couriers rather than through an authored Plan, at which point the rule is already written and the enemy Headquarters wants drawing.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
@@ -861,6 +894,8 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
 - **Concealment claimed terrain was the only thing that hides anything.** Powder Smoke would have falsified it. Resolved by keeping smoke inert rather than by weakening the claim.
 - **"A Unit is a battalion" was a French assumption.** Austrian cavalry regiments ran 1,000–1,400 men against a French 250, so no historical title unifies across armies. Resolved to a derived **Frontage** band with size as Roster data.
 - **G4 had no functions.** "A battle has a shape" survived the whole functions pass unserved, and was only filled when Rivoli proved unauthorable without **Arrival** — which then ranked third overall.
+- **G2 was served by one read out of four.** "Silhouette and colour say what everything is doing" is carried by F5, and F5 is about Formation; nothing in the function list put a Unit's Arm, its Grade or its Morale on the map. Colour was already spent on the army, so a battalion in line, a cavalry regiment in line and a battery in battery were the same picture — an army-coloured bar with a white front edge, 102px by 2.6px — and how a Unit was holding up appeared only once it had stopped holding up at all and turned into a mob. Resolved with one channel each and no glyph (§7), so G2 is still carried by the drawing of the men rather than by UI. The function is still unwritten: §2 has no "read a Unit's Arm, Grade and Morale off the map" row, so §5 and §7 are scored as though C10 only owed F5 a silhouette, and C10's rank of 3 is an understatement by however much this is worth. Left that way rather than scored on the spot, because inventing a weight to justify work already done is how a house of quality becomes decoration.
+- **A broken outline read as a segmented one.** Grade and Morale were first drawn by fraying a Unit's outline, which is the diegetic answer — drill is what buys a battalion its dressing. At 2.6px front to rear the dashes on the two long edges land two pixels apart and close up into a chain of little boxes, which reads as a Unit standing in separate blocks: exactly and only what cavalry's squadron intervals are there to say. It also drowned Grade, conscript and elite being told apart by a pattern that was already the loudest thing on the bar. Now a closed outline may only be broken above `RAGGED_FLOOR_PX`, which square alone clears at 26px; every thinner Unit breaks its Face, which is a single line and cannot read as anything but broken. Grade went to weight instead. Caught by drawing the whole matrix — three Arms by three Grades by four rungs of Morale, both armies, at the real 0.7px/m — and looking at it, which is the only way any of this can be checked.
 - **Rivoli was claimed to test everything.** It under-tests Formation play and cavalry badly, because its slopes leave little manoeuvrable ground. Resolved with two nominals and purpose-built fixtures.
 - **Three terms were tourism, not domain.** "Point of interest" → **Key Ground**; "smog" → **Powder Smoke**; "event feed" → **Dispatch**.
 - **Terrain reached a Unit through a square the size of its longest side.** A battalion in line
@@ -1014,6 +1049,26 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   rather than drawing a circle, because a beaten ground drawn where the fire is not is the one kind
   of lie F5 cannot afford. Measured: 18.4 men a Volley at 60m against a line's 29.1, 9.6 at 140m,
   and nothing past 159.
+
+- **"The Headquarters can be moved, and can be shot at" was written in ADR-0002 and neither half
+  was built.** Sited once at Deployment, it turned the one decision the whole delay mechanic exists
+  to pose into a fact about the player's setup: asked before the clock, against an afternoon he had
+  not seen, and unrevisable for the next forty minutes. Building the ride on its own would have been
+  worse than leaving it — with nothing able to touch it, a movable Headquarters is a button that
+  makes every Order faster, dragged forward behind the line all afternoon, and F1's distance stops
+  costing anything. So the ride and the danger are one feature (ADR-0008), and the danger is read
+  off the beaten ground C6 already draws rather than off a radius of its own: a battery on a ridge
+  harries a staff eight hundred metres away, and a line firing over its head does not. The failure
+  it refuses is *capture*: an army that cannot be ordered at all is a lost battle the player still
+  has to sit through, and ADR-0006 spends the clock's full length on purpose.
+
+- **A harried Headquarters delays the near Orders proportionally most, and that is the trade taken
+  knowingly.** Twenty seconds is most of the ride to the reserve behind you and a sixth of the ride
+  to the flank, so the surcharge halves the ratio F1 is built on at exactly the moment the battle is
+  at its most interesting. The alternative — slowing the riders instead — keeps the gradient and is
+  *invisible*, and ADR-0002 draws the Courier precisely because an unseen delay reads as lag. A
+  wait at the table can be drawn: the rider sits at the Headquarters, the Ghost is already out on
+  the Field, and the Order is visibly written and visibly not gone.
 
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which

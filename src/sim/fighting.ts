@@ -8,7 +8,7 @@ import {
   type FireZone,
 } from "./formation"
 import { fireEffect, isRouting, shake } from "./morale"
-import type { Arm, Battle, Grade, Unit } from "./types"
+import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
 import { axes, dot } from "./vec"
 
 /**
@@ -164,6 +164,41 @@ function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
     allRoundStandoff(zone, unit.facing, bearing)
   if (near > zone.range) return null
   return { target, side: 0, gap: Math.max(0, near), overlap: 1 }
+}
+
+/**
+ * True if a Unit's fire falls on one bare point of the Field. The same bands
+ * `aim` reads, measured against a target of no width and no depth at all —
+ * which is what a Headquarters is: a place and not a Unit, so there is nothing
+ * on the far side of the shot to measure (ADR-0008).
+ *
+ * The Faces are honoured, and that is the whole reason this is geometry and not
+ * a radius. A battalion in line beats a slab of ground a hundred metres deep in
+ * front of it and nothing behind it, so a Headquarters sited *behind* the line
+ * that is firing over it is not under fire — and one sited eight hundred metres
+ * off, in front of a battery, is.
+ */
+export function beatsPoint(unit: Unit, point: Vec2): boolean {
+  if (unit.changing || unit.strength <= 0 || isRouting(unit)) return false
+  const zone = fireZone(unit.arm, unit.formation, unit.strength)
+  if (!zone) return false
+  const offset = { x: point.x - unit.position.x, y: point.y - unit.position.y }
+  if (zone.faces === 0) {
+    const heading = Math.atan2(offset.y, offset.x)
+    const near = Math.hypot(offset.x, offset.y) - allRoundStandoff(zone, unit.facing, heading)
+    return near <= zone.range
+  }
+  const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
+  return sides.some((side) => {
+    const { across, standoff } = band(zone, side)
+    const face = axes(unit.facing + side * QUARTER_TURN)
+    const along = dot(offset, face.along)
+    // A point nearer than the standoff is inside the Unit's own Footprint, not
+    // in the ground it beats. Nothing is lost by it: anything that close to a
+    // Headquarters is past harrying it and into overrunning it.
+    if (along < standoff || along > standoff + zone.range) return false
+    return Math.abs(dot(offset, face.across)) <= across / 2
+  })
 }
 
 /**

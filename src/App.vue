@@ -35,6 +35,29 @@ function toMenu(): void {
   last.value = recallBattle()
 }
 
+/**
+ * The Headquarters in one line, or nothing while it is standing clear. Riding
+ * outranks harried: a staff in the saddle is not sending riders at all, so what
+ * the wait at the table would have cost is beside the point.
+ */
+const headquartersNote = computed(() => {
+  if (ui.phase !== "battle") return null
+  const hq = ui.headquarters
+  if (hq.riding) {
+    return { text: "The Headquarters is riding — no Order can leave it", tone: "text-error" }
+  }
+  if (hq.harried) {
+    return { text: "The Headquarters is harried — Orders are slow to leave", tone: "text-warning" }
+  }
+  if (hq.surcharge > 0) {
+    return {
+      text: `The Headquarters has been ridden over — Orders leave ${Math.round(hq.surcharge)}s late`,
+      tone: "text-base-content/60",
+    }
+  }
+  return null
+})
+
 const selected = computed(() => battle.unitById(ui.selected))
 const gradeName = computed(() => {
   const unit = selected.value
@@ -92,6 +115,13 @@ onBeforeUnmount(() => {
         </p>
         <p class="text-xs text-base-content/60">
           {{ ui.ordersInFlight }} order{{ ui.ordersInFlight === 1 ? "" : "s" }} in flight
+        </p>
+
+        <!-- What the Headquarters is costing right now. A press that sends no
+             rider has to be explained by something already on screen, and this
+             is it: riding is silence, harried is a wait at the table. -->
+        <p v-if="headquartersNote" class="text-xs" :class="headquartersNote.tone">
+          {{ headquartersNote.text }}
         </p>
 
         <div v-if="ui.phase === 'battle' || ui.phase === 'over'" class="flex items-center gap-1">
@@ -253,8 +283,10 @@ onBeforeUnmount(() => {
           >
             <span class="font-semibold text-base-content">Deployment.</span>
             Drag your Units inside the marked zone, and drag the Headquarters to where you mean to
-            stand — every Order you give will be ridden from there. Select a Unit to form it up, and
-            drag from open ground to point it: before the clock runs, both are free.
+            stand — every Order you give will be ridden from there. You can send it to new ground
+            once the clock runs, but nothing can be ordered while it is on the move. Select a Unit
+            to form it up, and drag from open ground to point it: before the clock runs, both are
+            free.
           </p>
         </div>
 

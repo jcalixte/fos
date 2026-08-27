@@ -34,7 +34,19 @@ const HANDOVER_RANGE = 6
  */
 export const ARRIVAL_RANGE = 8
 
-export function issueOrder(battle: Battle, unitId: UnitId, body: OrderBody, from: Vec2): Order {
+/**
+ * Write an Order and put a rider on the Field with it. `hold` is what the
+ * Headquarters costs before he sets off, which is zero unless the staff has
+ * been harried or ridden over (ADR-0008) — the ride itself is the same either
+ * way, because the wait is at the table and not on the road.
+ */
+export function issueOrder(
+  battle: Battle,
+  unitId: UnitId,
+  body: OrderBody,
+  from: Vec2,
+  hold = 0,
+): Order {
   const order: Order = {
     id: `o${battle.nextId++}`,
     unitId,
@@ -46,6 +58,7 @@ export function issueOrder(battle: Battle, unitId: UnitId, body: OrderBody, from
     order,
     position: { ...from },
     origin: { ...from },
+    hold,
   })
   return order
 }
@@ -110,6 +123,13 @@ export function advanceCouriers(battle: Battle, dt: number): void {
     const unit = battle.units.find((u) => u.id === courier.order.unitId)
     if (!unit) {
       arrived.push(courier)
+      continue
+    }
+    // Still at the table. He sits where the player can see him and the Ghost is
+    // already out on the Field, so a harried Headquarters reads as an Order
+    // that cannot get out of the door rather than as one that vanished.
+    if (courier.hold > 0) {
+      courier.hold = Math.max(0, courier.hold - dt)
       continue
     }
     const gap = sub(unit.position, courier.position)

@@ -4,7 +4,7 @@ import { loadScenario } from "@/scenario/loader"
 import { rememberBattle } from "@/scenario/catalogue"
 import { concede, isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
-import { issueOrder } from "@/sim/orders"
+import { isRiding, rideTo, sendOrder } from "@/sim/headquarters"
 import { canCharge, chargeable } from "@/sim/charge"
 import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
 import type {
@@ -26,6 +26,15 @@ export type Phase = "menu" | "loading" | "command" | "deployment" | "battle" | "
 
 /** Metres of drag below which the player is placing, not aiming. */
 const AIM_THRESHOLD = 24
+
+/**
+ * Metres from the Headquarters at which a press takes hold of it rather than of
+ * the ground under it. About the outer ring it is drawn with, so what can be
+ * grabbed is what the player can see — and it is checked before Units are hit
+ * tested, on the grounds that the marker is small and the only thing on the
+ * Field that is not a Unit, so a press that lands on it means it.
+ */
+const HEADQUARTERS_GRAB = 30
 
 /**
  * Metres of drag below which no Order is sent at all. A press that does not
@@ -81,6 +90,12 @@ export interface BattleUi {
   keyGround: { name: string; holder: string | null }[]
   /** What decided it, carried through so the Return can point at the figure. */
   decidedBy: Outcome["by"] | null
+  /**
+   * The player's own Headquarters, as the screen has to read it: nothing can be
+   * ordered while it is riding, and everything is later while it is harried
+   * (ADR-0008).
+   */
+  headquarters: { riding: boolean; harried: boolean; surcharge: number }
 }
 
 /** A Battle Ui as it stands with no Scenario on the Field. */
@@ -110,6 +125,7 @@ function blankUi(): BattleUi {
     conceding: false,
     keyGround: [],
     decidedBy: null,
+    headquarters: { riding: false, harried: false, surcharge: 0 },
   }
 }
 
@@ -306,6 +322,9 @@ export function useBattle() {
     r.advance((now - last) / 1000)
     last = now
     viewState.selected = ui.selected
+    // It moves now, so the screen's copy is a frame old at best if it is not
+    // re-read here (ADR-0008).
+    readHeadquarters()
     v.draw(r.previous, r.current, r.alpha, viewState)
 
     // The screen runs at 60fps; the panels have no business re-rendering there.
@@ -315,6 +334,12 @@ export function useBattle() {
     ui.units = r.current.units
     ui.ordersInFlight = r.current.couriers.length
     ui.running = r.running
+    const hq = headquarters()
+    if (hq) {
+      ui.headquarters.riding = isRiding(hq)
+      ui.headquarters.harried = hq.harried
+      ui.headquarters.surcharge = hq.surcharge
+    }
     if (ui.dispatches.length !== r.battle.dispatches.length) {
       ui.dispatches = [...r.battle.dispatches]
     }
@@ -366,8 +391,7 @@ export function useBattle() {
     if (!mine) return
     ui.playerArmy = mine.id
     viewState.playerArmy = mine.id
-    viewState.headquarters =
-      r.battle.armies.find((a) => a.id === mine.id)?.headquarters?.position ?? null
+    readHeadquarters()
     viewState.deploymentZone = mine.deploymentZone ?? null
     takeCommand(r.battle, mine.id)
     ui.phase = "deployment"
@@ -563,14 +587,39 @@ export function useBattle() {
     order({ kind: "standing", ...standing })
   }
 
+  /** The player's own Headquarters, which is where his Orders come from. */
+  function headquarters() {
+    const r = runner.value
+    if (!r) return null
+    return r.battle.armies.find((a) => a.id === ui.playerArmy)?.headquarters ?? null
+  }
+
+  /**
+   * Re-read the Headquarters onto the screen. Called every frame, because it
+   * moves now — and it carries the ride the player is still dragging out, so the
+   * mark he is aiming at is drawn before he has committed to it.
+   */
+  function readHeadquarters(): void {
+    const hq = headquarters()
+    viewState.headquarters = hq
+      ? {
+          position: hq.position,
+          destination: sending?.at ?? hq.destination,
+          harried: hq.harried,
+        }
+      : null
+  }
+
   function order(body: OrderBody): void {
     const r = runner.value
     if (!r || !ui.selected || ui.phase !== "battle") return
     // An enemy Unit can be selected to read it, never to order it about.
     if (!commandable()) return
-    const from = r.battle.armies.find((a) => a.id === ui.playerArmy)?.headquarters?.position
-    if (!from) return
-    issueOrder(r.battle, ui.selected, body, from)
+    const hq = headquarters()
+    if (!hq) return
+    // Nothing to say if there is nobody to carry it: a staff in the saddle
+    // sends no riders, and the Field and the panel both say so while it is.
+    if (!sendOrder(r.battle, hq, ui.selected, body)) return
     ui.dispatches = [...r.battle.dispatches]
   }
 
@@ -587,6 +636,14 @@ export function useBattle() {
   }
 
   let dragFrom: Vec2 | null = null
+
+  /**
+   * A ride the player is dragging out of the Headquarters and has not let go of
+   * yet. Held here rather than in the simulation because nothing is committed
+   * until the release: the ride costs him command of the whole army while it
+   * lasts, so it is not something a slip should buy.
+   */
+  let sending: { at: Vec2 } | null = null
 
   /**
    * Deployment: the point an aiming press began at, and the facing the Unit
@@ -624,7 +681,7 @@ export function useBattle() {
 
     if (ui.phase === "deployment") {
       const hq = viewState.headquarters
-      if (hq && distance(point, hq) < 30) {
+      if (hq && distance(point, hq.position) < HEADQUARTERS_GRAB) {
         viewState.placing = { id: "__hq", at: point }
         return
       }
@@ -678,6 +735,16 @@ export function useBattle() {
         return
       }
     }
+    // Take hold of the Headquarters and drag it where the staff is to go. After
+    // arming, which is a gesture the player asked for two presses ago, and
+    // before selection: the marker is small, and pressing it is unambiguous.
+    const hq = viewState.headquarters
+    if (hq && ui.phase === "battle" && distance(point, hq.position) < HEADQUARTERS_GRAB) {
+      sending = { at: point }
+      dragFrom = null
+      viewState.drag = null
+      return
+    }
     if (hit && hit.army !== ui.playerArmy) {
       ui.selected = hit.id
       dragFrom = null
@@ -718,6 +785,11 @@ export function useBattle() {
 
   function onPointerMove(event: PointerEvent): void {
     const point = fieldPoint(event)
+    if (sending) {
+      sending.at = point
+      readHeadquarters()
+      return
+    }
     if (viewState.placing) {
       viewState.placing.at = point
       movePlaced(point)
@@ -758,10 +830,10 @@ export function useBattle() {
     const placing = viewState.placing
     if (!r || !placing) return
     if (placing.id === "__hq") {
-      const hq = r.battle.armies.find((a) => a.id === ui.playerArmy)?.headquarters
+      const hq = headquarters()
       if (hq && inZone(point)) {
         hq.position = { ...point }
-        viewState.headquarters = hq.position
+        readHeadquarters()
       }
       return
     }
@@ -816,6 +888,19 @@ export function useBattle() {
   }
 
   function onPointerUp(event: PointerEvent): void {
+    if (sending) {
+      const r = runner.value
+      const to = sending.at
+      const hq = headquarters()
+      sending = null
+      // A press on the Headquarters that went nowhere is not a ride. It costs
+      // the whole army's command until the staff is established again, so it is
+      // the one gesture that must never happen by accident.
+      if (r && hq && distance(hq.position, to) >= COMMIT_THRESHOLD) rideTo(r.battle, hq, to)
+      readHeadquarters()
+      ui.dispatches = r ? [...r.battle.dispatches] : ui.dispatches
+      return
+    }
     if (viewState.placing) {
       viewState.placing = null
       return
@@ -872,6 +957,7 @@ export function useBattle() {
   function deselect(): void {
     ui.selected = null
     dragFrom = null
+    sending = null
     aim = null
     turning = null
     viewState.drag = null

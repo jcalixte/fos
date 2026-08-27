@@ -163,10 +163,21 @@ interface LocalRect {
   depth: number
 }
 
+/**
+ * The player's own Headquarters, as the Field draws it: where it stands, the
+ * ground it is riding to while it is on the move, and whether the enemy is
+ * harrying it (ADR-0008).
+ */
+export interface HeadquartersView {
+  position: Vec2
+  destination: Vec2 | null
+  harried: boolean
+}
+
 export interface ViewState {
   selected: string | null
   playerArmy: string
-  headquarters: Vec2 | null
+  headquarters: HeadquartersView | null
   keyGround: HeldGround[]
   deploymentZone: [number, number, number, number] | null
   /** The Order being drawn but not yet issued, shown as it will arrive. */
@@ -1127,6 +1138,18 @@ export class BattleView {
           }
         : courier.position
       const target = units.find((u) => u.id === courier.unitId)
+      // Still at the table, with a harried staff round him: a hollow mark and no
+      // ride drawn behind him, because he has not ridden anywhere yet. The
+      // Ghost is already out on the Field, so the Order is visibly *written*
+      // and visibly not gone (ADR-0008).
+      if (courier.held) {
+        g.circle(at.x, at.y, 4.5 * mpp).stroke({ width: mpp, color: 0xf5e6a8, alpha: 0.8 })
+        if (target) {
+          g.moveTo(at.x, at.y).lineTo(target.position.x, target.position.y)
+          g.stroke({ width: mpp, color: 0xf5e6a8, alpha: 0.12 })
+        }
+        continue
+      }
       g.moveTo(courier.origin.x, courier.origin.y).lineTo(at.x, at.y)
       g.stroke({ width: mpp, color: 0xf5e6a8, alpha: 0.35 })
       if (target) {
@@ -1137,13 +1160,7 @@ export class BattleView {
     }
 
     if (view.headquarters) {
-      const { x, y } = view.headquarters
-      const r = 7 * mpp
-      g.poly([x, y - r * 1.6, x + r, y + r, x - r, y + r]).fill({
-        color: 0xf5e6a8,
-        alpha: 0.95,
-      })
-      g.circle(x, y, r * 2.2).stroke({ width: mpp, color: 0xf5e6a8, alpha: 0.4 })
+      this.drawHeadquarters(g, view.headquarters, mpp)
     }
 
     if (view.drag) {
@@ -1162,6 +1179,31 @@ export class BattleView {
           )
           .stroke({ width: mpp * 2, color: 0xffffff, alpha: 0.85 })
       }
+    }
+  }
+
+  /**
+   * The Headquarters, in its three states. Harrying takes the mob's own orange,
+   * which is the colour everything going wrong is already drawn in, and the
+   * ride is drawn as the ground it is trying to reach — the player is out of
+   * command until the mark and the staff are the same place, so the wait has to
+   * be something he can see the end of.
+   */
+  private drawHeadquarters(g: Graphics, hq: HeadquartersView, mpp: number): void {
+    const { x, y } = hq.position
+    const r = 7 * mpp
+    const colour = hq.harried ? 0xd8632f : 0xf5e6a8
+    if (hq.destination) {
+      const to = hq.destination
+      g.moveTo(x, y).lineTo(to.x, to.y).stroke({ width: mpp, color: colour, alpha: 0.45 })
+      g.circle(to.x, to.y, r * 1.4).stroke({ width: mpp * 1.5, color: colour, alpha: 0.7 })
+    }
+    g.poly([x, y - r * 1.6, x + r, y + r, x - r, y + r]).fill({ color: colour, alpha: 0.95 })
+    g.circle(x, y, r * 2.2).stroke({ width: mpp, color: colour, alpha: hq.harried ? 0.8 : 0.4 })
+    // A second ring, and only while it is harried: one ring changing colour is
+    // not a state change a player catches out of the corner of his eye.
+    if (hq.harried) {
+      g.circle(x, y, r * 3.2).stroke({ width: mpp, color: colour, alpha: 0.45 })
     }
   }
 

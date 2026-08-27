@@ -66,6 +66,19 @@ somewhere else, which is what keeps a well-briefed army from commanding itself
 ([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). It is free at Deployment
 and costs a Courier after, and it is the one Order that arrives without disturbing the march.
 
+The Headquarters, which stops being a spot on the map and becomes a place that can be lost. It
+rides: drag it during the battle and the staff walks there at its own pace, and until it is
+established again no Order can leave it at all — so moving four hundred metres is a hundred seconds
+out of command, and that is the price of standing somewhere better. Meanwhile the enemy can come at
+it. A Unit whose beaten ground falls on the staff, or one simply up to it inside musket shot, leaves
+every Order waiting twenty seconds at the table before its rider sets off — a wait the player
+watches, since the rider sits at the Headquarters while the Ghost is already out on the Field. One
+that reaches the tables overruns it: the staff mounts and bolts three hundred metres rearward, which
+is a ride, which is a blackout, and every Order after it is permanently a little later. It is never
+captured and the army is never silenced, because an army that cannot be ordered at all is a lost
+battle the player still has to sit through
+([ADR-0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)).
+
 Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
 ## Layout
