@@ -1,7 +1,7 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
-import { isOver } from "@/sim/battle"
+import { concede, isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
 import { issueOrder } from "@/sim/orders"
 import { canCharge, chargeable } from "@/sim/charge"
@@ -51,6 +51,8 @@ export interface BattleUi {
   verdict: { headline: string; detail: string } | null
   /** What each army had to show for it, filled in once the battle is over. */
   returns: ArmyReturn[]
+  /** Breaking off has been offered and is waiting to be taken or dropped. */
+  conceding: boolean
 }
 
 export function useBattle(scenarioPath: string) {
@@ -77,6 +79,7 @@ export function useBattle(scenarioPath: string) {
     playerArmy: "french",
     verdict: null,
     returns: [],
+    conceding: false,
   })
 
   /**
@@ -87,6 +90,17 @@ export function useBattle(scenarioPath: string) {
    */
   function readVerdict(outcome: Outcome): { headline: string; detail: string } {
     const mine = outcome.winner === ui.playerArmy
+    if (outcome.by === "conceded") {
+      return mine
+        ? {
+            headline: "The enemy has broken off the action.",
+            detail: "They have taken their army off the Field, and left it to you.",
+          }
+        : {
+            headline: "You have broken off the action.",
+            detail: "Your army is off the Field, and the day belongs to the enemy.",
+          }
+    }
     if (outcome.by === "army-break") {
       if (outcome.winner === null) {
         return {
@@ -212,12 +226,17 @@ export function useBattle(scenarioPath: string) {
     if (ui.dispatches.length !== r.battle.dispatches.length) {
       ui.dispatches = [...r.battle.dispatches]
     }
-    if (isOver(r.battle) && ui.phase === "battle") {
-      ui.phase = "over"
-      ui.verdict = readVerdict(r.battle.outcome!)
-      ui.returns = armyReturns(r.battle)
-      r.running = false
-    }
+    if (isOver(r.battle) && ui.phase === "battle") finish(r)
+  }
+
+  /** Close the battle down and read what it came to. */
+  function finish(r: BattleRunner): void {
+    if (!r.battle.outcome) return
+    ui.phase = "over"
+    ui.verdict = readVerdict(r.battle.outcome)
+    ui.returns = armyReturns(r.battle)
+    ui.running = false
+    r.running = false
   }
 
   function unitById(id: string | null): UnitSnapshot | null {
@@ -243,6 +262,23 @@ export function useBattle(scenarioPath: string) {
   function toggleFireZones(): void {
     viewState.fireZones = !viewState.fireZones
     ui.fireZones = viewState.fireZones
+  }
+
+  /**
+   * Break off the action. Two presses and not one: it ends the battle outright
+   * and there is no taking it back, which is the same reason a Charge is armed
+   * before it is aimed. The offer stands until it is taken or dropped.
+   */
+  function offerToConcede(on: boolean): void {
+    ui.conceding = on && ui.phase === "battle"
+  }
+
+  function breakOff(): void {
+    const r = runner.value
+    if (!r || ui.phase !== "battle") return
+    ui.conceding = false
+    concede(r.battle, ui.playerArmy)
+    finish(r)
   }
 
   function togglePause(): void {
@@ -586,6 +622,8 @@ export function useBattle(scenarioPath: string) {
     setTempo,
     toggleFireZones,
     togglePause,
+    offerToConcede,
+    breakOff,
     order,
     form,
     armCharge,

@@ -93,6 +93,34 @@ onBeforeUnmount(() => {
           >
             range
           </button>
+
+          <!-- Breaking off ends the battle and cannot be taken back, so the
+               offer is made before it is taken — the same two gestures a Charge
+               costs, and for the same reason. -->
+          <template v-if="ui.phase === 'battle'">
+            <span v-if="ui.conceding" class="ml-1 flex items-center gap-1">
+              <span class="text-xs text-base-content/60">Take the army off the Field?</span>
+              <button type="button" class="btn btn-error btn-xs" @click="battle.breakOff()">
+                break off
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost btn-xs"
+                @click="battle.offerToConcede(false)"
+              >
+                fight on
+              </button>
+            </span>
+            <button
+              v-else
+              type="button"
+              class="btn btn-ghost btn-xs ml-1"
+              title="quit the Field and leave the day to the enemy"
+              @click="battle.offerToConcede(true)"
+            >
+              break off
+            </button>
+          </template>
         </div>
 
         <button
