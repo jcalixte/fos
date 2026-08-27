@@ -406,24 +406,34 @@ export function step(battle: Battle): void {
 
 /**
  * Who holds each piece of Key Ground, kept up to date as Units walk on and off
- * it. An army holds one by having the last uncontested Unit on it: while both
- * armies have somebody standing there it changes hands for nobody, and a piece
- * taken and then marched away from stays taken until somebody else takes it.
+ * it. An army holds one by having the nearest Unit on it: standing inside the
+ * radius is what puts a Unit in the running at all, and of those that are, the
+ * one closest to the centre decides it. A piece taken and then marched away
+ * from stays taken until somebody else takes it.
+ *
+ * Proximity settling a contest is the whole of the rule, and it is what a
+ * contested bridge looks like: two armies both on it, and the one with a
+ * battalion actually astride the deck holding it rather than the pair of them
+ * cancelling out. Freezing the holder while both were present read as neither
+ * side being able to take anything the other had bothered to come near.
  *
  * A Rout does not count. A mob streaming back over the bridge has not held the
  * bridge, and the army it belongs to is in no position to claim it.
  */
 function holdKeyGround(battle: Battle): void {
   for (const ground of battle.keyGround) {
-    let claimant: ArmyId | null = null
-    let contested = false
+    let holder: ArmyId | null = null
+    let nearest = Infinity
     for (const unit of battle.units) {
       if (isRouting(unit)) continue
-      if (distance(unit.position, ground.position) > ground.radius) continue
-      if (claimant === null) claimant = unit.army
-      else if (claimant !== unit.army) contested = true
+      const range = distance(unit.position, ground.position)
+      // Ties go to the earlier Unit in the list, which is stable across a
+      // replay from the same seed and is all F18 asks of it.
+      if (range > ground.radius || range >= nearest) continue
+      nearest = range
+      holder = unit.army
     }
-    if (claimant !== null && !contested) ground.holder = claimant
+    if (holder !== null) ground.holder = holder
   }
 }
 

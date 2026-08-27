@@ -1319,10 +1319,32 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     expect(battle.keyGround[0].holder).toBe("french")
   })
 
-  it("changes hands for nobody while both armies are standing on it", () => {
+  it("gives Key Ground both armies are standing on to the nearer of them", () => {
     const units = [
+      battalion({ id: "au1", army: "austrian", position: { x: 440, y: 100 } }),
       battalion({ id: "fr1", army: "french", position: { x: 400, y: 100 } }),
-      battalion({ id: "au1", army: "austrian", position: { x: 430, y: 100 } }),
+    ]
+    const battle = emptyBattle(blankField(200, 120), units, [
+      army("french", "French", 1),
+      army("austrian", "Austrian", 1),
+    ])
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 400, y: 100 }, radius: 90, holder: null },
+    ]
+    step(battle)
+    expect(battle.keyGround[0].holder).toBe("french")
+
+    // The French are pushed back to the far lip of it — still on the bridge,
+    // no longer the nearest to it — and the Austrians take it off them.
+    units[1].position = { x: 470, y: 100 }
+    step(battle)
+    expect(battle.keyGround[0].holder).toBe("austrian")
+  })
+
+  it("gives Key Ground to nobody while both armies are outside its radius", () => {
+    const units = [
+      battalion({ id: "fr1", army: "french", position: { x: 300, y: 100 } }),
+      battalion({ id: "au1", army: "austrian", position: { x: 520, y: 100 } }),
     ]
     const battle = emptyBattle(blankField(200, 120), units, [
       army("french", "French", 1),

@@ -217,7 +217,7 @@ export interface KeyGround {
 
 /** Key Ground, with the army standing on it. Only a battle has a holder. */
 export interface HeldGround extends KeyGround {
-  /** The last army to have it uncontested, or null while nobody has had it. */
+  /** The last army to have had the nearest Unit on it, or null while nobody has. */
   holder: ArmyId | null
 }
 
