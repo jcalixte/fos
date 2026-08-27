@@ -295,6 +295,10 @@ _Avoid_: game speed, time scale, simulation speed
 - Being engaged off its facing costs a **Unit** **Morale** sharply, scaling with the angle and
   worst from behind. This is a deliberate rule, not geometry: Units broke from being flanked
   long before the casualties justified it
+- A **Charge** closing on a **Unit** costs it **Morale** every second it is running, and three
+  times as much if the Unit has no **Face** turned toward it. A deliberate rule for the same
+  reason as the one above: infantry broke at the sight of cavalry far more often than it broke
+  at the sabre, and that is what the drill into **Square** is buying
 
 ## Example dialogue
 

@@ -32,8 +32,14 @@ Then Morale decides its fate rather than Strength — a battalion Breaks at abou
 Routs away from whatever broke it, is deaf to Orders while it runs, and Rallies with a lower Morale
 Ceiling than it had before.
 
-Not built yet: Charge, Contact, Fatigue, Disorder, Pursuit, Army Break, Concealment, Powder Smoke,
-sound.
+The Charge, which is the one Order aimed at a Unit and not at a piece of ground. It walks up at the
+Formation's own pace and runs only the last hundred and fifty metres, and where it lands is decided
+by which Face it struck: off a Face there is no fight, and a battalion in march column or halfway
+into square has none. Contact takes very few men and is over inside one step, because it is nerve
+that gives out. A square throws horse back on a quarter of a line's Frontage, which is the whole of
+what square is for and needs no rule of its own.
+
+Not built yet: Fatigue, Disorder, Pursuit, Army Break, Concealment, Powder Smoke, sound.
 
 ## Layout
 

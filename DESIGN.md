@@ -740,6 +740,7 @@ Milestone 1 only, on the bridge-march fixture.
 | 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
 | 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
+| 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
@@ -749,6 +750,28 @@ C6 and C7 together settle what a firefight is. Two lines standing eighty metres 
 9% off each other in the first minute, and one of them Breaks between two and a half and four
 minutes in. Morale is what ends a fight; fire only decides how quickly it gets there. Nothing
 reaches 0 Strength any more, which is what F10 asked for.
+
+C6's other half settles what a Charge is worth, and the numbers are the argument for building
+square out of Frontage rather than out of a rule. Four hundred horse into a seven-hundred-man
+battalion, frontally, at full Morale:
+
+| It was standing in | Front that met | It lost | Morale it cost | Carried at Morale |
+|---|---|---|---|---|
+| line | 140m | 56 men, 8% | 0.45 | 0.44 |
+| attack column | 47m | 19 men, 2.7% | 0.15 | — |
+| square | 36m | 14 men, 2.1% | 0.12 | 0.11 |
+| march column | 2.8m | 1 man | it broke | always |
+
+A square is four times harder to break than a line and it is entirely because it is a quarter as
+wide, so a quarter as many sabres reach it. Nothing in C6 knows what a square is. And the last row
+is the one that matters most: a battalion caught in march column costs the horse nothing at all and
+comes apart for one casualty.
+
+**Letting go too close beats the drill, and only just.** A Charge let go at 290m strikes after 71
+seconds and at 200m after 37, and the square lands both times — the drill is 30. Let go at 140m it
+strikes after 18 and catches the battalion mid-drill with no Face at all. So the window is roughly
+150–200m, which is narrower than the rule was designed against and is exactly the ground the player
+has to buy with a Move Order first.
 
 Two of §9's triggers are still unmeasured, and both are cheap: how many order-cycles a 20-minute
 battle allows to the far flank, and whether the fixture resolves much the same with no Orders
@@ -781,6 +804,12 @@ issued at all.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
 - **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.
 - **Smoke as a blinding mechanic.** Deliberately not built; the dial sits at zero. **Trigger:** if firefights resolve faster and more decisively than the period suggests they should.
+- **The bayonet charge is weak, and the attack column weakest of all.** A charge in line takes 33
+  men and 0.26 Morale off a line; the same battalion charging in attack column takes 11 and 0.09,
+  because a third of the frontage meets. Against fresh infantry an infantry charge does nothing,
+  which is period-true — frontal assaults on steady lines failed — but it leaves the attack column
+  earning its place on speed and on being a poor target rather than on carrying positions.
+  **Trigger:** a Castiglione where the column is never the right way to attack.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
@@ -836,6 +865,36 @@ issued at all.
   Unit is still running — handing a mob at full flight back to the rule that files it into column
   for the bridge. The rule asks whether the Unit *is Routing*; only the Rally rule, above it, can
   end that. Morale decides when a Unit Breaks and never when it stops.
+
+- **Square was assumed to resist by depth. It resists by Frontage.** The design had a square
+  holding because four ranks stand behind its Face against a line's three — which is barely a
+  difference, and would have needed a constant to become one. What actually saves it is that a
+  36-metre front lets a quarter as many sabres reach it as a 140-metre front does: four times the
+  Morale, out of geometry that was already there. It is the same quantity that makes an attack
+  column safe from a charge and, read the other way, the depth that makes it a gift to round shot.
+
+- **Charging in line hits harder than charging in column, which is not what the period says.**
+  More bayonets meet, so more men fall — three times as many. The column's virtues here are speed,
+  a narrow front to be shot at, and resistance to being charged, and none of them is the moral
+  weight the period gives it. Left as measured rather than fudged with a constant, and recorded as
+  a tension in §9 with a trigger.
+
+- **Initiative trying to make square can be worse than not trying, and that is deliberate.** A
+  Unit halfway between two layouts has no Face at all, so a battalion caught mid-drill is undone
+  where one that stood in line would have thrown the charge back. CONTEXT already said a Unit is at
+  its worst while it changes Formation; this is the first mechanic that makes it cost something. It
+  is also the strongest possible argument for forming square *before* the horse is let go, which is
+  the player's decision and not the rule list's.
+
+- **"Contact ends when one Unit Breaks" needed splitting from who says so.** Off a Face the Contact
+  is the cause and breaks the Unit on the spot. On a Face it does not: it takes men, Morale decides,
+  and the Rout is declared a tick later by the Initiative rule that gets to name the reason. So the
+  Contact reports the outcome and never delivers it, which keeps every Rout attributable to C7.
+
+- **A Charge had to stop being free somewhere, and Fatigue is not built.** Without a limit a
+  regiment could gallop the length of the Field for nothing. CHARGE_RANGE stands in: only the last
+  hundred and fifty metres are run, so closing the ground first is a Move Order and a Courier ride,
+  and the Charge itself is the last twenty seconds. Fatigue replaces it rather than joins it.
 
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 
