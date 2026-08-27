@@ -1381,13 +1381,50 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     expect(battle.outcome?.keyGround).toEqual([{ name: "the bridge", holder: "french" }])
   })
 
-  it("leaves the clock undecided when nobody is ahead on Key Ground", () => {
-    const battle = emptyBattle(blankField(200, 120), brigade("french", 200, 1), [
-      army("french", "French", 1),
-    ])
+  it("leaves the clock undecided when neither Key Ground nor condition separates them", () => {
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...brigade("french", 200, 3), ...brigade("austrian", 700, 3)],
+      [army("french", "French", 3), army("austrian", "Austrian", 3)],
+    )
     battle.clock = 1
     while (!isOver(battle) && battle.time < 10) step(battle)
     expect(battle.outcome?.winner).toBeNull()
-    expect(battle.dispatches.some((d) => d.text.includes("undecided"))).toBe(true)
+    expect(battle.dispatches.some((d) => d.text.includes("nothing to separate"))).toBe(true)
+  })
+
+  it("counts condition when the clock runs out with the Key Ground even", () => {
+    const french = brigade("french", 200, 4)
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...french, ...brigade("austrian", 700, 4)],
+      [army("french", "French", 4), army("austrian", "Austrian", 4)],
+    )
+    // One French battalion in four running: a quarter of the army, past the
+    // margin and short of the third that would have ended it outright.
+    running(french[0])
+    battle.clock = 1
+    while (!isOver(battle) && battle.time < 10) step(battle)
+
+    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.outcome?.winner).toBe("austrian")
+    expect(battle.outcome?.keyGround).toEqual([])
+  })
+
+  it("counts the Key Ground ahead of condition", () => {
+    const french = brigade("french", 200, 4)
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...french, ...brigade("austrian", 700, 4)],
+      [army("french", "French", 4), army("austrian", "Austrian", 4)],
+    )
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 200, y: 100 }, radius: 90, holder: null },
+    ]
+    // The French are in worse shape and hold the bridge anyway. Ground wins.
+    running(french[1])
+    battle.clock = 1
+    while (!isOver(battle) && battle.time < 10) step(battle)
+    expect(battle.outcome?.winner).toBe("french")
   })
 })

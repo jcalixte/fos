@@ -20,7 +20,15 @@ import {
 } from "./charge"
 import { resolveFire } from "./fighting"
 import { applyInitiative } from "./initiative"
-import { advanceRout, dread, hasArmyBroken, hasQuitTheField, isRouting, recover } from "./morale"
+import {
+  advanceRout,
+  dread,
+  hasArmyBroken,
+  hasQuitTheField,
+  isRouting,
+  recover,
+  shareGone,
+} from "./morale"
 import { advanceCouriers } from "./orders"
 import {
   describeFormation,
@@ -437,6 +445,32 @@ function holdKeyGround(battle: Battle): void {
   }
 }
 
+/**
+ * The army in materially better condition, or null where neither is. Read off
+ * the same share of Army Break the end condition uses, so it is the same
+ * question asked a step short of the threshold: which of the two was nearer
+ * quitting when the light went.
+ *
+ * It is the second thing counted and never the first. An army that spends the
+ * afternoon intact behind a hill has not won a battle, and this only ever
+ * speaks when the Key Ground has nothing to say.
+ */
+function inBetterCondition(battle: Battle): ArmyId | null {
+  if (battle.armies.length !== 2) return null
+  const [a, b] = battle.armies
+  const gap = shareGone(battle, b) - shareGone(battle, a)
+  if (Math.abs(gap) < TELLING_MARGIN) return null
+  return gap > 0 ? a.id : b.id
+}
+
+/**
+ * The least difference in what two armies have left that is worth calling a
+ * result. A tenth of an army — roughly one battalion in ten — because below
+ * that the two sides walked off the Field in the same state and saying
+ * otherwise would be inventing a winner out of rounding.
+ */
+const TELLING_MARGIN = 0.1
+
 /** The army holding the most Key Ground, or null where nobody is ahead on it. */
 function onPoints(battle: Battle): ArmyId | null {
   const held = new Map<ArmyId, number>()
@@ -471,12 +505,20 @@ function endBattle(battle: Battle, by: Outcome["by"], winner: ArmyId | null, tex
 
 /**
  * Whether the battle is decided, and by what (F11). Two ways in and no third:
- * an army breaks, or the clock runs out and the Key Ground is counted. There is
- * no way to win by killing everything, because C7 sees to it that nothing is
- * there to be killed — a battalion is running long before it is gone.
+ * an army breaks, or the clock runs out and what each army has to show for the
+ * afternoon is counted. There is no way to win by killing everything, because
+ * C7 sees to it that nothing is there to be killed — a battalion is running
+ * long before it is gone.
  *
  * Army Break outranks the clock, and the Key Ground does not enter into it. An
  * army that has quit the Field has left whatever it was standing on.
+ *
+ * On the clock it is the Key Ground first and condition second, in that order
+ * and never mixed into a total. Ground is what the Scenario said the afternoon
+ * was for; condition only answers the case where neither army took what it came
+ * for, which is a real afternoon and not a rare one — the bridge fixture spends
+ * thirty minutes without a Unit crossing the river, and "undecided" is the wrong
+ * word for it when one side has two battalions running and the other has none.
  */
 function decide(battle: Battle): void {
   if (battle.outcome) return
@@ -499,15 +541,18 @@ function decide(battle: Battle): void {
   }
 
   if (battle.time < battle.clock) return
-  const winner = onPoints(battle)
+  const onGround = onPoints(battle)
+  const winner = onGround ?? inBetterCondition(battle)
   const name = battle.armies.find((a) => a.id === winner)?.name
   endBattle(
     battle,
     "clock",
     winner,
-    name
-      ? `The clock has run out, and the ${name} army holds the Key Ground`
-      : `The clock has run out with the Key Ground undecided`,
+    !name
+      ? `The clock has run out with nothing to separate the two armies`
+      : onGround
+        ? `The clock has run out, and the ${name} army holds the Key Ground`
+        : `The clock has run out with the Key Ground even, and the ${name} army in better condition`,
   )
 }
 
