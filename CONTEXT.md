@@ -188,6 +188,11 @@ The point at which enough of an army's Units have Broken that the army quits the
 weighted so that losing an elite Unit counts for more than losing a conscript one.
 _Avoid_: defeat, game over, army rout, collapse
 
+**Outcome**:
+How a battle ended: by **Army Break** for one side, or on the **Scenario** clock with the **Key
+Ground** counted. It names the army left holding the Field, and never a score.
+_Avoid_: result, victory points, win condition, score
+
 **Plan**:
 The enemy army's authored intent — Orders fired by clock time or by trigger. There is no
 planning intelligence behind it; the tactical competence lives in each Unit's Initiative.

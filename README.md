@@ -39,7 +39,13 @@ into square has none. Contact takes very few men and is over inside one step, be
 that gives out. A square throws horse back on a quarter of a line's Frontage, which is the whole of
 what square is for and needs no rule of its own.
 
-Not built yet: Fatigue, Disorder, Pursuit, Army Break, Concealment, Powder Smoke, sound.
+How a battle ends, which until now was a timer. An army quits the Field once a third of it,
+weighted by Grade, is running — read as what is running now rather than as a tally, so a Rally
+buys the army back as well as the battalion, and measured against the whole Roster so a column
+still on the road counts as standing. Otherwise the clock runs out and the Key Ground is counted:
+an army holds a piece by having the last uncontested Unit on it. Neither way is annihilation.
+
+Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
 ## Layout
 

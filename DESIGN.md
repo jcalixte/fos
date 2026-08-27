@@ -741,6 +741,7 @@ Milestone 1 only, on the bridge-march fixture.
 | 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
+| 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past 22% of the 33% Army Break threshold | the bridge-march fixture, headless, with no Orders |
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
@@ -773,9 +774,22 @@ strikes after 18 and catches the battalion mid-drill with no Face at all. So the
 150–200m, which is narrower than the rule was designed against and is exactly the ground the player
 has to buy with a Move Order first.
 
-Two of §9's triggers are still unmeasured, and both are cheap: how many order-cycles a 20-minute
-battle allows to the far flank, and whether the fixture resolves much the same with no Orders
-issued at all.
+**The fixture with no Orders at all does not resolve, which is the best answer §9's first trigger
+could have returned.** Run headless for the full thirty minutes with the player silent, the
+Austrian Plan breaks two French-facing battalions eight minutes apart and both Rally; neither army
+gets past 22% of the 33% needed for Army Break; and nothing ever crosses the river. The battle ends
+undecided with the bridge held by nobody. Initiative preserves and does not advance, exactly as
+§6 requires it to, and taking the ground is entirely the player's.
+
+**Nobody comes within the bridge's radius on that run — the nearest formed Unit stops 111m off a
+90m radius.** The Austrian Plan parks its covering battalion short of the crossing, which is what
+a battalion covering a bridge does. The consequence is that on this fixture the clock branch is
+decided by nobody unless the player marches onto the bridge, which is a fair thing for a Key
+Ground to demand and a thing to watch when Castiglione is authored: a Key Ground that can only be
+taken and never defended is only half a decision. Left as measured; the radius is data.
+
+One of §9's triggers is still unmeasured: how many order-cycles a 20-minute battle allows to the
+far flank.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 
@@ -799,7 +813,7 @@ issued at all.
 
 ### Tensions being watched (unresolved by design)
 
-- **Initiative versus player agency.** Held at bay by keeping Initiative strictly defensive — it preserves, never advances. **Trigger to revisit:** a playtest where the battle resolves much the same whether the player issues Orders or not.
+- **Initiative versus player agency.** Held at bay by keeping Initiative strictly defensive — it preserves, never advances. **Trigger to revisit:** a playtest where the battle resolves much the same whether the player issues Orders or not. *Measured on the fixture and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.*
 - **Courier delay versus battle length.** Both tuned against Castiglione, in opposite directions. **Trigger:** when a 20-minute battle allows fewer than about three order-cycles to the far flank.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
 - **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.
@@ -895,6 +909,26 @@ issued at all.
   regiment could gallop the length of the Field for nothing. CHARGE_RANGE stands in: only the last
   hundred and fifty metres are run, so closing the ground first is a Move Order and a Courier ride,
   and the Charge itself is the last twenty seconds. Fatigue replaces it rather than joins it.
+
+- **Army Break was written as a tally and is a moment.** "Enough of an army's Units have Broken"
+  reads as a running total, and a total never comes back down: a commander who got two battalions
+  back in hand would still be carrying them as losses for the rest of the afternoon, and a Rally
+  would be worth something to the Unit and nothing to the army. It counts what is running *now*,
+  so the share falls as well as rises. That is also the more period-true claim — an army breaks in
+  the moment too much of it is running at once, and it is the cascade that ends a battle rather
+  than the arithmetic of the day.
+
+- **The end condition could not see the road.** §6 flagged the conflict between Army Break and
+  Arrival and left it to the end condition to solve. What solves it is which side of the count the
+  road sits on, and the fix is one line: an army is measured against its whole Roster, fixed at
+  Deployment, and a Unit still walking on counts as standing. Nothing had to know about Arrival at
+  all — the denominator already did.
+
+- **Weighting Army Break by Grade means a squadron costs what a battalion does.** Two hundred
+  horse and seven hundred foot are the same loss, which is plainly wrong about bodies. It is kept,
+  because Army Break counts *Units* that have Broken and what the army has lost is a place in the
+  line, which is the same width either way. Weighing men instead would also have let casualties
+  push an army toward breaking, and F11 is explicit that a battle never ends by annihilation.
 
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 
