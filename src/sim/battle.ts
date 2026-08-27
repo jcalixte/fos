@@ -7,7 +7,14 @@ import {
   isCrossing,
   passable,
 } from "./field"
-import { baseSpeed, beginChange, frontage, intendedFormation, unitFootprint } from "./formation"
+import {
+  baseSpeed,
+  beginChange,
+  frontage,
+  intendedFormation,
+  traverseRate,
+  unitFootprint,
+} from "./formation"
 import {
   CHARGE_RANGE,
   chargeSpeed,
@@ -78,19 +85,27 @@ function paceOf(battle: Battle, unit: Unit, base: number): number {
 }
 
 /**
- * Radians per second a Unit can wheel. Derived rather than authored: the outer
- * flank of a long line has further to walk, so a 140m line wheels slowly and a
- * march column turns on the spot (F8).
- *
- * The floor is what a Unit that cannot march can still do. A battery in battery
- * has no speed at all and yet traverses its guns; this is the rate it does it
- * at, and the reason the floor is not zero.
+ * Metres a second the outer flank of a wheel makes, at the least. A battalion in
+ * square is 0.25 m/s and marsh takes a third off a line, and neither is a Unit
+ * that has stopped turning — men shuffling a quarter turn round are not walking
+ * the arc at the pace they would march it at.
  */
-const TRAVERSE_SPEED = 0.4
+const WHEEL_FLOOR = 0.4
 
+/**
+ * Radians per second a Unit comes onto a new facing at, by whichever of the two
+ * ways it turns.
+ *
+ * A wheel is derived rather than authored: the outer flank of a long line has
+ * further to walk, so a 140m line wheels slowly and a march column turns on the
+ * spot (F8). A traverse is not a wheel and is not read off Frontage at all —
+ * that is C3's to say, and it says so from the Formation having no speed.
+ */
 function turnRate(battle: Battle, unit: Unit): number {
+  const traverse = traverseRate(unit.arm, unit.grade, unit.formation)
+  if (traverse !== null) return traverse
   const width = Math.max(4, frontage(unit.arm, unit.formation, unit.strength))
-  return (2 * Math.max(TRAVERSE_SPEED, unitSpeed(battle, unit))) / width
+  return (2 * Math.max(WHEEL_FLOOR, unitSpeed(battle, unit))) / width
 }
 
 /**

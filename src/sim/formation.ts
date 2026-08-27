@@ -340,6 +340,23 @@ const DRILL_BY_GRADE: Record<Grade, number> = {
   elite: 0.75,
 }
 
+/**
+ * Radians a second a Formation with no speed comes round at. A quarter turn in
+ * about a minute.
+ *
+ * A rate, and deliberately not a wheel. A wheel is paid for in ground: the
+ * outer flank of a long line walks the arc, so the wider the Unit the longer it
+ * takes, which is why C8 derives that one from Frontage. A traverse is paid for
+ * in men: the guns are off their limbers and each crew handspikes its own piece
+ * on its trail, all of them at once. Twelve guns therefore come round in the
+ * time six do, and reading the traverse off Frontage had a twelve-gun battery
+ * spending seven minutes of a thirty-minute battle changing front.
+ *
+ * Scaled by Grade because it is drill and not marching — the same ladder that
+ * sets how fast a battalion files into square.
+ */
+const TRAVERSE_RATE = Math.PI / 2 / 60
+
 export function drillSeconds(
   arm: Arm,
   grade: Grade,
@@ -350,6 +367,18 @@ export function drillSeconds(
   const base = DRILL_SECONDS[`${from}>${to}`] ?? 25
   const cavalryEase = arm === "cavalry" ? 0.7 : 1
   return base * DRILL_BY_GRADE[grade] * cavalryEase
+}
+
+/**
+ * Radians a second the Unit traverses at, or null if this Formation wheels
+ * instead. Derived from having no speed at all rather than authored per
+ * Formation: a body of troops that cannot walk has no outer flank to walk the
+ * arc, so it must be turning some other way, and for guns that way is the
+ * trail. Nothing needs to declare it twice.
+ */
+export function traverseRate(arm: Arm, grade: Grade, formation: FormationName): number | null {
+  if (spec(arm, formation).speed > 0) return null
+  return TRAVERSE_RATE / DRILL_BY_GRADE[grade]
 }
 
 /**

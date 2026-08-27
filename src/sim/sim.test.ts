@@ -40,7 +40,7 @@ import {
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { armyReturns } from "./return"
 import { clearLine, route } from "./routing"
-import type { Battle, Field, Unit } from "./types"
+import type { Battle, Field, Grade, Unit } from "./types"
 import { distance } from "./vec"
 
 function battalion(overrides: Partial<Unit> = {}): Unit {
@@ -514,6 +514,78 @@ describe("C2 Initiative", () => {
     expect(battery.formation).toBe("in-battery")
     expect(battery.facing).toBeCloseTo(-Math.PI / 2, 2)
     expect(battery.order).toBeNull()
+  })
+
+  it("traverses at a rate, not a wheel, so twelve guns come round with six", () => {
+    // Seconds a battery of `strength` gunners takes to come a quarter turn
+    // round where it stands.
+    const quarterTurn = (strength: number, grade: Grade = "line"): number => {
+      const battery = battalion({ arm: "artillery", formation: "in-battery", strength, grade })
+      const battle = emptyBattle(blankField(60, 60), [battery])
+      battery.order = {
+        order: {
+          id: "o1",
+          unitId: battery.id,
+          body: {
+            kind: "move",
+            destination: { ...battery.position },
+            arrivalFacing: -Math.PI / 2,
+            arrivalFormation: "in-battery",
+          },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      for (let i = 0; i < 6000 && battery.order !== null; i++) step(battle)
+      expect(battery.order).toBeNull()
+      return battle.time
+    }
+
+    // Six guns are 108m of front and twelve are 216m. Read off Frontage the way
+    // a wheel is, that was 212s against 425s: a twelve-gun battery spent seven
+    // minutes of a thirty-minute battle changing front, and the bigger the
+    // battery the worse it got. Every crew handspikes its own piece at once, so
+    // the time is the same one.
+    expect(frontage("artillery", "in-battery", 180)).toBeCloseTo(
+      frontage("artillery", "in-battery", 90) * 2,
+      0,
+    )
+    // A minute, less the last 0.05 radians FACING_TOLERANCE calls dressed.
+    expect(quarterTurn(90)).toBeGreaterThan(55)
+    expect(quarterTurn(90)).toBeLessThan(62)
+    expect(quarterTurn(180)).toBeCloseTo(quarterTurn(90), 0)
+
+    // It is drill, so the ladder that sets how fast a battalion files into
+    // square sets this too.
+    expect(quarterTurn(90, "elite")).toBeLessThan(quarterTurn(90))
+    expect(quarterTurn(90, "conscript")).toBeGreaterThan(quarterTurn(90))
+  })
+
+  it("still wheels what can walk, so a wider line takes longer to come round", () => {
+    // The other half of the same rule: a Formation with speed pays for its turn
+    // in ground, and the outer flank of a long line has further to walk.
+    const wheelTime = (strength: number): number => {
+      const unit = battalion({ strength })
+      const battle = emptyBattle(blankField(60, 60), [unit])
+      unit.order = {
+        order: {
+          id: "o1",
+          unitId: unit.id,
+          body: {
+            kind: "move",
+            destination: { ...unit.position },
+            arrivalFacing: -Math.PI / 2,
+            arrivalFormation: "line",
+          },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      for (let i = 0; i < 12000 && unit.order !== null; i++) step(battle)
+      expect(unit.order).toBeNull()
+      return battle.time
+    }
+    expect(wheelTime(700)).toBeGreaterThan(wheelTime(350) * 1.5)
   })
 
   it("leaves the Formation alone when a Form Order pins it", () => {
