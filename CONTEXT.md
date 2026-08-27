@@ -191,9 +191,11 @@ weighted so that losing an elite Unit counts for more than losing a conscript on
 _Avoid_: defeat, game over, army rout, collapse
 
 **Outcome**:
-How a battle ended: by **Army Break** for one side, on the **Scenario** clock with the **Key
-Ground** counted first and, where that is even, what each army has left counted second, or by the
-player choosing to **Break Off**. It names the army left holding the Field, and never a score.
+What decided a battle: an **Army Break**, the **Key Ground** counted when the **Scenario** clock
+ran out, what each army had left where that count was even, or the player choosing to **Break
+Off**. It names the army left holding the Field, and never a score. It says which of the four
+decided it rather than merely that the clock ran out, because an army that split the **Key
+Ground** one apiece and won on what it had left did not win on ground it never took.
 _Avoid_: result, victory points, win condition, score
 
 **Break Off**:
