@@ -191,10 +191,17 @@ weighted so that losing an elite Unit counts for more than losing a conscript on
 _Avoid_: defeat, game over, army rout, collapse
 
 **Outcome**:
-How a battle ended: by **Army Break** for one side, or on the **Scenario** clock with the **Key
-Ground** counted first and, where that is even, what each army has left counted second. It names
-the army left holding the Field, and never a score.
+How a battle ended: by **Army Break** for one side, on the **Scenario** clock with the **Key
+Ground** counted first and, where that is even, what each army has left counted second, or by the
+player choosing to **Break Off**. It names the army left holding the Field, and never a score.
 _Avoid_: result, victory points, win condition, score
+
+**Break Off**:
+The player taking his own army off the Field rather than fight the clock out. It is the one way a
+battle ends that no rule reaches — the commander's hand, not his men's nerve, which is why it is
+not an **Army Break**. It always leaves the day to the enemy, so a commander cannot bank a **Key
+Ground** he happens to be sitting on by stopping the clock on it.
+_Avoid_: concede, surrender, forfeit, quit, resign
 
 **Return**:
 What each army had to show for the afternoon, read off the battle at the moment it ended: Units
@@ -282,8 +289,11 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
 - A **Scenario** carries a **Field**, two **Rosters**, the enemy's **Plan**, a clock, and its **Key Ground**
-- A battle ends at **Army Break** for either side, or when the **Scenario** clock runs out — and
-  then the **Key Ground** is counted, and where it is even, what each army has left
+- A battle ends at **Army Break** for either side, when the **Scenario** clock runs out — and
+  then the **Key Ground** is counted, and where it is even, what each army has left — or when the
+  player chooses to **Break Off**
+- To **Break Off** is to lose: an army that has gone has left whatever it was standing on, the
+  same as one that has reached **Army Break**
 - An army ending on the clock with more **Key Ground** wins it whatever it cost; only where the
   **Key Ground** says nothing does what each army has left decide it, and only by a telling margin
 - A battle that has ended has a **Return** for each army, which reports and never decides
