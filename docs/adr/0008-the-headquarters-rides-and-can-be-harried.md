@@ -3,11 +3,11 @@
 The **Headquarters** is no longer sited once and left there.
 
 It **rides**: the player drags it during the battle and it walks to the ground he named at a
-staff's pace, and no Courier leaves it while it is on the move. An enemy Unit within 300m
-**harries** it, and every Order then waits a fixed twenty seconds at the table before its rider
-sets off. An enemy Unit within 60m **overruns** it: the staff mounts and bolts three hundred
-metres rearward, which is a ride, which is a blackout — and every Overrun leaves a permanent
-surcharge on every Order for the rest of the afternoon.
+staff's pace, and no Courier leaves it while it is on the move. An enemy Unit whose fire falls on
+the tables, or one simply up to them inside 150m, **harries** it, and every Order then waits a
+fixed twenty seconds at the table before its rider sets off. An enemy Unit within 60m **overruns**
+it: the staff mounts and bolts three hundred metres rearward, which is a ride, which is a blackout
+— and every Overrun leaves a permanent surcharge on every Order for the rest of the afternoon.
 
 This finishes [ADR-0002](./0002-orders-are-couriered-from-a-headquarters.md), which said the
 Headquarters could be moved and shot at, and built neither.
