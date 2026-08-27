@@ -1,7 +1,7 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
 import { bodyCount, faces, figureSlots, fireZone, footprint, poseFootprint } from "@/sim/formation"
 import { chargeable } from "@/sim/charge"
-import type { Battle, Field, FormationName, KeyGround, Vec2 } from "@/sim/types"
+import type { Battle, Field, FormationName, HeldGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
 import { buildContourCanvas, buildTerrainCanvas } from "./terrain"
@@ -36,7 +36,7 @@ export interface ViewState {
   selected: string | null
   playerArmy: string
   headquarters: Vec2 | null
-  keyGround: KeyGround[]
+  keyGround: HeldGround[]
   deploymentZone: [number, number, number, number] | null
   /** The Order being drawn but not yet issued, shown as it will arrive. */
   drag: { at: Vec2; facing: number; formation: FormationName } | null
@@ -397,15 +397,23 @@ export class BattleView {
         .fill({ color: 0xffffff, alpha: 0.05 })
         .stroke({ width: 2 * this.metresPerPixel(), color: 0xffffff, alpha: 0.35 })
     }
+    // Key Ground in the colour of whoever holds it, so who is winning the thing
+    // the battle is about is a glance and not a panel. Gold while it is nobody's
+    // — a piece of ground neither army has reached yet is still worth the ring,
+    // and colouring it in advance would be claiming it for somebody.
     for (const key of view.keyGround) {
-      g.circle(key.position.x, key.position.y, key.radius).stroke({
-        width: 2 * this.metresPerPixel(),
-        color: 0xf0d27a,
-        alpha: 0.55,
-      })
+      const held = key.holder !== null
+      const colour = key.holder === null ? 0xf0d27a : (view.armyColours[key.holder] ?? 0xf0d27a)
+      g.circle(key.position.x, key.position.y, key.radius)
+        .fill({ color: colour, alpha: held ? 0.1 : 0 })
+        .stroke({
+          width: (held ? 3 : 2) * this.metresPerPixel(),
+          color: colour,
+          alpha: held ? 0.8 : 0.55,
+        })
       g.circle(key.position.x, key.position.y, 4 * this.metresPerPixel()).fill({
-        color: 0xf0d27a,
-        alpha: 0.85,
+        color: colour,
+        alpha: 0.9,
       })
     }
   }
