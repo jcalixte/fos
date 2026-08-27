@@ -912,6 +912,35 @@ describe("C7 Morale", () => {
     expect(battle.dispatches.at(-1)?.text).toContain("quit the Field")
   })
 
+  it("runs along a river at its back rather than standing against it", () => {
+    // A mob does not pick its way, but it does not stand in the shallows and
+    // wait to be shot either. Water down the whole west edge, the enemy to the
+    // east, so the way it breaks is the one way it cannot go.
+    const field = blankField(120, 120)
+    const water = GROUNDS.indexOf("water")
+    for (let cy = 0; cy < field.height; cy++) {
+      for (let cx = 0; cx < 30; cx++) field.ground[cellIndex(field, cx, cy)] = water
+    }
+    const mob = battalion({ position: { x: 250, y: 500 }, morale: 0 })
+    const austrian = battalion({
+      id: "au",
+      army: "austrian",
+      position: { x: 400, y: 500 },
+      facing: Math.PI,
+    })
+    const battle = emptyBattle(field, [mob, austrian])
+    step(battle)
+    expect(isRouting(mob)).toBe(true)
+    const brokeAt = { ...mob.position }
+
+    for (let i = 0; i < 600 && battle.units.includes(mob); i++) step(battle)
+    // It got somewhere. Where hardly matters — along the bank, over a bridge if
+    // there were one, off the edge of the Field — but not nowhere.
+    expect(distance(mob.position, brokeAt)).toBeGreaterThan(100)
+    // And it never turned round into what it was running from.
+    expect(mob.position.x).toBeLessThanOrEqual(brokeAt.x)
+  })
+
   it("costs more Morale from behind than in the teeth, casualties being equal", () => {
     const front = battalion({ position: { x: 500, y: 500 } })
     const behind = battalion({ position: { x: 500, y: 500 } })

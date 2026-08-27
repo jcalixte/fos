@@ -88,6 +88,22 @@ const ROUT_SPEED = 2.6
 /** The share of its remaining Strength a Routing Unit sheds each second. */
 const SHEDDING = 0.001
 
+/**
+ * Deflections a Rout tries when the way it is running is shut, in order, and
+ * never past a quarter turn either side — a mob will run along a river but it
+ * will not turn back into what put it there.
+ *
+ * This is what a mob does at an obstacle, not pathfinding: it takes the least
+ * turn that still gets it away and keeps going. The heading it broke on is
+ * never rewritten, so the moment the bank runs out or a bridge comes up under
+ * it, it is running for the rear again.
+ *
+ * Ties go to its left, always and for no reason anybody could defend. A mob
+ * pinned against a river is not choosing the better bank, and the tie has to
+ * break the same way every replay (F18).
+ */
+const ROUT_DEFLECTIONS = [0, 1, -1, 2, -2, 3, -3].map((sixths) => (sixths * Math.PI) / 6)
+
 function clamp(value: number, low: number, high: number): number {
   return Math.max(low, Math.min(high, value))
 }
@@ -221,21 +237,31 @@ export function rally(unit: Unit): void {
 }
 
 /**
- * Run one step of a Rout: straight down the heading it broke on, shedding men as
- * it goes. It does not route around anything — a mob is not picking its way — so
- * it stops at water it cannot cross rather than drowning in it.
+ * Run one step of a Rout: down the heading it broke on, shedding men as it goes.
+ * It does not route around anything — a mob is not picking its way — so it does
+ * not cross water it cannot cross. What it does instead is run along it.
+ *
+ * Stopping dead was the first answer and it was the wrong one. A battalion that
+ * broke with a river behind it stood in the shallows for the rest of the
+ * afternoon: it could not run, it could not Rally with the enemy that close,
+ * and it shed men where it stood — which is F10's bug arriving by the back
+ * door, a Unit counted down to nothing rather than beaten.
  */
 export function advanceRout(battle: Battle, unit: Unit, dt: number): void {
   if (!unit.routing) return
   unit.strength = Math.max(0, unit.strength - unit.strength * SHEDDING * dt)
-  const heading = unit.routing.heading
-  const next = {
-    x: unit.position.x + Math.cos(heading) * ROUT_SPEED * dt,
-    y: unit.position.y + Math.sin(heading) * ROUT_SPEED * dt,
+  const stride = ROUT_SPEED * dt
+  for (const deflection of ROUT_DEFLECTIONS) {
+    const heading = unit.routing.heading + deflection
+    const next = {
+      x: unit.position.x + Math.cos(heading) * stride,
+      y: unit.position.y + Math.sin(heading) * stride,
+    }
+    if (!runnable(battle, next)) continue
+    unit.position = next
+    unit.facing = heading
+    return
   }
-  if (!runnable(battle, next)) return
-  unit.position = next
-  unit.facing = heading
 }
 
 /** Ground a Rout will actually run over. Off the Field counts: it keeps going. */
