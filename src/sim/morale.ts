@@ -1,7 +1,7 @@
 import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { TRAVELLING_FORMATION } from "./formation"
 import type { Arm, Army, ArmyId, Battle, Grade, Unit, Vec2 } from "./types"
-import { bearing, distance } from "./vec"
+import { angleDelta, bearing, distance } from "./vec"
 
 /**
  * C7 Morale.
@@ -98,11 +98,13 @@ const SHEDDING = 0.001
  * never rewritten, so the moment the bank runs out or a bridge comes up under
  * it, it is running for the rear again.
  *
- * Ties go to its left, always and for no reason anybody could defend. A mob
- * pinned against a river is not choosing the better bank, and the tie has to
- * break the same way every replay (F18).
+ * Ties go to the side it is already turned to, and to its left when it is not
+ * turned at all — for no reason anybody could defend beyond replay. A mob
+ * pinned against a river is not choosing the better bank, but it is not
+ * choosing afresh either: see `advanceRout` for what picking the far side of a
+ * tie every step did to a Unit standing on a bank on the slant (F18).
  */
-const ROUT_DEFLECTIONS = [0, 1, -1, 2, -2, 3, -3].map((sixths) => (sixths * Math.PI) / 6)
+const ROUT_DEFLECTIONS = [0, 1, 2, 3].map((sixths) => (sixths * Math.PI) / 6)
 
 function clamp(value: number, low: number, high: number): number {
   return Math.max(low, Math.min(high, value))
@@ -246,21 +248,34 @@ export function rally(unit: Unit): void {
  * afternoon: it could not run, it could not Rally with the enemy that close,
  * and it shed men where it stood — which is F10's bug arriving by the back
  * door, a Unit counted down to nothing rather than beaten.
+ *
+ * Choosing afresh every step was the second wrong one. On a bank on the slant
+ * both quarter turns are open, and which of them is open is decided by the cell
+ * edge the Unit is standing on: it stepped a foot north, that shut the turn it
+ * had just taken and opened the other, and it stepped the foot back. A mob
+ * spinning end for end ten times a second and holding its ground is the
+ * shallows again in a different coat, so the side it turned to is remembered.
  */
 export function advanceRout(battle: Battle, unit: Unit, dt: number): void {
   if (!unit.routing) return
   unit.strength = Math.max(0, unit.strength - unit.strength * SHEDDING * dt)
   const stride = ROUT_SPEED * dt
+  // The side it is already turned to, tried first at every deflection. A mob
+  // that turned last step is running along the obstacle, and a mob has no
+  // reason to change its mind about which way round it.
+  const turned = Math.sign(angleDelta(unit.routing.heading, unit.facing)) || 1
   for (const deflection of ROUT_DEFLECTIONS) {
-    const heading = unit.routing.heading + deflection
-    const next = {
-      x: unit.position.x + Math.cos(heading) * stride,
-      y: unit.position.y + Math.sin(heading) * stride,
+    for (const side of deflection === 0 ? [1] : [turned, -turned]) {
+      const heading = unit.routing.heading + side * deflection
+      const next = {
+        x: unit.position.x + Math.cos(heading) * stride,
+        y: unit.position.y + Math.sin(heading) * stride,
+      }
+      if (!runnable(battle, next)) continue
+      unit.position = next
+      unit.facing = heading
+      return
     }
-    if (!runnable(battle, next)) continue
-    unit.position = next
-    unit.facing = heading
-    return
   }
 }
 

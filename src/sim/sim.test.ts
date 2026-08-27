@@ -1033,6 +1033,52 @@ describe("C7 Morale", () => {
     expect(mob.position.x).toBeLessThanOrEqual(brokeAt.x)
   })
 
+  it("holds the side it turned to, so a bank on the slant is run along and not danced on", () => {
+    // The bank at forty-five degrees, which is the one the straight edge above
+    // does not catch. Both quarter turns off the heading it broke on are open
+    // ground here, and which of them is open is settled by the cell edge the
+    // Unit happens to be standing on — so choosing afresh every step had the
+    // mob step a foot north, find that turn shut and the other open, and step
+    // the foot back. It spun end for end ten times a second and held its
+    // ground for the rest of the afternoon.
+    const field = blankField(120, 120)
+    const water = GROUNDS.indexOf("water")
+    for (let cy = 0; cy < field.height; cy++) {
+      for (let cx = 0; cx < field.width; cx++) {
+        if (cx + cy < 100) field.ground[cellIndex(field, cx, cy)] = water
+      }
+    }
+    const mob = battalion({ position: { x: 350, y: 496 }, morale: 0 })
+    const austrian = battalion({
+      id: "au",
+      army: "austrian",
+      position: { x: 490, y: 496 },
+      facing: Math.PI,
+    })
+    const battle = emptyBattle(field, [mob, austrian])
+    step(battle)
+    expect(isRouting(mob)).toBe(true)
+    const brokeAt = { ...mob.position }
+
+    // A mob hugging a bank on the slant does swing between the heading it
+    // broke on and its deflection, taking a little ground west whenever the
+    // bank allows it — over seconds, which is a Unit working its way down a
+    // bank. What it must never do is swing back inside a tenth of a second,
+    // which is a Unit going nowhere.
+    let flaps = 0
+    let turn = 0
+    for (let i = 0; i < 1200 && battle.units.includes(mob); i++) {
+      const was = mob.facing
+      step(battle)
+      const swing = mob.facing - was
+      if (swing !== 0 && turn !== 0 && Math.sign(swing) !== Math.sign(turn)) flaps++
+      turn = swing
+    }
+    expect(flaps).toBe(0)
+    // And it got down the bank rather than standing on it.
+    expect(distance(mob.position, brokeAt)).toBeGreaterThan(200)
+  })
+
   it("costs more Morale from behind than in the teeth, casualties being equal", () => {
     const front = battalion({ position: { x: 500, y: 500 } })
     const behind = battalion({ position: { x: 500, y: 500 } })
