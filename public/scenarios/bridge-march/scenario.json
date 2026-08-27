@@ -15,6 +15,7 @@
       "id": "french",
       "name": "French",
       "colour": "#2f4d8f",
+      "brief": "Over the river and into the hamlet before the Austrians are settled in it. One bridge, one column wide, and the guns on the far ridge already laid on it.",
       "roster": "/rosters/french-advance-guard.json",
       "headquarters": {
         "x": 352,
@@ -26,7 +27,13 @@
       "id": "austrian",
       "name": "Austrian",
       "colour": "#e3e7ef",
-      "roster": "/rosters/austrian-bridge-guard.json"
+      "brief": "Hold the bridge and the hamlet until the light goes. You come up to the crossing from behind the ridge, and whatever you put on the far bank has the river at its back.",
+      "roster": "/rosters/austrian-bridge-guard.json",
+      "headquarters": {
+        "x": 1248,
+        "y": 557
+      },
+      "deploymentZone": [900, 340, 460, 480]
     }
   ],
   "crossings": [
@@ -55,6 +62,58 @@
   ],
   "plan": [
     {
+      "at": 20,
+      "unitId": "fr-batterie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 640,
+          "y": 596
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 30,
+      "unitId": "fr-4e-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 660,
+          "y": 560
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 45,
+      "unitId": "fr-18e-3",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 660,
+          "y": 650
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "fr-18e-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 620,
+          "y": 680
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
       "at": 90,
       "unitId": "au-ir23-2",
       "body": {
@@ -64,6 +123,32 @@
           "y": 590
         },
         "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 210,
+      "unitId": "fr-4e-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 830,
+          "y": 588
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 330,
+      "unitId": "fr-18e-3",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 812,
+          "y": 656
+        },
+        "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
     },
@@ -78,6 +163,71 @@
         },
         "arrivalFacing": 3.14159,
         "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 480,
+      "unitId": "fr-4e-2",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 528
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 600,
+      "unitId": "fr-9e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 836,
+          "y": 616
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 780,
+      "unitId": "fr-4e-2",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 852,
+          "y": 520
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1020,
+      "unitId": "fr-2e-chasseurs",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 656
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1140,
+      "unitId": "fr-18e-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 744,
+          "y": 596
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
       }
     }
   ]

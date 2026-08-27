@@ -59,7 +59,8 @@ export interface ScenarioArmy {
   /** One line on what this army's afternoon is, read when it is offered. */
   brief?: string
   roster: string
-  headquarters?: Vec2
+  /** Where its Orders are ridden from. Every army has one: either may be taken. */
+  headquarters: Vec2
   /** The rectangle, in metres, the player may arrange this army inside. */
   deploymentZone?: [number, number, number, number]
 }
@@ -122,11 +123,16 @@ export function assemble(scenario: AssembledScenario): Battle {
   const arrivals: Arrival[] = []
 
   for (const a of file.armies) {
+    // Either army may be taken, so either may be the one whose Orders have to
+    // be ridden from somewhere. An army authored without a Headquarters is a
+    // Scenario the player could pick and then be unable to command at all, and
+    // it would fail as silence rather than as an error.
+    if (!a.headquarters) throw new Error(`${a.name} is authored without a Headquarters`)
     const army: Army = {
       id: a.id,
       name: a.name,
       colour: Number.parseInt(a.colour.replace("#", ""), 16),
-      headquarters: a.headquarters ? { army: a.id, position: { ...a.headquarters } } : null,
+      headquarters: { army: a.id, position: { ...a.headquarters } },
       weight: 0,
       strength: 0,
       units: 0,
