@@ -1,6 +1,6 @@
 {
   "name": "The bridge march",
-  "summary": "A fixture, not a battle. One river, one bridge, and an advance guard that has to be over it before the Austrians settle in. It exists to answer whether an Order that takes a minute and a half to arrive is a game or a nuisance.",
+  "summary": "A fixture, not a battle. One river, one bridge, a hamlet commanding the far bank, and an advance guard that has to be over and into it before the Austrians settle in. It exists to answer whether an Order that takes a minute and a half to arrive is a game or a nuisance.",
   "field": {
     "cells": [200, 120],
     "cellSize": 8,
@@ -42,7 +42,15 @@
         "x": 744,
         "y": 596
       },
-      "radius": 90
+      "radius": 34
+    },
+    {
+      "name": "the hamlet",
+      "position": {
+        "x": 828,
+        "y": 592
+      },
+      "radius": 48
     }
   ],
   "plan": [

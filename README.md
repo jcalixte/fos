@@ -39,11 +39,13 @@ into square has none. Contact takes very few men and is over inside one step, be
 that gives out. A square throws horse back on a quarter of a line's Frontage, which is the whole of
 what square is for and needs no rule of its own.
 
-How a battle ends, which until now was a timer. An army quits the Field once a third of it,
-weighted by Grade, is running — read as what is running now rather than as a tally, so a Rally
-buys the army back as well as the battalion, and measured against the whole Roster so a column
-still on the road counts as standing. Otherwise the clock runs out and the Key Ground is counted:
-an army holds a piece by having the last uncontested Unit on it. Neither way is annihilation.
+How a battle ends, which is the clock. It runs its full length the way a turn-based game runs its
+last turn, and then the Key Ground is counted: an army holds a piece by having the last
+uncontested Unit on it, and where that is even, what each army has left decides. Underneath sits
+the only other ending a rule reaches — an army with nothing left in hand, every Unit of it running
+or gone, quits the Field. That is a floor and not a race: an army a third gone is hurt and not
+beaten, and it has the rest of the afternoon to show it ([ADR-0006](./docs/adr/0006-a-battle-ends-on-the-clock.md)).
+Neither way is annihilation.
 
 Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
@@ -68,4 +70,5 @@ Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
   - [0003 — TypeScript, with the simulation as a pure module](./docs/adr/0003-typescript-with-a-pure-simulation-core.md)
   - [0004 — Initiative is an ordered rule list](./docs/adr/0004-initiative-is-an-ordered-rule-list.md)
   - [0005 — Terrain is authored as images](./docs/adr/0005-terrain-is-authored-as-images.md)
+  - [0006 — A battle ends on the clock](./docs/adr/0006-a-battle-ends-on-the-clock.md)
 <!-- docs:end -->

@@ -186,8 +186,11 @@ it. A Routing Unit holds nothing. A piece marched away from stays held until som
 _Avoid_: point of interest, objective, capture point, control point, flag
 
 **Army Break**:
-The point at which enough of an army's Units have Broken that the army quits the Field,
-weighted so that losing an elite Unit counts for more than losing a conscript one.
+The point at which an army has nothing left in hand — every one of its **Units** Broken, running
+or gone off the **Field** — and quits. It is the floor under the **Scenario** clock and not the
+ordinary way a battle ends: an army half wrecked at the tenth minute stays and fights the other
+twenty. It is never annihilation, because a **Unit** leaves the count by Breaking and not by being
+killed.
 _Avoid_: defeat, game over, army rout, collapse
 
 **Outcome**:
@@ -291,9 +294,9 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
 - A **Scenario** carries a **Field**, two **Rosters**, the enemy's **Plan**, a clock, and its **Key Ground**
-- A battle ends at **Army Break** for either side, when the **Scenario** clock runs out — and
-  then the **Key Ground** is counted, and where it is even, what each army has left — or when the
-  player chooses to **Break Off**
+- A battle ends when the **Scenario** clock runs out — and then the **Key Ground** is counted, and
+  where it is even, what each army has left — or at an **Army Break**, which takes every **Unit**
+  of an army, or when the player chooses to **Break Off**
 - To **Break Off** is to lose: an army that has gone has left whatever it was standing on, the
   same as one that has reached **Army Break**
 - An army ending on the clock with more **Key Ground** wins it whatever it cost; only where the
@@ -302,6 +305,8 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Roster** entry either stands on the **Field** at **Deployment** or waits on an **Arrival**
 - An **Arrival** can land after its army is already near **Army Break**, so a battle is not lost
   while a column is still on the road
+- How far an army went toward **Army Break** is weighted by **Grade**; whether it got there is not,
+  because nothing standing is nothing standing at any weight
 - An army sees from the eyes of all its own **Units**, never from where the camera is pointed
 - **Height** blocks sight past it, so a ridge conceals its own reverse slope — symmetrically,
   for both armies

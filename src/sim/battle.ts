@@ -447,13 +447,17 @@ function holdKeyGround(battle: Battle): void {
 
 /**
  * The army in materially better condition, or null where neither is. Read off
- * the same share of Army Break the end condition uses, so it is the same
- * question asked a step short of the threshold: which of the two was nearer
- * quitting when the light went.
+ * the same share of itself an army spends toward Army Break, so it is the same
+ * question asked well short of the whole: which of the two was nearer quitting
+ * when the light went.
  *
  * It is the second thing counted and never the first. An army that spends the
  * afternoon intact behind a hill has not won a battle, and this only ever
  * speaks when the Key Ground has nothing to say.
+ *
+ * It carries more weight than it used to. Army Break at 1 all but never fires,
+ * so nearly every battle is decided here or on the Key Ground, and this is the
+ * only place a mauling that stopped short of a Rout is counted at all.
  */
 function inBetterCondition(battle: Battle): ArmyId | null {
   if (battle.armies.length !== 2) return null
@@ -535,8 +539,8 @@ function decide(battle: Battle): void {
       "army-break",
       left.length === 1 ? left[0].id : null,
       left.length === 1
-        ? `The ${broken.map((a) => a.name).join(" and ")} army has had enough, and is quitting the Field`
-        : `Both armies have had enough, and the Field is left to nobody`,
+        ? `The ${broken.map((a) => a.name).join(" and ")} army has nothing left in hand, and is quitting the Field`
+        : `Neither army has anything left in hand, and the Field is left to nobody`,
     )
     return
   }

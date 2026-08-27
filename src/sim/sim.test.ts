@@ -1242,7 +1242,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     )
   })
 
-  it("breaks an army once a third of it, weighted by Grade, is running", () => {
+  it("breaks an army only once it has nothing left in hand", () => {
     const units = brigade("french", 200, 4)
     const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
     const french = battle.armies[0]
@@ -1250,9 +1250,15 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     expect(shareGone(battle, french)).toBe(0)
     running(units[0])
     expect(shareGone(battle, french)).toBeCloseTo(0.25, 5)
-    expect(hasArmyBroken(battle, french)).toBe(false)
+    // Half an army running is a mauling and not a result. Under the third this
+    // was, the battle was already over here (ADR-0006).
     running(units[1])
     expect(shareGone(battle, french)).toBeCloseTo(0.5, 5)
+    expect(hasArmyBroken(battle, french)).toBe(false)
+    running(units[2])
+    expect(hasArmyBroken(battle, french)).toBe(false)
+    running(units[3])
+    expect(shareGone(battle, french)).toBeCloseTo(1, 5)
     expect(shareGone(battle, french)).toBeGreaterThanOrEqual(ARMY_BREAK)
     expect(hasArmyBroken(battle, french)).toBe(true)
   })
@@ -1276,7 +1282,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
       entry: { x: 8, y: 400 },
       order: null,
     })
-    running(units[0])
+    for (const unit of units) running(unit)
 
     expect(hasArmyBroken(battle, battle.armies[0])).toBe(false)
     // The same Field with nothing on the road is an army that has lost. This is
@@ -1289,8 +1295,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
   it("lets a Rally take an army back off the edge, because the cascade is the thing", () => {
     const units = brigade("french", 200, 4)
     const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
-    running(units[0])
-    running(units[1])
+    for (const unit of units) running(unit)
     expect(hasArmyBroken(battle, battle.armies[0])).toBe(true)
     units[0].routing = null
     expect(hasArmyBroken(battle, battle.armies[0])).toBe(false)
@@ -1302,8 +1307,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
       army("french", "French", 4),
       army("austrian", "Austrian", 4),
     ])
-    running(units[0])
-    running(units[1])
+    for (const unit of units.filter((u) => u.army === "french")) running(unit)
 
     step(battle)
     expect(isOver(battle)).toBe(true)
@@ -1315,8 +1319,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
   it("keeps the Outcome it first wrote, so the end of a battle is decided once", () => {
     const units = [...brigade("french", 200, 4), ...brigade("austrian", 1400, 4)]
     const battle = emptyBattle(blankField(200, 120), units)
-    running(units[0])
-    running(units[1])
+    for (const unit of units.filter((u) => u.army === "french")) running(unit)
     step(battle)
     const decided = battle.outcome
     running(units[4])

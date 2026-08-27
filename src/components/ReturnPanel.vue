@@ -16,8 +16,9 @@ const props = defineProps<{
 /**
  * The column the day turned on, marked so the table answers "why did they win"
  * on its own. Army Break and condition are both read off the share an army
- * spent, which is the same figure asked at two different moments. Breaking off
- * marks nothing: no figure here decided it, the commander did.
+ * spent, which is the same figure asked at two different moments — at the whole
+ * of it, and well short of the whole when the clock runs out level. Breaking
+ * off marks nothing: no figure here decided it, the commander did.
  */
 const deciding = computed(() =>
   props.decidedBy === "key-ground"
@@ -54,8 +55,9 @@ function men(count: number): string {
 /**
  * How far an army went toward Army Break, as a percentage. It is the one figure
  * here that answers whether there was still an army at the end, and it is
- * shown as a share because that is how the end condition reads it — a third of
- * what it mustered, weighted, and the rest will not stay.
+ * shown as a share because that is how the end condition reads it: at 100% an
+ * army has nothing in hand and quits, and short of that it is what settles a
+ * clock that ran out with the Key Ground even.
  */
 function spent(share: number): string {
   return `${Math.round(share * 100)}%`
@@ -131,7 +133,7 @@ function mark(column: "ground" | "spent"): string {
 
     <p class="mt-3 text-xs leading-relaxed text-base-content/45">
       Pieces of Key Ground held, Units in hand, Units running and Units gone off the Field; men lost
-      of the men mustered; and the share of itself each army spent, weighted by Grade — a third is
+      of the men mustered; and the share of itself each army spent, weighted by Grade — all of it is
       where an army quits the Field. The column the day turned on is the bright one.
     </p>
     <p class="mt-3 text-xs text-base-content/40">Reload to march it again from the same seed.</p>

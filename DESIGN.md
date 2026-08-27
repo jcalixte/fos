@@ -571,7 +571,7 @@ player already knows what a square is for.
 
 | ID  | Function                                    | Dir | Target |
 |-----|---------------------------------------------|:---:|--------|
-| F11 | End a battle by Army Break or clock         |  →  | 20–40 min at Tempo 1; never by annihilation |
+| F11 | End a battle on the clock, Army Break under it |  →  | the clock's full length at Tempo 1, 20–40 min; never by annihilation |
 | F20 | Bring Units onto the Field mid-battle       |  →  | Arrival by clock time or trigger, at a named point or Field edge |
 
 **Watchability** — serves G7
@@ -608,7 +608,7 @@ player already knows what a square is for.
   - **F9** Discrete events on historical clocks — **How**: Volley on a reload clock, Charge as a resolved sequence, Contact decided in seconds → C6, C8
   - **F10** Morale decides, not Strength — **How**: casualties are one input to Morale; Break, Rout, Rally and a falling Morale Ceiling do the rest → C7
 - **G4** a battle has shape  _W:8_
-  - **F11** End by Army Break or clock — **How**: weighted count of Broken Units per army, plus a Scenario clock, then Key Ground is counted → C7, C8
+  - **F11** End on the clock, Army Break under it — **How**: a Scenario clock, then Key Ground counted and condition where it is even; and a floor at every Unit of an army Broken (ADR-0006) → C7, C8
   - **F20** Arrival — **How**: Roster entries that enter at a named point or Field edge on clock time or trigger → C8, C14, C5
 - **G5** authorable as data  _W:7_
   - **F16** Scenario, Field and Roster from data — **How**: Rosters are standalone files a Scenario names, so persistence later is writing them back out → C14
@@ -658,7 +658,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 
 **F14 render interpolation × F18 deterministic replay** — not a conflict if the discipline holds, and a nasty one if it doesn't. Interpolated positions must never feed back into the simulation. One accidental read of a rendered position and replays diverge.
 
-**F11 Army Break × F20 Arrival** — an army can be one Unit from Army Break with a fresh column ninety seconds off the Field edge. That's a *feature* — it's what Rivoli and Castiglione both turn on — but it means the end condition has to consider what is still on the road, or battles will end one minute before their best moment.
+**F11 Army Break × F20 Arrival** — an army can be one Unit from Army Break with a fresh column ninety seconds off the Field edge. That's a *feature* — it's what Rivoli and Castiglione both turn on — but it means the end condition has to consider what is still on the road, or battles will end one minute before their best moment. *Sharper since ADR-0006, not softer: with Army Break at 1, a single Unit on the road is the whole of what keeps an otherwise empty army in the battle.*
 
 ## 7. Components & Function → Component map
 
@@ -741,7 +741,7 @@ Milestone 1 only, on the bridge-march fixture.
 | 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
-| 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past 22% of the 33% Army Break threshold | the bridge-march fixture, headless, with no Orders |
+| 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
@@ -777,16 +777,29 @@ has to buy with a Move Order first.
 **The fixture with no Orders at all does not resolve, which is the best answer §9's first trigger
 could have returned.** Run headless for the full thirty minutes with the player silent, the
 Austrian Plan breaks two French-facing battalions eight minutes apart and both Rally; neither army
-gets past 22% of the 33% needed for Army Break; and nothing ever crosses the river. The battle ends
+gets anywhere near having nothing left in hand; and nothing ever crosses the river. The battle ends
 undecided with the bridge held by nobody. Initiative preserves and does not advance, exactly as
 §6 requires it to, and taking the ground is entirely the player's.
 
-**Nobody comes within the bridge's radius on that run — the nearest formed Unit stops 111m off a
+**Nobody came within the bridge's radius on that run — the nearest formed Unit stopped 111m off a
 90m radius.** The Austrian Plan parks its covering battalion short of the crossing, which is what
-a battalion covering a bridge does. The consequence is that on this fixture the clock branch is
-decided by nobody unless the player marches onto the bridge, which is a fair thing for a Key
-Ground to demand and a thing to watch when Castiglione is authored: a Key Ground that can only be
-taken and never defended is only half a decision. Left as measured; the radius is data.
+a battalion covering a bridge does: it was covering the hamlet on the far bank, which is the
+ground that commands the crossing and the ground nothing was scoring. A Key Ground that can only
+be taken and never defended is only half a decision, and while the clock branch was rare that was
+a footnote. ADR-0006 made the clock the ending, so it stopped being one.
+
+Resolved as data, not as a rule. The fixture now carries two pieces: **the bridge** at (744, 596)
+with a 34m radius, which means being on the deck, and **the hamlet** at (828, 592) with a 48m
+radius, which is the painted village at cells 99–107 × 70–77. The Plan's first order already sends
+`au-ir23-2` to (850, 590) — 22m from the hamlet's centre and inside it — so the Austrians defend
+the new piece without a line of the Plan changing. The two radii sum to 82 against 84m between
+centres, so no Unit can stand on both.
+
+Two pieces rather than one is the part that is about F11 and not about this Field. With the clock
+deciding nearly every battle, a single piece makes every result binary; two allow a 1–1 that falls
+through to condition and a 2–0 that reads as a day's work. **Unmeasured, and the thing to watch on
+the next run:** whether the French can cross a one-column bridge and clear a garrisoned hamlet
+inside thirty minutes at all. If they cannot, every battle ends 1–1 and the hamlet is scenery.
 
 One of §9's triggers is still unmeasured: how many order-cycles a 20-minute battle allows to the
 far flank.
@@ -798,6 +811,7 @@ far flank.
 | T1 | Rigid blocks over agent soldiers | ~40 simulated bodies; no per-man steering, collision or pathing; exact Formations | no emergent melee churn or rout scatter; Contact must be abstract | — |
 | T2 | Figures rigid in their slots | trivial rendering, exact geometry | transitions must be morphed by C3 or Formations visibly pop | — |
 | T3 | Scripted Plan over tactical AI | no planning AI to write; scenarios become authorable content | no adaptation; a battle is fresh once or twice; no skirmish generator | — |
+| T16 | Clock over Army Break as the ending | battle length is a known budget, the same every time; small Rosters stop cutting the afternoon short | Key Ground carries nearly every result and is not yet authored to; a decided battle can leave twenty minutes of dead clock, released only by Break Off | ADR-0006 |
 | T4 | TypeScript over Godot | velocity in a known stack; ships as a link; pure testable sim | no editor for free — mitigated by T5 | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | T5 | Terrain painted as images over a built editor | F17 drops from "build an editor" to "write a loader"; historical maps can be traced | terrain is opaque in diffs and ungreppable | [0005](./docs/adr/0005-terrain-is-authored-as-images.md) |
 | T6 | Three Grades over five | one fewer axis to balance | Jeune and Vieille Garde collapse into one rung | — |
@@ -917,6 +931,15 @@ far flank.
   so the share falls as well as rises. That is also the more period-true claim — an army breaks in
   the moment too much of it is running at once, and it is the cascade that ends a battle rather
   than the arithmetic of the day.
+
+- **Army Break at a third was period-true and ended the fixture in five and a half minutes.** Two
+  Austrian battalions broke; on a four-Unit Roster that is 44% weighted, and the army quit with two
+  Units in hand and a Plan Order due at 7:00 that never fired. The threshold was not mistuned — the
+  weighting puts one battalion at 22% and two at 44%, so the whole end condition lived in the gap
+  between the first and the second and there was no state in between. Any threshold below 1 has
+  that gap on a small Roster. Resolved by making the clock the ending and Army Break the floor
+  under it, at 1 (ADR-0006). The bill is that Key Ground now decides nearly every battle, and on
+  the fixture only one army ever stands on it.
 
 - **The end condition could not see the road.** §6 flagged the conflict between Army Break and
   Arrival and left it to the end condition to solve. What solves it is which side of the count the

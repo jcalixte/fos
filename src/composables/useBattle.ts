@@ -120,10 +120,13 @@ export function useBattle(scenarioPath: string) {
         }
       }
       return mine
-        ? { headline: "The enemy army has quit the Field.", detail: "The day is yours." }
+        ? {
+            headline: "The enemy army has quit the Field.",
+            detail: "They had nothing left in hand. The day is yours.",
+          }
         : {
             headline: "Your army has quit the Field.",
-            detail: "Too much of it was running for the rest to stay.",
+            detail: "There was nothing of it left in hand.",
           }
     }
     if (outcome.winner === null) {
@@ -251,6 +254,20 @@ export function useBattle(scenarioPath: string) {
     r.running = false
   }
 
+  /**
+   * The arrival Formation the player most likely wants for this Unit: what it
+   * is standing in, unless that is a travelling Formation — Initiative puts
+   * Units into column on its own, and seeding from it would quietly order the
+   * next move to *arrive* in column, which is a battalion standing at its
+   * destination unable to fire.
+   */
+  function seedArrival(unit: UnitSnapshot | null): void {
+    if (!unit) return
+    ui.arrivalFormation = canFire(unit.arm, unit.formation)
+      ? unit.formation
+      : FIGHTING_FORMATION[unit.arm]
+  }
+
   function unitById(id: string | null): UnitSnapshot | null {
     if (!id) return null
     return ui.units.find((u) => u.id === id) ?? null
@@ -260,6 +277,12 @@ export function useBattle(scenarioPath: string) {
     const r = runner.value
     if (!r) return
     ui.phase = "battle"
+    // Deployment hides the arrival Formation — there is no arrival to dress for
+    // while the army is still being arranged — so a Unit selected in that phase
+    // reaches the first minute of the battle with nothing chosen. Seed it here
+    // or the row opens blank and the first Order arrives in whatever the Unit
+    // happens to be standing in, which is not what the player read.
+    seedArrival(unitById(ui.selected))
     viewState.deploymentZone = null
     r.running = true
   }
@@ -465,13 +488,7 @@ export function useBattle(scenarioPath: string) {
     if (hit) {
       if (hit.id !== ui.selected) setArming(false)
       ui.selected = hit.id
-      // Seed from what the Unit is standing in, unless that is a travelling
-      // Formation — Initiative puts Units into column on its own, and seeding
-      // from it would quietly order the next move to *arrive* in column, which
-      // is a battalion standing at its destination unable to fire.
-      ui.arrivalFormation = canFire(hit.arm, hit.formation)
-        ? hit.formation
-        : FIGHTING_FORMATION[hit.arm]
+      seedArrival(hit)
       dragFrom = null
       return
     }
