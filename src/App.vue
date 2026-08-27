@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef } from "vue"
+import ReturnPanel from "@/components/ReturnPanel.vue"
 import DispatchPanel from "@/components/DispatchPanel.vue"
 import UnitCard from "@/components/UnitCard.vue"
 import { useBattle } from "@/composables/useBattle"
@@ -139,15 +140,14 @@ onBeforeUnmount(() => {
 
         <div
           v-else-if="ui.phase === 'over'"
-          class="absolute inset-0 grid place-items-center bg-base-300/80 backdrop-blur-sm"
+          class="absolute inset-0 grid place-items-center overflow-auto bg-base-300/80 p-6 backdrop-blur-sm"
         >
-          <div class="max-w-md text-center">
-            <p class="text-lg font-semibold">{{ ui.verdict?.headline }}</p>
-            <p class="mt-1 text-sm text-base-content/70">{{ ui.verdict?.detail }}</p>
-            <p class="mt-3 text-xs text-base-content/50">
-              Reload to march it again from the same seed.
-            </p>
-          </div>
+          <ReturnPanel
+            :headline="ui.verdict?.headline ?? ''"
+            :detail="ui.verdict?.detail ?? ''"
+            :returns="ui.returns"
+            :player-army="ui.playerArmy"
+          />
         </div>
       </div>
 

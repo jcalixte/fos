@@ -7,6 +7,7 @@ import { issueOrder } from "@/sim/orders"
 import { canCharge, chargeable } from "@/sim/charge"
 import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
 import type { Dispatch, FormationName, Grade, OrderBody, Outcome, Unit, Vec2 } from "@/sim/types"
+import { armyReturns, type ArmyReturn } from "@/sim/return"
 import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
 import { bearing, distance } from "@/sim/vec"
 
@@ -48,6 +49,8 @@ export interface BattleUi {
   playerArmy: string
   /** How the battle ended, once it has, and what the player is to make of it. */
   verdict: { headline: string; detail: string } | null
+  /** What each army had to show for it, filled in once the battle is over. */
+  returns: ArmyReturn[]
 }
 
 export function useBattle(scenarioPath: string) {
@@ -73,6 +76,7 @@ export function useBattle(scenarioPath: string) {
     gradeNames: {},
     playerArmy: "french",
     verdict: null,
+    returns: [],
   })
 
   /**
@@ -111,6 +115,20 @@ export function useBattle(scenarioPath: string) {
       .filter((g) => g.holder === outcome.winner)
       .map((g) => g.name)
       .join(", ")
+    // No names means the Key Ground was even and the day went on condition
+    // instead — the one case where the winner took nothing and won anyway.
+    if (!names) {
+      return mine
+        ? {
+            headline: "The clock has run out, and the Field is yours.",
+            detail:
+              "Neither army took the Key Ground, and theirs is in the worse state for trying.",
+          }
+        : {
+            headline: "The clock has run out, and the Field is theirs.",
+            detail: "Neither army took the Key Ground, and yours is in the worse state for trying.",
+          }
+    }
     return mine
       ? { headline: "The clock has run out, and you hold the Field.", detail: `You hold ${names}.` }
       : {
@@ -197,6 +215,7 @@ export function useBattle(scenarioPath: string) {
     if (isOver(r.battle) && ui.phase === "battle") {
       ui.phase = "over"
       ui.verdict = readVerdict(r.battle.outcome!)
+      ui.returns = armyReturns(r.battle)
       r.running = false
     }
   }
