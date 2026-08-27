@@ -180,7 +180,9 @@ _Avoid_: reinforcement, spawn, entry, respawn
 
 **Key Ground**:
 A named piece of the Field whose possession at the end of a battle decides it — the bridge,
-the farm, the ridge. An army holds one by having the last uncontested Unit on it.
+the farm, the ridge. An army holds one by having the nearest Unit on it: a Unit is in the running
+only while it stands inside the radius, and of those that do, the closest to the centre decides
+it. A Routing Unit holds nothing. A piece marched away from stays held until somebody takes it.
 _Avoid_: point of interest, objective, capture point, control point, flag
 
 **Army Break**:
@@ -190,8 +192,17 @@ _Avoid_: defeat, game over, army rout, collapse
 
 **Outcome**:
 How a battle ended: by **Army Break** for one side, or on the **Scenario** clock with the **Key
-Ground** counted. It names the army left holding the Field, and never a score.
+Ground** counted first and, where that is even, what each army has left counted second. It names
+the army left holding the Field, and never a score.
 _Avoid_: result, victory points, win condition, score
+
+**Return**:
+What each army had to show for the afternoon, read off the battle at the moment it ended: Units
+still in hand, Units running, Units gone, men lost against the men mustered, and how far the army
+went toward **Army Break**. A tally of facts and never a total — the ground an army took and the
+men it spent taking it are two currencies, and the **Outcome** has already said which decided
+the day.
+_Avoid_: score, summary, results screen, scoreboard, stats
 
 **Plan**:
 The enemy army's authored intent — Orders fired by clock time or by trigger. There is no
@@ -272,7 +283,10 @@ _Avoid_: game speed, time scale, simulation speed
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
 - A **Scenario** carries a **Field**, two **Rosters**, the enemy's **Plan**, a clock, and its **Key Ground**
 - A battle ends at **Army Break** for either side, or when the **Scenario** clock runs out — and
-  then the **Key Ground** is counted
+  then the **Key Ground** is counted, and where it is even, what each army has left
+- An army ending on the clock with more **Key Ground** wins it whatever it cost; only where the
+  **Key Ground** says nothing does what each army has left decide it, and only by a telling margin
+- A battle that has ended has a **Return** for each army, which reports and never decides
 - A **Roster** entry either stands on the **Field** at **Deployment** or waits on an **Arrival**
 - An **Arrival** can land after its army is already near **Army Break**, so a battle is not lost
   while a column is still on the road
