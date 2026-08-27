@@ -141,9 +141,10 @@ onBeforeUnmount(() => {
           v-else-if="ui.phase === 'over'"
           class="absolute inset-0 grid place-items-center bg-base-300/80 backdrop-blur-sm"
         >
-          <div class="text-center">
-            <p class="text-lg font-semibold">The Scenario clock has run out.</p>
-            <p class="mt-1 text-sm text-base-content/60">
+          <div class="max-w-md text-center">
+            <p class="text-lg font-semibold">{{ ui.verdict?.headline }}</p>
+            <p class="mt-1 text-sm text-base-content/70">{{ ui.verdict?.detail }}</p>
+            <p class="mt-3 text-xs text-base-content/50">
               Reload to march it again from the same seed.
             </p>
           </div>

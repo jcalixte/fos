@@ -1,11 +1,12 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
+import { isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
 import { issueOrder } from "@/sim/orders"
 import { canCharge, chargeable } from "@/sim/charge"
 import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
-import type { Dispatch, FormationName, Grade, OrderBody, Unit, Vec2 } from "@/sim/types"
+import type { Dispatch, FormationName, Grade, OrderBody, Outcome, Unit, Vec2 } from "@/sim/types"
 import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
 import { bearing, distance } from "@/sim/vec"
 
@@ -45,6 +46,8 @@ export interface BattleUi {
   dispatches: Dispatch[]
   gradeNames: Record<string, Record<Grade, string>>
   playerArmy: string
+  /** How the battle ended, once it has, and what the player is to make of it. */
+  verdict: { headline: string; detail: string } | null
 }
 
 export function useBattle(scenarioPath: string) {
@@ -69,7 +72,52 @@ export function useBattle(scenarioPath: string) {
     dispatches: [],
     gradeNames: {},
     playerArmy: "french",
+    verdict: null,
   })
+
+  /**
+   * The Outcome in the second person. The simulation decides who was left
+   * holding the Field and never who the player is, so the reading is done here
+   * — and it is a reading, not a score: there is no tally to show, because T11
+   * gave up the countable bar and F11 refuses to end a battle by annihilation.
+   */
+  function readVerdict(outcome: Outcome): { headline: string; detail: string } {
+    const mine = outcome.winner === ui.playerArmy
+    if (outcome.by === "army-break") {
+      if (outcome.winner === null) {
+        return {
+          headline: "Both armies have quit the Field.",
+          detail: "Neither had enough left standing to hold it.",
+        }
+      }
+      return mine
+        ? { headline: "The enemy army has quit the Field.", detail: "The day is yours." }
+        : {
+            headline: "Your army has quit the Field.",
+            detail: "Too much of it was running for the rest to stay.",
+          }
+    }
+    const held = outcome.keyGround.filter((g) => g.holder !== null)
+    if (outcome.winner === null) {
+      return {
+        headline: "The clock has run out, undecided.",
+        detail:
+          held.length === 0
+            ? "Neither army was left standing on the Key Ground."
+            : "The Key Ground was evenly shared.",
+      }
+    }
+    const names = outcome.keyGround
+      .filter((g) => g.holder === outcome.winner)
+      .map((g) => g.name)
+      .join(", ")
+    return mine
+      ? { headline: "The clock has run out, and you hold the Field.", detail: `You hold ${names}.` }
+      : {
+          headline: "The clock has run out, and the enemy holds the Field.",
+          detail: `They hold ${names}.`,
+        }
+  }
 
   const viewState: ViewState = {
     selected: null,
@@ -146,8 +194,9 @@ export function useBattle(scenarioPath: string) {
     if (ui.dispatches.length !== r.battle.dispatches.length) {
       ui.dispatches = [...r.battle.dispatches]
     }
-    if (r.battle.time >= r.battle.clock && ui.phase === "battle") {
+    if (isOver(r.battle) && ui.phase === "battle") {
       ui.phase = "over"
+      ui.verdict = readVerdict(r.battle.outcome!)
       r.running = false
     }
   }
