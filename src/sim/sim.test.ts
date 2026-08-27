@@ -1305,7 +1305,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     while (battle.time < 59) step(battle)
     expect(isOver(battle)).toBe(false)
     while (!isOver(battle) && battle.time < 120) step(battle)
-    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.outcome?.by).toBe("condition")
     expect(battle.time).toBeCloseTo(60, 5)
   })
 
@@ -1381,7 +1381,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     battle.clock = 30
     while (!isOver(battle) && battle.time < 60) step(battle)
 
-    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.outcome?.by).toBe("key-ground")
     expect(battle.outcome?.winner).toBe("french")
     expect(battle.outcome?.keyGround).toEqual([{ name: "the bridge", holder: "french" }])
   })
@@ -1411,7 +1411,7 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     battle.clock = 1
     while (!isOver(battle) && battle.time < 10) step(battle)
 
-    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.outcome?.by).toBe("condition")
     expect(battle.outcome?.winner).toBe("austrian")
     expect(battle.outcome?.keyGround).toEqual([])
   })
@@ -1431,6 +1431,35 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     battle.clock = 1
     while (!isOver(battle) && battle.time < 10) step(battle)
     expect(battle.outcome?.winner).toBe("french")
+  })
+
+  it("says condition decided it even where the winner holds Key Ground of its own", () => {
+    const french = brigade("french", 200, 4)
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...french, ...brigade("austrian", 700, 4)],
+      [army("french", "French", 4), army("austrian", "Austrian", 4)],
+    )
+    // One piece apiece: level on ground, so the day turns on condition. The
+    // Austrians win it while still standing on the farm, which is the case that
+    // reading the ending off "the clock ran out" alone got wrong — it reported
+    // a win on ground the Austrians had not taken more of.
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 200, y: 100 }, radius: 90, holder: null },
+      { name: "the farm", position: { x: 700, y: 100 }, radius: 90, holder: null },
+    ]
+    // Not the battalion on the bridge — a Rout would give the bridge up and
+    // put the Austrians ahead on ground, which is the other case entirely.
+    running(french[1])
+    battle.clock = 1
+    while (!isOver(battle) && battle.time < 10) step(battle)
+
+    expect(battle.outcome?.by).toBe("condition")
+    expect(battle.outcome?.winner).toBe("austrian")
+    expect(battle.outcome?.keyGround).toEqual([
+      { name: "the bridge", holder: "french" },
+      { name: "the farm", holder: "austrian" },
+    ])
   })
 
   it("leaves the Field to the enemy when a commander breaks off the action", () => {

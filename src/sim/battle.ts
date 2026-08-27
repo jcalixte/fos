@@ -547,7 +547,7 @@ function decide(battle: Battle): void {
   const name = battle.armies.find((a) => a.id === winner)?.name
   endBattle(
     battle,
-    "clock",
+    onGround ? "key-ground" : "condition",
     winner,
     !name
       ? `The clock has run out with nothing to separate the two armies`

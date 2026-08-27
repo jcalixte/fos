@@ -263,12 +263,19 @@ export interface Outcome {
   /** Battle time it was decided, in seconds. */
   at: number
   /**
+   * What decided it, and not merely when. The clock running out is two
+   * different endings wearing one word — the Key Ground counted, or the Key
+   * Ground even and condition asked instead — and a battle read off `clock`
+   * alone cannot tell which, so an army that split the Key Ground one apiece
+   * and won on condition would be reported as having won on ground it did not
+   * take. That the clock ran out at all is still readable from `at`.
+   *
    * `conceded` is its own way in rather than an Army Break wearing its coat.
    * Both end with an army off the Field, but one is a commander deciding and
    * the other is his men deciding for him, and a Return that could not tell
    * them apart would be reporting the wrong afternoon.
    */
-  by: "army-break" | "clock" | "conceded"
+  by: "army-break" | "key-ground" | "condition" | "conceded"
   /** The army left holding the Field, or null where nothing decided it. */
   winner: ArmyId | null
   /** Who held each piece of Key Ground when it ended. */
