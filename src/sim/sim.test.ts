@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { STEP, step, unitSpeed } from "./battle"
+import { isOver, STEP, step, unitSpeed } from "./battle"
 import { blankField } from "./scenario"
 import { cellIndex } from "./field"
 import {
@@ -26,7 +26,17 @@ import {
   resolveContact,
   struckSide,
 } from "./charge"
-import { canRally, describeMorale, dread, isRouting, shake } from "./morale"
+import {
+  ARMY_BREAK,
+  canRally,
+  hasArmyBroken,
+  describeMorale,
+  dread,
+  isRouting,
+  shake,
+  shareGone,
+  unitWeight,
+} from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
@@ -56,11 +66,32 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
   }
 }
 
-function emptyBattle(field: Field, units: Unit[]): Battle {
+/**
+ * One army per army id among the Units, each weighted by exactly what it has on
+ * the Field. A fixture has no Roster behind it, so anything else would leave it
+ * short of Units it never had and broken before the first step.
+ */
+function armiesOf(units: Unit[]): Battle["armies"] {
+  const seen = new Map<string, Battle["armies"][number]>()
+  for (const unit of units) {
+    const army = seen.get(unit.army) ?? {
+      id: unit.army,
+      name: unit.army,
+      colour: 0x2c7c40,
+      headquarters: null,
+      weight: 0,
+    }
+    army.weight += unitWeight(unit)
+    seen.set(unit.army, army)
+  }
+  return [...seen.values()]
+}
+
+function emptyBattle(field: Field, units: Unit[], armies?: Battle["armies"]): Battle {
   return {
     time: 0,
     field,
-    armies: [{ id: "french", name: "French", colour: 0x2c7c40, headquarters: null }],
+    armies: armies ?? armiesOf(units),
     units,
     couriers: [],
     volleys: [],
@@ -71,6 +102,7 @@ function emptyBattle(field: Field, units: Unit[]): Battle {
     arrivals: [],
     plan: [],
     clock: 2400,
+    outcome: null,
     seed: 1,
     nextId: 1,
   }
@@ -770,7 +802,7 @@ describe("C6 Fighting", () => {
     const { battle } = facingOff(60, { strength: 0 })
     step(battle)
     expect(battle.units.map((u) => u.id)).toEqual(["fr"])
-    expect(battle.dispatches.at(-1)?.text).toContain("destroyed")
+    expect(battle.dispatches.some((d) => d.text.includes("destroyed"))).toBe(true)
   })
 
   it("keeps a Volley only for the step it was fired in", () => {
@@ -1136,5 +1168,204 @@ describe("C6 Fighting — the Charge", () => {
     dread(exposed, horse, true, 10)
     expect(1 - facing.morale).toBeGreaterThan(0)
     expect(1 - exposed.morale).toBeCloseTo((1 - facing.morale) * 3, 5)
+  })
+})
+
+describe("C7 Army Break, and C8 the end of a battle", () => {
+  function army(id: string, name: string, weight: number): Battle["armies"][number] {
+    return { id, name, colour: 0, headquarters: null, weight }
+  }
+
+  /** `count` line battalions of one army, spread far enough apart to be alone. */
+  function brigade(id: string, at: number, count: number): Unit[] {
+    return Array.from({ length: count }, (_, i) =>
+      battalion({
+        id: `${id}${i}`,
+        army: id,
+        name: `${id} ${i}`,
+        position: { x: at, y: 100 + i * 160 },
+      }),
+    )
+  }
+
+  function running(unit: Unit): Unit {
+    unit.routing = { heading: Math.PI, brokeAt: 0 }
+    unit.morale = 0
+    return unit
+  }
+
+  it("weighs an elite Unit at twice a conscript one, which is all the weighting is for", () => {
+    expect(unitWeight(battalion({ grade: "elite" }))).toBe(
+      unitWeight(battalion({ grade: "conscript" })) * 2,
+    )
+  })
+
+  it("weighs Units and not men, so a squadron costs the army what a battalion does", () => {
+    // Wrong about bodies and right about the line: what the army has lost is a
+    // place in it, and the gap is the same width either way.
+    expect(unitWeight(battalion({ arm: "cavalry", strength: 220 }))).toBe(
+      unitWeight(battalion({ strength: 700 })),
+    )
+  })
+
+  it("breaks an army once a third of it, weighted by Grade, is running", () => {
+    const units = brigade("french", 200, 4)
+    const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
+    const french = battle.armies[0]
+
+    expect(shareGone(battle, french)).toBe(0)
+    running(units[0])
+    expect(shareGone(battle, french)).toBeCloseTo(0.25, 5)
+    expect(hasArmyBroken(battle, french)).toBe(false)
+    running(units[1])
+    expect(shareGone(battle, french)).toBeCloseTo(0.5, 5)
+    expect(shareGone(battle, french)).toBeGreaterThanOrEqual(ARMY_BREAK)
+    expect(hasArmyBroken(battle, french)).toBe(true)
+  })
+
+  it("is unmoved by casualties, so an army is never counted down to nothing", () => {
+    const units = brigade("french", 200, 4)
+    const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
+    // The whole brigade shot to a tenth of itself and still in its ranks. F11
+    // says a battle never ends by annihilation, and this is the half of it that
+    // is C7's: Units that have Broken are what Army Break counts.
+    for (const unit of units) unit.strength = 70
+    expect(shareGone(battle, battle.armies[0])).toBe(0)
+  })
+
+  it("counts a column still on the road, so a battle does not end while one is coming", () => {
+    const units = brigade("french", 200, 3)
+    const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
+    battle.arrivals.push({
+      at: 600,
+      unit: battalion({ id: "fr-late", army: "french", name: "9e Légère" }),
+      entry: { x: 8, y: 400 },
+      order: null,
+    })
+    running(units[0])
+
+    expect(hasArmyBroken(battle, battle.armies[0])).toBe(false)
+    // The same Field with nothing on the road is an army that has lost. This is
+    // the one conflict §6 flags between Army Break and Arrival, and the whole
+    // of the resolution is which side of the count the road sits on.
+    battle.arrivals = []
+    expect(hasArmyBroken(battle, battle.armies[0])).toBe(true)
+  })
+
+  it("lets a Rally take an army back off the edge, because the cascade is the thing", () => {
+    const units = brigade("french", 200, 4)
+    const battle = emptyBattle(blankField(200, 120), units, [army("french", "French", 4)])
+    running(units[0])
+    running(units[1])
+    expect(hasArmyBroken(battle, battle.armies[0])).toBe(true)
+    units[0].routing = null
+    expect(hasArmyBroken(battle, battle.armies[0])).toBe(false)
+  })
+
+  it("ends the battle at Army Break and leaves the Field to the other army", () => {
+    const units = [...brigade("french", 200, 4), ...brigade("austrian", 1400, 4)]
+    const battle = emptyBattle(blankField(200, 120), units, [
+      army("french", "French", 4),
+      army("austrian", "Austrian", 4),
+    ])
+    running(units[0])
+    running(units[1])
+
+    step(battle)
+    expect(isOver(battle)).toBe(true)
+    expect(battle.outcome?.by).toBe("army-break")
+    expect(battle.outcome?.winner).toBe("austrian")
+    expect(battle.dispatches.some((d) => d.text.includes("quitting the Field"))).toBe(true)
+  })
+
+  it("keeps the Outcome it first wrote, so the end of a battle is decided once", () => {
+    const units = [...brigade("french", 200, 4), ...brigade("austrian", 1400, 4)]
+    const battle = emptyBattle(blankField(200, 120), units)
+    running(units[0])
+    running(units[1])
+    step(battle)
+    const decided = battle.outcome
+    running(units[4])
+    running(units[5])
+    step(battle)
+    expect(battle.outcome).toBe(decided)
+    expect(battle.outcome?.winner).toBe("austrian")
+  })
+
+  it("does not end on the clock alone before the clock", () => {
+    const battle = emptyBattle(blankField(200, 120), brigade("french", 200, 4), [
+      army("french", "French", 4),
+    ])
+    battle.clock = 60
+    while (battle.time < 59) step(battle)
+    expect(isOver(battle)).toBe(false)
+    while (!isOver(battle) && battle.time < 120) step(battle)
+    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.time).toBeCloseTo(60, 5)
+  })
+
+  it("gives Key Ground to the last army that stood on it uncontested", () => {
+    const holder = battalion({ id: "fr1", army: "french", position: { x: 400, y: 100 } })
+    const battle = emptyBattle(blankField(200, 120), [holder], [army("french", "French", 1)])
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 400, y: 100 }, radius: 90, holder: null },
+    ]
+
+    step(battle)
+    expect(battle.keyGround[0].holder).toBe("french")
+    // Marched off it, and it is still French. Nobody has taken it since.
+    holder.position = { x: 900, y: 100 }
+    step(battle)
+    expect(battle.keyGround[0].holder).toBe("french")
+  })
+
+  it("changes hands for nobody while both armies are standing on it", () => {
+    const units = [
+      battalion({ id: "fr1", army: "french", position: { x: 400, y: 100 } }),
+      battalion({ id: "au1", army: "austrian", position: { x: 430, y: 100 } }),
+    ]
+    const battle = emptyBattle(blankField(200, 120), units, [
+      army("french", "French", 1),
+      army("austrian", "Austrian", 1),
+    ])
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 400, y: 100 }, radius: 90, holder: null },
+    ]
+    step(battle)
+    expect(battle.keyGround[0].holder).toBeNull()
+  })
+
+  it("is not held by a mob running over it", () => {
+    const mob = running(battalion({ id: "fr1", army: "french", position: { x: 400, y: 100 } }))
+    const battle = emptyBattle(blankField(200, 120), [mob], [army("french", "French", 4)])
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 400, y: 100 }, radius: 90, holder: null },
+    ]
+    step(battle)
+    expect(battle.keyGround[0].holder).toBeNull()
+  })
+
+  it("counts the Key Ground when the clock runs out", () => {
+    const holder = battalion({ id: "fr1", army: "french", position: { x: 400, y: 100 } })
+    const battle = emptyBattle(blankField(200, 120), [holder], [army("french", "French", 1)])
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 400, y: 100 }, radius: 90, holder: null },
+    ]
+    battle.clock = 30
+    while (!isOver(battle) && battle.time < 60) step(battle)
+
+    expect(battle.outcome?.by).toBe("clock")
+    expect(battle.outcome?.winner).toBe("french")
+    expect(battle.outcome?.keyGround).toEqual([{ name: "the bridge", holder: "french" }])
+  })
+
+  it("leaves the clock undecided when nobody is ahead on Key Ground", () => {
+    const battle = emptyBattle(blankField(200, 120), brigade("french", 200, 1), [
+      army("french", "French", 1),
+    ])
+    battle.clock = 1
+    while (!isOver(battle) && battle.time < 10) step(battle)
+    expect(battle.outcome?.winner).toBeNull()
+    expect(battle.dispatches.some((d) => d.text.includes("undecided"))).toBe(true)
   })
 })

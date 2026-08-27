@@ -1,5 +1,5 @@
 import { makeField } from "./field"
-import { FULL_MORALE } from "./morale"
+import { FULL_MORALE, unitWeight } from "./morale"
 import type {
   Arm,
   Arrival,
@@ -9,6 +9,7 @@ import type {
   Field,
   FormationName,
   Grade,
+  HeldGround,
   KeyGround,
   OrderBody,
   PlannedOrder,
@@ -119,16 +120,23 @@ export function assemble(scenario: AssembledScenario): Battle {
   const arrivals: Arrival[] = []
 
   for (const a of file.armies) {
-    armies.push({
+    const army: Army = {
       id: a.id,
       name: a.name,
       colour: Number.parseInt(a.colour.replace("#", ""), 16),
       headquarters: a.headquarters ? { army: a.id, position: { ...a.headquarters } } : null,
-    })
+      weight: 0,
+    }
+    armies.push(army)
     const roster = rosters[a.roster]
     if (!roster) throw new Error(`Scenario names a Roster it has not loaded: ${a.roster}`)
     for (const entry of roster.entries) {
       const unit = entryToUnit(entry, a.id)
+      // What the army is worth is settled here, off the whole Roster, and never
+      // moves again — so a Unit that Breaks lowers what is standing without
+      // lowering what it is measured against, and one still on the road is
+      // already counted.
+      army.weight += unitWeight(unit)
       if (entry.arrival) {
         arrivals.push({
           at: entry.arrival.at,
@@ -165,10 +173,11 @@ export function assemble(scenario: AssembledScenario): Battle {
     contacts: [],
     dispatches: [],
     crossings,
-    keyGround: file.keyGround,
+    keyGround: file.keyGround.map((g): HeldGround => ({ ...g, holder: null })),
     arrivals,
     plan: [...file.plan],
     clock: file.clock,
+    outcome: null,
     seed: file.seed,
     nextId: 1,
   }

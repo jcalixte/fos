@@ -215,6 +215,12 @@ export interface KeyGround {
   radius: number
 }
 
+/** Key Ground, with the army standing on it. Only a battle has a holder. */
+export interface HeldGround extends KeyGround {
+  /** The last army to have it uncontested, or null while nobody has had it. */
+  holder: ArmyId | null
+}
+
 /** A passable strip through otherwise impassable terrain — only a march column fits. */
 export interface Crossing {
   name: string
@@ -228,6 +234,26 @@ export interface Army {
   /** Colour the army's Units are drawn in. */
   colour: number
   headquarters: Headquarters | null
+  /**
+   * What the whole Roster is worth, weighted by Grade and fixed at Deployment.
+   * The denominator Army Break is measured against — and, because it is fixed
+   * there, the reason a Unit still on the road counts toward it.
+   */
+  weight: number
+}
+
+/**
+ * How a battle ended. A battle ends at Army Break for either side, or when the
+ * Scenario clock runs out and the Key Ground is counted. Never by annihilation.
+ */
+export interface Outcome {
+  /** Battle time it was decided, in seconds. */
+  at: number
+  by: "army-break" | "clock"
+  /** The army left holding the Field, or null where nothing decided it. */
+  winner: ArmyId | null
+  /** Who held each piece of Key Ground when it ended. */
+  keyGround: { name: string; holder: ArmyId | null }[]
 }
 
 export interface Battle {
@@ -243,12 +269,14 @@ export interface Battle {
   contacts: Contact[]
   dispatches: Dispatch[]
   crossings: Crossing[]
-  keyGround: KeyGround[]
+  keyGround: HeldGround[]
   arrivals: Arrival[]
   /** Enemy Orders fired by clock time; no planning intelligence behind them. */
   plan: PlannedOrder[]
   /** Seconds on the Scenario clock; the battle ends when it runs out. */
   clock: number
+  /** How it ended, once it has. Null while it is still being fought. */
+  outcome: Outcome | null
   seed: number
   nextId: number
 }

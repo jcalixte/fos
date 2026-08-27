@@ -1,6 +1,6 @@
 import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { TRAVELLING_FORMATION } from "./formation"
-import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
+import type { Arm, Army, ArmyId, Battle, Grade, Unit, Vec2 } from "./types"
 import { bearing, distance } from "./vec"
 
 /**
@@ -16,9 +16,14 @@ import { bearing, distance } from "./vec"
  * everything the rules ask about: what casualties cost, what standing still
  * gives back, what a Rout does to a Unit, and what a Rally costs it.
  *
- * Not built yet: Fatigue, Disorder, Pursuit and Army Break. A Rout stands in for
- * Disorder in the meantime by putting the Unit in its travelling Formation,
- * which is legible and wrong in the Unit's favour.
+ * The last thing in here is the one that is about the army rather than the
+ * battalion. Army Break is Morale read one level up: an army is beaten when
+ * enough of it is running, exactly as a Unit is, and neither is ever beaten by
+ * being counted down to nothing.
+ *
+ * Not built yet: Fatigue, Disorder and Pursuit. A Rout stands in for Disorder in
+ * the meantime by putting the Unit in its travelling Formation, which is
+ * legible and wrong in the Unit's favour.
  */
 
 /** Morale, and the Ceiling on it, that a Unit starts a battle with. */
@@ -246,4 +251,70 @@ export function hasQuitTheField(battle: Battle, unit: Unit): boolean {
   if (!isRouting(unit)) return false
   const { cx, cy } = cellAt(battle.field, unit.position)
   return !inBounds(battle.field, cx, cy)
+}
+
+/**
+ * What losing a Unit costs its army. The army leans on its best, so an elite
+ * Unit going is worth exactly two conscript ones going — which is the whole of
+ * what the weighting is asked for.
+ *
+ * It weighs Units and not men, because Army Break counts Units that have
+ * Broken. So a squadron of two hundred costs the same as a battalion of seven
+ * hundred: wrong about bodies, right about the line, where what has been lost
+ * is a place in it and the gap is the same width either way.
+ */
+const GRADE_WEIGHT: Record<Grade, number> = { conscript: 0.75, line: 1, elite: 1.5 }
+
+/**
+ * The share of an army that has to be running or gone before the rest of it
+ * will not stay. A third, which is roughly where the period's armies quit —
+ * nothing like annihilation, and well short of half.
+ */
+export const ARMY_BREAK = 1 / 3
+
+/** What one Unit is worth toward its army's Army Break. */
+export function unitWeight(unit: Unit): number {
+  return GRADE_WEIGHT[unit.grade]
+}
+
+/**
+ * What an army still has standing: Units on the Field that are not running,
+ * plus everything still on the road.
+ *
+ * Counting the road is what settles the conflict between Army Break and
+ * Arrival. An army one Unit from breaking with a fresh column ninety seconds
+ * off the Field edge has not lost, and a rule that looked only at the Field
+ * would end the battle a minute before its best moment.
+ */
+function standing(battle: Battle, army: ArmyId): number {
+  let total = 0
+  for (const unit of battle.units) {
+    if (unit.army !== army || isRouting(unit)) continue
+    total += unitWeight(unit)
+  }
+  for (const arrival of battle.arrivals) {
+    if (arrival.unit.army !== army) continue
+    total += unitWeight(arrival.unit)
+  }
+  return total
+}
+
+/**
+ * The share of an army that is running or gone, 0 to 1.
+ *
+ * It reads what is happening now rather than keeping a tally, so a Unit that
+ * Rallies comes back off it and the share can fall as well as rise. That is
+ * deliberate: an army breaks in the moment too much of it is running at once,
+ * and it is that cascade which ends a battle rather than the afternoon's
+ * arithmetic. A commander who gets two battalions back in hand has bought the
+ * time he paid for.
+ */
+export function shareGone(battle: Battle, army: Army): number {
+  if (army.weight <= 0) return 0
+  return Math.max(0, 1 - standing(battle, army.id) / army.weight)
+}
+
+/** True when enough of an army is running or gone that the rest will not stay. */
+export function hasArmyBroken(battle: Battle, army: Army): boolean {
+  return shareGone(battle, army) >= ARMY_BREAK
 }

@@ -1,4 +1,4 @@
-import { step, STEP } from "./battle"
+import { isOver, step, STEP } from "./battle"
 import { snapshot, type BattleSnapshot } from "./snapshot"
 import type { Battle } from "./types"
 
@@ -28,7 +28,11 @@ export class BattleRunner {
 
   /** Advance by `seconds` of wall clock. Steps are always exactly STEP long. */
   advance(seconds: number): void {
-    if (!this.running) {
+    // A decided battle stops here rather than in `step`, which stays a plain
+    // step. Nothing downstream of the Outcome would be wrong if it ran on — the
+    // Outcome is written once and never revisited — but a battle that has
+    // ended should not still be moving on the screen.
+    if (!this.running || isOver(this.battle)) {
       this.alpha = 1
       return
     }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import { admits, STEP, step } from "./battle"
 import { cellAt, cellIndex } from "./field"
 import { GROUNDS } from "./ground"
+import { unitWeight } from "./morale"
 import { issueOrder } from "./orders"
 import { blankField } from "./scenario"
 import type { Battle, Field, Unit } from "./types"
@@ -51,7 +52,17 @@ function battle(field: Field, units: Unit[]): Battle {
   return {
     time: 0,
     field,
-    armies: [{ id: "french", name: "French", colour: 0x2f4d8f, headquarters: null }],
+    armies: [
+      {
+        id: "french",
+        name: "French",
+        colour: 0x2f4d8f,
+        headquarters: null,
+        // What is on the Field is the whole of this fixture's army, so nothing
+        // is missing from it and it is nowhere near Army Break.
+        weight: units.reduce((total, unit) => total + unitWeight(unit), 0),
+      },
+    ],
     units,
     couriers: [],
     volleys: [],
@@ -62,6 +73,7 @@ function battle(field: Field, units: Unit[]): Battle {
     arrivals: [],
     plan: [],
     clock: 1800,
+    outcome: null,
     seed: 179605,
     nextId: 1,
   }

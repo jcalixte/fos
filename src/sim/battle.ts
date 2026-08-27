@@ -20,9 +20,17 @@ import {
 } from "./charge"
 import { resolveFire } from "./fighting"
 import { applyInitiative } from "./initiative"
-import { advanceRout, dread, hasQuitTheField, isRouting, recover } from "./morale"
+import { advanceRout, dread, hasArmyBroken, hasQuitTheField, isRouting, recover } from "./morale"
 import { advanceCouriers } from "./orders"
-import { describeFormation, type Battle, type ChargeOrder, type Unit, type Vec2 } from "./types"
+import {
+  describeFormation,
+  type ArmyId,
+  type Battle,
+  type ChargeOrder,
+  type Outcome,
+  type Unit,
+  type Vec2,
+} from "./types"
 import { angleDelta, bearing, distance } from "./vec"
 import { route as findRoute } from "./routing"
 
@@ -392,8 +400,107 @@ export function step(battle: Battle): void {
     recover(battle, unit, STEP)
   }
   clearTheGone(battle)
+  holdKeyGround(battle)
+  decide(battle)
+}
+
+/**
+ * Who holds each piece of Key Ground, kept up to date as Units walk on and off
+ * it. An army holds one by having the last uncontested Unit on it: while both
+ * armies have somebody standing there it changes hands for nobody, and a piece
+ * taken and then marched away from stays taken until somebody else takes it.
+ *
+ * A Rout does not count. A mob streaming back over the bridge has not held the
+ * bridge, and the army it belongs to is in no position to claim it.
+ */
+function holdKeyGround(battle: Battle): void {
+  for (const ground of battle.keyGround) {
+    let claimant: ArmyId | null = null
+    let contested = false
+    for (const unit of battle.units) {
+      if (isRouting(unit)) continue
+      if (distance(unit.position, ground.position) > ground.radius) continue
+      if (claimant === null) claimant = unit.army
+      else if (claimant !== unit.army) contested = true
+    }
+    if (claimant !== null && !contested) ground.holder = claimant
+  }
+}
+
+/** The army holding the most Key Ground, or null where nobody is ahead on it. */
+function onPoints(battle: Battle): ArmyId | null {
+  const held = new Map<ArmyId, number>()
+  for (const ground of battle.keyGround) {
+    if (ground.holder === null) continue
+    held.set(ground.holder, (held.get(ground.holder) ?? 0) + 1)
+  }
+  let leader: ArmyId | null = null
+  let most = 0
+  let level = false
+  for (const [army, count] of held) {
+    if (count > most) {
+      most = count
+      leader = army
+      level = false
+    } else if (count === most) {
+      level = true
+    }
+  }
+  return level ? null : leader
+}
+
+function endBattle(battle: Battle, by: Outcome["by"], winner: ArmyId | null, text: string): void {
+  battle.outcome = {
+    at: battle.time,
+    by,
+    winner,
+    keyGround: battle.keyGround.map((g) => ({ name: g.name, holder: g.holder })),
+  }
+  battle.dispatches.push({ at: battle.time, unitId: null, text })
+}
+
+/**
+ * Whether the battle is decided, and by what (F11). Two ways in and no third:
+ * an army breaks, or the clock runs out and the Key Ground is counted. There is
+ * no way to win by killing everything, because C7 sees to it that nothing is
+ * there to be killed — a battalion is running long before it is gone.
+ *
+ * Army Break outranks the clock, and the Key Ground does not enter into it. An
+ * army that has quit the Field has left whatever it was standing on.
+ */
+function decide(battle: Battle): void {
+  if (battle.outcome) return
+
+  const broken = battle.armies.filter((army) => hasArmyBroken(battle, army))
+  if (broken.length > 0) {
+    // Both armies going in the same step is rare and entirely possible: two
+    // Routs a tick apart on a Field where both sides are already at the edge.
+    // Nobody won it, and saying so is better than picking one.
+    const left = battle.armies.filter((army) => !broken.includes(army))
+    endBattle(
+      battle,
+      "army-break",
+      left.length === 1 ? left[0].id : null,
+      left.length === 1
+        ? `The ${broken.map((a) => a.name).join(" and ")} army has had enough, and is quitting the Field`
+        : `Both armies have had enough, and the Field is left to nobody`,
+    )
+    return
+  }
+
+  if (battle.time < battle.clock) return
+  const winner = onPoints(battle)
+  const name = battle.armies.find((a) => a.id === winner)?.name
+  endBattle(
+    battle,
+    "clock",
+    winner,
+    name
+      ? `The clock has run out, and the ${name} army holds the Key Ground`
+      : `The clock has run out with the Key Ground undecided`,
+  )
 }
 
 export function isOver(battle: Battle): boolean {
-  return battle.time >= battle.clock
+  return battle.outcome !== null
 }
