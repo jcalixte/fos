@@ -255,13 +255,20 @@ export interface Army {
 }
 
 /**
- * How a battle ended. A battle ends at Army Break for either side, or when the
- * Scenario clock runs out and the Key Ground is counted. Never by annihilation.
+ * How a battle ended: an army broke, the clock ran out and what each army had
+ * was counted, or the commander broke off the action himself. Never by
+ * annihilation.
  */
 export interface Outcome {
   /** Battle time it was decided, in seconds. */
   at: number
-  by: "army-break" | "clock"
+  /**
+   * `conceded` is its own way in rather than an Army Break wearing its coat.
+   * Both end with an army off the Field, but one is a commander deciding and
+   * the other is his men deciding for him, and a Return that could not tell
+   * them apart would be reporting the wrong afternoon.
+   */
+  by: "army-break" | "clock" | "conceded"
   /** The army left holding the Field, or null where nothing decided it. */
   winner: ArmyId | null
   /** Who held each piece of Key Ground when it ended. */

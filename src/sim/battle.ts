@@ -504,11 +504,12 @@ function endBattle(battle: Battle, by: Outcome["by"], winner: ArmyId | null, tex
 }
 
 /**
- * Whether the battle is decided, and by what (F11). Two ways in and no third:
- * an army breaks, or the clock runs out and what each army has to show for the
- * afternoon is counted. There is no way to win by killing everything, because
- * C7 sees to it that nothing is there to be killed — a battalion is running
- * long before it is gone.
+ * Whether the battle is decided, and by what (F11). Two ways in that the
+ * simulation reaches on its own — an army breaks, or the clock runs out and
+ * what each army has to show for the afternoon is counted — and a third the
+ * player reaches by hand, which is `concede` below. There is no way to win by
+ * killing everything, because C7 sees to it that nothing is there to be killed
+ * — a battalion is running long before it is gone.
  *
  * Army Break outranks the clock, and the Key Ground does not enter into it. An
  * army that has quit the Field has left whatever it was standing on.
@@ -553,6 +554,30 @@ function decide(battle: Battle): void {
       : onGround
         ? `The clock has run out, and the ${name} army holds the Key Ground`
         : `The clock has run out with the Key Ground even, and the ${name} army in better condition`,
+  )
+}
+
+/**
+ * Break off the action: the commander takes his army off the Field rather than
+ * fight the clock out. The Field is left to the enemy, whatever either army was
+ * standing on when he decided — the same as an Army Break, and for the same
+ * reason, since an army that has gone has left what it was holding.
+ *
+ * It is the player's hand and not a rule, so it lives outside `decide` and is
+ * called rather than checked. What it is not is a way to bank a won afternoon:
+ * conceding never wins, so the Key Ground a commander is sitting on cannot be
+ * cashed by stopping the clock on it.
+ */
+export function concede(battle: Battle, army: ArmyId): void {
+  if (battle.outcome) return
+  const quitting = battle.armies.find((a) => a.id === army)
+  if (!quitting) return
+  const left = battle.armies.filter((a) => a.id !== army)
+  endBattle(
+    battle,
+    "conceded",
+    left.length === 1 ? left[0].id : null,
+    `The ${quitting.name} army breaks off the action, and quits the Field`,
   )
 }
 

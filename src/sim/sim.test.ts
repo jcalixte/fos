@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { isOver, STEP, step, unitSpeed } from "./battle"
+import { concede, isOver, STEP, step, unitSpeed } from "./battle"
 import { blankField } from "./scenario"
 import { cellIndex } from "./field"
 import {
@@ -1431,6 +1431,54 @@ describe("C7 Army Break, and C8 the end of a battle", () => {
     battle.clock = 1
     while (!isOver(battle) && battle.time < 10) step(battle)
     expect(battle.outcome?.winner).toBe("french")
+  })
+
+  it("leaves the Field to the enemy when a commander breaks off the action", () => {
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...brigade("french", 200, 4), ...brigade("austrian", 700, 4)],
+      [army("french", "French", 4), army("austrian", "Austrian", 4)],
+    )
+    battle.clock = 3600
+    step(battle)
+    concede(battle, "french")
+
+    expect(isOver(battle)).toBe(true)
+    expect(battle.outcome?.by).toBe("conceded")
+    expect(battle.outcome?.winner).toBe("austrian")
+    expect(battle.dispatches.some((d) => d.text.includes("breaks off the action"))).toBe(true)
+  })
+
+  it("does not let a commander bank the Key Ground he is sitting on", () => {
+    const battle = emptyBattle(
+      blankField(200, 120),
+      [...brigade("french", 200, 4), ...brigade("austrian", 700, 4)],
+      [army("french", "French", 4), army("austrian", "Austrian", 4)],
+    )
+    battle.keyGround = [
+      { name: "the bridge", position: { x: 200, y: 100 }, radius: 90, holder: null },
+    ]
+    battle.clock = 3600
+    step(battle)
+    expect(battle.keyGround[0].holder).toBe("french")
+
+    // Holding the only piece on the Field, and quitting it still loses: an
+    // army that has gone has left what it was standing on.
+    concede(battle, "french")
+    expect(battle.outcome?.winner).toBe("austrian")
+    expect(battle.outcome?.keyGround).toEqual([{ name: "the bridge", holder: "french" }])
+  })
+
+  it("does not reopen a battle that is already decided", () => {
+    const battle = emptyBattle(blankField(200, 120), brigade("french", 200, 4), [
+      army("french", "French", 4),
+    ])
+    battle.clock = 1
+    while (!isOver(battle) && battle.time < 10) step(battle)
+    const decided = battle.outcome
+
+    concede(battle, "french")
+    expect(battle.outcome).toBe(decided)
   })
 })
 
