@@ -1,6 +1,6 @@
 import { faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
 import { breakUnit, hasBroken, isRouting, shake } from "./morale"
-import type { Arm, Battle, Unit, Vec2 } from "./types"
+import type { Arm, Battle, Unit, UnitId, Vec2 } from "./types"
 import { angleDelta, axes, bearing, distance } from "./vec"
 
 /**
@@ -76,8 +76,21 @@ const LETHALITY: Record<Arm, number> = { infantry: 0.035, cavalry: 0.1, artiller
  * CONTEXT forbids Grade a damage bonus and means it, and Morale is already
  * deciding the outcome — letting it decide the casualties too would count it
  * twice.
+ *
+ * Paid to whichever side is running, and not to whichever side this function
+ * was handed first. That distinction is the whole of what a countercharge buys:
+ * two regiments meeting head-on are both at the gallop, and while impetus went
+ * to the `unit` argument alone, which of them got it was decided by the order
+ * the Units happen to sit in the array — so meeting a charge was strictly worse
+ * than standing to receive it, because the regiment that ran closed the last
+ * few metres on its opponent's behalf and was then struck as the target.
  */
 const IMPETUS = 2
+
+/** What a Unit brings to a Contact for being in motion: a run, or nothing. */
+function impetus(unit: Unit): number {
+  return unit.charging && !unit.charging.recoiling ? IMPETUS : 1
+}
 
 /**
  * Whether a Charge may be aimed at this Unit at all. A Routing one may not: the
@@ -177,10 +190,31 @@ export function chargersOf(battle: Battle, unit: Unit): Unit[] {
   })
 }
 
-/** End a Charge, put the Order down with it, and say why. */
+/**
+ * Let a Unit go at another on its own account, and say whether it went. The
+ * counterpart to `endCharge`, and here rather than in C2 for the same reason: a
+ * Charge is a state this module owns, and the rule list only ever asks for one.
+ *
+ * Idempotent, because the rule that asks re-matches every tick to keep the
+ * Order suspended for the length of the run — asking twice must not relaunch it
+ * and reset the clock it was launched on.
+ */
+export function beginCharge(battle: Battle, unit: Unit, targetId: UnitId): boolean {
+  if (unit.charging) return false
+  unit.charging = { targetId, launchedAt: battle.time, recoiling: false }
+  unit.route = []
+  return true
+}
+
+/** End a Charge, put the Order down with it where it was one, and say why. */
 export function endCharge(battle: Battle, unit: Unit, text: string): void {
   unit.charging = null
-  unit.order = null
+  // The Order goes down with the Charge only where the Order *was* the Charge.
+  // A countercharge came out of the rule list instead, and Initiative suspends
+  // an Order and never cancels one (ADR-0004) — so a regiment that met the
+  // horse coming on goes back to whatever it was doing before, rather than
+  // standing in an empty field waiting for a rider that is not coming.
+  if (unit.order?.order.body.kind === "charge") unit.order = null
   unit.route = []
   battle.dispatches.push({ at: battle.time, unitId: unit.id, text })
 }
@@ -195,11 +229,13 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
   const side = struckSide(target, unit.position)
   const width = contactWidth(unit, target)
 
-  const dealt = Math.min(target.strength, reach(unit, width) * LETHALITY[unit.arm] * IMPETUS)
+  const dealt = Math.min(target.strength, reach(unit, width) * LETHALITY[unit.arm] * impetus(unit))
   // Off a Face there is nothing to take in return. The chargers are into
   // something that cannot turn to meet them, and it costs them nothing.
   const taken =
-    side === null ? 0 : Math.min(unit.strength, reach(target, width) * LETHALITY[target.arm])
+    side === null
+      ? 0
+      : Math.min(unit.strength, reach(target, width) * LETHALITY[target.arm] * impetus(target))
 
   target.strength -= dealt
   unit.strength -= taken

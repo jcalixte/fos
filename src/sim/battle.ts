@@ -42,9 +42,9 @@ import {
   describeFormation,
   type ArmyId,
   type Battle,
-  type ChargeOrder,
   type Outcome,
   type Unit,
+  type UnitId,
   type Vec2,
 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
@@ -198,9 +198,14 @@ function runOn(
  * round a wood, because it is a committed run and not a march, so it stops dead
  * at ground it cannot enter and at a Crossing it does not fit through — and the
  * Order stands there until the player sends another.
+ *
+ * Given a target and not an Order, because a Charge is a state and not an Order
+ * (see `Charge` in C1) and there are now two ways into it: one the player gave,
+ * and a countercharge the rule list gave. Both run on the same geometry from
+ * here on, which is the point of the state being the thing that carries it.
  */
-function advanceCharge(battle: Battle, unit: Unit, body: ChargeOrder, dt: number): void {
-  const target = battle.units.find((u) => u.id === body.targetId)
+function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number): void {
+  const target = battle.units.find((u) => u.id === targetId)
   if (!target) {
     endCharge(battle, unit, `${unit.name} has nothing left to charge`)
     return
@@ -288,7 +293,7 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   }
 
   if (body.kind === "charge") {
-    advanceCharge(battle, unit, body, dt)
+    advanceCharge(battle, unit, body.targetId, dt)
     return
   }
 
@@ -457,6 +462,10 @@ export function step(battle: Battle): void {
     } else {
       const was = unit.position
       if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
+      // Suspended, and running anyway: a countercharge holds the Order back and
+      // commits the Unit, so the Charge state is what carries it from here.
+      // Above the shift, because a regiment that has been let go is not walking.
+      else if (unit.charging) advanceCharge(battle, unit, unit.charging.targetId, STEP)
       // Suspended, and walking anyway: the Latitude rules are the only ones
       // that hold an Order back and still move the Unit (ADR-0007).
       else if (unit.shift) shiftGround(battle, unit, STEP)

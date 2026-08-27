@@ -41,6 +41,7 @@ import {
 } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { armyReturns } from "./return"
+import { applyInitiative } from "./initiative"
 import { defaultStanding, leash } from "./standing"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Grade, Unit } from "./types"
@@ -1443,6 +1444,171 @@ describe("C6 Fighting — the Charge", () => {
     while (battle.time < 600 && battle.contacts.length === 0) step(battle)
     return { cavalry, enemy, battle, contact: battle.contacts[0] }
   }
+
+  describe("the countercharge", () => {
+    /** Enemy horse committed to a Charge on a regiment of ours, `gap` metres short. */
+    function comingOn(gap: number, ours: Partial<Unit> = {}) {
+      const mine = regiment({ id: "fr-hus", army: "french", facing: Math.PI })
+      Object.assign(mine, ours)
+      mine.post = { ...mine.position }
+      const theirs = regiment({ id: "au-hus", army: "austrian", name: "Hussar Nr. 4" })
+      place(theirs, mine, gap)
+      theirs.charging = { targetId: mine.id, launchedAt: 0, recoiling: false }
+      theirs.order = {
+        order: {
+          id: "o1",
+          unitId: theirs.id,
+          body: { kind: "charge", targetId: mine.id },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      return { mine, theirs, battle: emptyBattle(blankField(250, 250), [mine, theirs]) }
+    }
+
+    it("lets the horse go at what is coming on, on its own account", () => {
+      const { mine, theirs, battle } = comingOn(CHARGE_RANGE - 20)
+      applyInitiative(mine, battle)
+      expect(mine.charging?.targetId).toBe(theirs.id)
+      expect(mine.suspendedBy).toBe("countercharged the horse coming on")
+    })
+
+    it("stands still for anything further off than a Charge's run-in", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE + 40)
+      applyInitiative(mine, battle)
+      expect(mine.charging).toBeNull()
+    })
+
+    it("needs a Charge coming on, and not the sight of horse", () => {
+      const { mine, theirs, battle } = comingOn(60)
+      theirs.charging = null
+      theirs.order = null
+      applyInitiative(mine, battle)
+      expect(mine.charging).toBeNull()
+    })
+
+    it("leaves a battalion to make square instead, which is its own answer", () => {
+      const foot = battalion({ army: "french", position: { x: 800, y: 1000 }, facing: 0 })
+      foot.post = { ...foot.position }
+      const theirs = regiment({ id: "au-hus", army: "austrian" })
+      place(theirs, foot, 100)
+      theirs.charging = { targetId: foot.id, launchedAt: 0, recoiling: false }
+      const battle = emptyBattle(blankField(250, 250), [foot, theirs])
+      applyInitiative(foot, battle)
+      expect(foot.charging).toBeNull()
+      expect(foot.changing?.to).toBe("square")
+    })
+
+    it("does not argue with a Charge the player gave it", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE - 20)
+      const other = regiment({ id: "au-2", army: "austrian", position: { x: 1200, y: 1200 } })
+      battle.units.push(other)
+      mine.order = {
+        order: {
+          id: "p1",
+          unitId: mine.id,
+          body: { kind: "charge", targetId: other.id },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      applyInitiative(mine, battle)
+      // The Order stands: it is aimed at the far regiment, not at the near one.
+      expect(mine.suspendedBy).toBeNull()
+      expect(mine.charging).toBeNull()
+    })
+
+    it("runs the countercharge with no Order behind it, and comes to Contact", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE - 20)
+      const from = mine.position.x
+      while (battle.time < 600 && battle.contacts.length === 0) step(battle)
+      expect(battle.contacts).toHaveLength(1)
+      // It met them: the regiment covered ground toward the charge rather than
+      // standing where it was, and nothing but the Charge state carried it.
+      expect(mine.position.x).toBeLessThan(from - 20)
+    })
+
+    it("takes the exchange with it rather than losing one for nothing", () => {
+      const met = comingOn(CHARGE_RANGE - 20)
+      while (met.battle.time < 600 && met.battle.contacts.length === 0) step(met.battle)
+      const contact = met.battle.contacts[0]
+      // Both were at the gallop, so both paid a running Unit's price. Standing
+      // to receive costs a regiment everything and the enemy nothing, which is
+      // the whole reason the horse does not wait to be told.
+      expect(contact.casualties).toBeCloseTo(contact.targetCasualties)
+      expect(met.theirs.morale).toBeLessThan(0)
+    })
+
+    it("gives the Order back afterwards, because Initiative never cancels one", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE - 20)
+      const errand = {
+        order: {
+          id: "m1",
+          unitId: mine.id,
+          body: {
+            kind: "move" as const,
+            destination: { x: 200, y: 1000 },
+            arrivalFacing: 0,
+            arrivalFormation: "line" as const,
+          },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      mine.order = errand
+      applyInitiative(mine, battle)
+      expect(mine.charging).not.toBeNull()
+      while (battle.time < 900 && mine.charging !== null) step(battle)
+      // The errand is still in its hand: the Charge was never the Order.
+      expect(mine.order).toBe(errand)
+    })
+
+    it("keeps the Order suspended for the whole run, and does not relaunch it", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE - 20)
+      applyInitiative(mine, battle)
+      const launched = mine.charging!.launchedAt
+      battle.time += 5
+      applyInitiative(mine, battle)
+      expect(mine.charging!.launchedAt).toBe(launched)
+      expect(mine.suspendedBy).toBe("countercharged the horse coming on")
+    })
+
+    it("countercharges on hold ground, which is the brief nobody writes", () => {
+      const { mine, battle } = comingOn(CHARGE_RANGE - 20)
+      expect(mine.standing.latitude).toBe("hold-ground")
+      applyInitiative(mine, battle)
+      // Preservation is not Latitude: a leash of zero must not mean standing to
+      // receive a charge in every battle with no Standing Order written for it.
+      expect(mine.charging).not.toBeNull()
+    })
+  })
+
+  it("pays impetus to whichever side is running, and not to whichever struck", () => {
+    // Horse against horse, so both sides can bring a run to the Contact.
+    const opposing = { arm: "cavalry" as const, strength: 400, formation: "line" as const }
+    // Standing to receive: the target brings nothing, and the arithmetic is
+    // what it always was.
+    const still = struck(opposing)
+    // Met head-on: both are at the gallop, so both pay a running Unit's price.
+    const met = struck({
+      ...opposing,
+      charging: { targetId: "ca", launchedAt: 0, recoiling: false },
+    })
+    expect(met.contact.casualties).toBeCloseTo(still.contact.casualties * 2)
+    // What the chargers deal is untouched by it either way: impetus is read off
+    // each side's own motion, so answering a Charge does not blunt it.
+    expect(met.contact.targetCasualties).toBeCloseTo(still.contact.targetCasualties)
+  })
+
+  it("pays a recoiling Unit nothing, because it is running the other way", () => {
+    const opposing = { arm: "cavalry" as const, strength: 400, formation: "line" as const }
+    const still = struck(opposing)
+    const thrownBack = struck({
+      ...opposing,
+      charging: { targetId: "ca", launchedAt: 0, recoiling: true },
+    })
+    expect(thrownBack.contact.casualties).toBeCloseTo(still.contact.casualties)
+  })
 
   it("is for the two Arms that can run at somebody, and not for the guns", () => {
     expect(canCharge("cavalry")).toBe(true)

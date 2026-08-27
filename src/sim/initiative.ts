@@ -1,4 +1,4 @@
-import { chargersOf } from "./charge"
+import { beginCharge, CHARGE_RANGE, chargersOf } from "./charge"
 import { aim } from "./fighting"
 import { cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import {
@@ -13,7 +13,7 @@ import {
 } from "./formation"
 import { breakUnit, canRally, hasBroken, isRouting, rally } from "./morale"
 import { leash } from "./standing"
-import type { Battle, FormationName, Unit, Vec2 } from "./types"
+import type { Battle, FormationName, Unit, UnitId, Vec2 } from "./types"
 import { bearing, distance, normalise, scale, sub } from "./vec"
 
 /**
@@ -42,6 +42,13 @@ export interface InitiativeAction {
    * giving ground to, or closing on, is moving too.
    */
   march?: Vec2
+  /**
+   * The Unit the rule lets this one go at, if it lets it go at all. The one
+   * thing in here that ADR-0002 would otherwise reserve to a Courier, and it is
+   * narrow on purpose: the rule that reaches it answers a Charge already coming
+   * on and can aim at nothing else, so no rung buys the choice of a target.
+   */
+  charge?: UnitId
   /**
    * What the rule does to the Unit's obedience. Only Morale reaches this far: a
    * Rout is a Unit that has stopped listening, which no Formation rule can say.
@@ -354,6 +361,41 @@ export const RULES: InitiativeRule[] = [
     },
   },
   {
+    // Beside the square and under nothing else, because it is the same rule for
+    // the arm that has no square. Infantry answers horse coming on by presenting
+    // four Faces; cavalry has one Formation and cannot present anything, so its
+    // only answer is not to be standing still when the charge arrives. Both stop
+    // mid-march and mid-Order to give it, and for the same reason.
+    //
+    // The one place Initiative commits a Charge, and the narrowest it can be:
+    // it answers a Charge already committed to *this* Unit, so it picks no
+    // objective and cannot be aimed. Horse standing to receive is horse ridden
+    // over — that is the whole of the rule, and it is why the gap was left here
+    // rather than filled with something that goes looking.
+    //
+    // Not gated on Latitude, like the square above it and unlike the three
+    // Latitude rules below. A leash bounds what a Unit spends acting on its own
+    // account; this is preservation, and `hold-ground` is the default brief, so
+    // gating it would mean cavalry sat still for a charge in every battle nobody
+    // had written a Standing Order for. Where the regiment ends up is the
+    // accepted cost of any Charge (ADR-0007).
+    //
+    // It re-matches for as long as the run lasts, so the Order stays suspended
+    // until the Charge is over and the regiment picks it back up — `beginCharge`
+    // is idempotent for exactly this.
+    name: "countercharged the horse coming on",
+    applies: (unit, battle) => {
+      if (unit.arm !== "cavalry") return null
+      // A Charge the player gave is an Order, and C2 does not argue with one.
+      if (unit.order?.order.body.kind === "charge") return null
+      if (unit.charging) return { charge: unit.charging.targetId }
+      const coming = chargersOf(battle, unit).find(
+        (other) => distance(unit.position, other.position) <= CHARGE_RANGE,
+      )
+      return coming ? { charge: coming.id } : null
+    },
+  },
+  {
     // Under the square, and over everything about how a Unit travels. Giving
     // ground is preservation and belongs with the rules that preserve: a screen
     // exists to watch and not to be fixed, and a Unit that means to keep its
@@ -520,12 +562,14 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     unit.shift = action.march ?? null
     if (unit.suspendedBy === rule.name) return
     const reformed = action.formation ? beginChange(unit, action.formation) : false
+    const gone = action.charge !== undefined ? beginCharge(battle, unit, action.charge) : false
     // A rule that only re-forms the Unit has done nothing if the Unit is already
     // standing that way, and must not claim the Order. A rule that changes what
-    // the Unit is *obeying*, or walks it somewhere, has always done something.
+    // the Unit is *obeying*, walks it somewhere, or lets it go at somebody, has
+    // always done something.
     if (action.obedience === "break") breakUnit(battle, unit)
     else if (action.obedience === "rally") rally(unit)
-    else if (!reformed && !action.march) return
+    else if (!reformed && !action.march && !gone) return
     unit.suspendedBy = rule.name
     battle.dispatches.push({
       at: battle.time,

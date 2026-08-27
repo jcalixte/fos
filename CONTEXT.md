@@ -333,6 +333,10 @@ _Avoid_: game speed, time scale, simulation speed
 - An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**, or a
   new **Standing Order**
 - A **Move** carries a destination, an arrival facing and an arrival **Formation**
+- A **Move**'s arrival **Formation** is the last one the player asked that **Unit** for with a
+  **Form**, never the one it happens to be standing in — so a battalion told to make square and
+  then sent somewhere goes there to make square, and one **Initiative** has filed into column
+  arrives in what it was told to hold and not in the column it travelled in
 - A **Move** onto the ground a **Unit** already stands on is how it is turned where it is:
   guns In Battery traverse rather than wheel, and it needs no **Order** of its own because a
   **Move** already carries a facing — this one simply has no ground in it
@@ -385,6 +389,11 @@ _Avoid_: game speed, time scale, simulation speed
   route by which **Grade** reaches lethality, rather than any direct multiplier
 - **Contact** ends when one **Unit** **Breaks** — it is never a state a **Unit** sits in
 - A **Charge** resolves against the **Face** it strikes; off a **Face** there is no fight
+- A **Contact** pays a **Unit** for being in motion, so two regiments meeting head-on both pay it
+  and one standing to receive brings nothing
+- Cavalry meets a **Charge** committed to it on its **Initiative**, because horse standing to
+  receive is horse ridden over: the one **Charge** the player does not give, and it can be aimed at
+  nothing but what is already coming on
 - A **Square** resists cavalry by having four **Faces** and therefore no flank — it needs no rule
   of its own
 - Fire striking a **Unit** off its facing runs down the **Frontage** it cannot present, so a

@@ -43,3 +43,13 @@ Order can now let it give or take ground, and what stops Initiative making the p
 no longer that boundary but a leash: every act a Unit takes on its own account is bounded in metres
 from the ground the player last gave it. Never choosing an objective still holds, and it is the
 half of the old clause that was load-bearing.
+
+**Amended again by the countercharge.** Cavalry now meets a Charge already committed to it without
+being told to, which advances and which commits a Charge — two things the clause above forbids, and
+the second of which ADR-0002 reserves to a Courier. The reason it is allowed is that the target is
+not a choice: the rule can be aimed at nothing but the Unit already running at this one, so it
+picks no objective, and that remains the half of the boundary doing the work. What it buys is that
+horse standing still to receive a charge is horse ridden over, and an arm with no Square has no
+other answer. It is not leashed, because preservation is not Latitude and `hold ground` is the
+default brief — a leash would have meant cavalry sitting still for a charge in every battle nobody
+had written a Standing Order for.
