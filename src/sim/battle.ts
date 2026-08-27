@@ -1,10 +1,28 @@
-import { averageCostUnder, cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
+import {
+  cellAt,
+  cellIndex,
+  crossingWidth,
+  groundDivisor,
+  inBounds,
+  isCrossing,
+  passable,
+} from "./field"
 import { baseSpeed, beginChange, frontage, intendedFormation, unitFootprint } from "./formation"
+import {
+  CHARGE_RANGE,
+  chargeSpeed,
+  CONTACT_RANGE,
+  endCharge,
+  gapTo,
+  RECOIL_DISTANCE,
+  resolveContact,
+  struckSide,
+} from "./charge"
 import { resolveFire } from "./fighting"
 import { applyInitiative } from "./initiative"
-import { advanceRout, hasQuitTheField, isRouting, recover } from "./morale"
+import { advanceRout, dread, hasQuitTheField, isRouting, recover } from "./morale"
 import { advanceCouriers } from "./orders"
-import { describeFormation, type Battle, type Unit, type Vec2 } from "./types"
+import { describeFormation, type Battle, type ChargeOrder, type Unit, type Vec2 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
 import { route as findRoute } from "./routing"
 
@@ -34,9 +52,13 @@ const FACING_TOLERANCE = 0.05
  * reaches it as an average over the Footprint, never cell by cell.
  */
 export function unitSpeed(battle: Battle, unit: Unit): number {
+  return paceOf(battle, unit, baseSpeed(unit.arm, unit.formation))
+}
+
+/** What `base` metres a second comes to over the ground under the Unit. */
+function paceOf(battle: Battle, unit: Unit, base: number): number {
   const shape = unitFootprint(unit)
-  const cost = averageCostUnder(battle.field, unit.position, shape.width, shape.depth, unit.facing)
-  return baseSpeed(unit.arm, unit.formation) / Math.max(0.5, cost)
+  return base / groundDivisor(battle.field, unit.position, shape.width, shape.depth, unit.facing)
 }
 
 /**
@@ -108,6 +130,87 @@ export function admits(battle: Battle, unit: Unit, at: Vec2, heading: number): b
   return unitFootprint(unit).width <= crossingWidth(field, cx, cy, heading)
 }
 
+/**
+ * Move a Unit that is running rather than marching: straight down a heading, at
+ * whatever the ground leaves of the pace, stopping at anything it cannot enter.
+ */
+function runOn(
+  battle: Battle,
+  unit: Unit,
+  heading: number,
+  base: number,
+  dt: number,
+  wheel: boolean,
+): void {
+  if (wheel) turnToward(battle, unit, heading, dt)
+  const stride = paceOf(battle, unit, base) * dt
+  const next = {
+    x: unit.position.x + Math.cos(heading) * stride,
+    y: unit.position.y + Math.sin(heading) * stride,
+  }
+  const { cx, cy } = cellAt(battle.field, next)
+  if (inBounds(battle.field, cx, cy) && !passable(battle.field, cellIndex(battle.field, cx, cy))) {
+    return
+  }
+  if (!admits(battle, unit, next, heading)) return
+  unit.position = next
+}
+
+/**
+ * A Charge under way, which is two different things with a seam between them.
+ * Beyond CHARGE_RANGE the Unit is walking up at its Formation's own pace;
+ * inside it, it is running, and the ground it covers running is the only ground
+ * that costs it anything. That seam is standing in for Fatigue until Fatigue is
+ * built — without it a regiment could gallop the length of the Field for free,
+ * and the player's real problem, which is getting the horse close under a Move
+ * Order before letting them go, would not exist.
+ *
+ * It goes straight at what it was aimed at. A Charge does not pick its way
+ * round a wood, because it is a committed run and not a march, so it stops dead
+ * at ground it cannot enter and at a Crossing it does not fit through — and the
+ * Order stands there until the player sends another.
+ */
+function advanceCharge(battle: Battle, unit: Unit, body: ChargeOrder, dt: number): void {
+  const target = battle.units.find((u) => u.id === body.targetId)
+  if (!target) {
+    endCharge(battle, unit, `${unit.name} has nothing left to charge`)
+    return
+  }
+  unit.charging ??= { targetId: target.id, launchedAt: battle.time, recoiling: false }
+  const charge = unit.charging
+
+  // Nobody rides down a mob here: Pursuit is not built, so the chargers pull up
+  // and watch it go. Generous to the Unit that ran, and knowingly so.
+  if (isRouting(target)) {
+    endCharge(battle, unit, `${unit.name} pulled up; ${target.name} was already running`)
+    return
+  }
+
+  const gap = gapTo(unit, target)
+
+  if (charge.recoiling) {
+    if (gap >= RECOIL_DISTANCE) {
+      endCharge(battle, unit, `${unit.name} is clear of ${target.name}, and blown`)
+      return
+    }
+    runOn(battle, unit, bearing(target.position, unit.position), chargeSpeed(unit.arm), dt, true)
+    return
+  }
+
+  if (gap <= CONTACT_RANGE) {
+    resolveContact(battle, unit, target)
+    return
+  }
+
+  const running = gap <= CHARGE_RANGE
+  // What it costs to be charged at, before anybody is touched. Only while they
+  // are actually running: a regiment walking up at two and a half metres a
+  // second is a threat, and the threat is what the square rule answers.
+  if (running) dread(target, unit, struckSide(target, unit.position) === null, dt)
+  const pace = running ? chargeSpeed(unit.arm) : baseSpeed(unit.arm, unit.formation)
+  runOn(battle, unit, bearing(unit.position, target.position), pace, dt, true)
+}
+
 function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   const live = unit.order
   if (!live) return
@@ -123,6 +226,11 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     if (intendedFormation(unit) !== body.formation) {
       beginChange(unit, body.formation)
     }
+    return
+  }
+
+  if (body.kind === "charge") {
+    advanceCharge(battle, unit, body, dt)
     return
   }
 
@@ -230,6 +338,7 @@ function firePlan(battle: Battle): void {
       arrivedAt: battle.time,
     }
     unit.route = []
+    unit.charging = null
   }
   battle.plan = battle.plan.filter((p) => p.at > battle.time)
 }
@@ -263,6 +372,7 @@ function clearTheGone(battle: Battle): void {
 export function step(battle: Battle): void {
   battle.time += STEP
   battle.volleys = []
+  battle.contacts = []
   releaseArrivals(battle)
   firePlan(battle)
   advanceCouriers(battle, STEP)

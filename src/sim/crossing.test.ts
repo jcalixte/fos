@@ -43,6 +43,7 @@ function battalion(): Unit {
     morale: 1,
     moraleCeiling: 1,
     routing: null,
+    charging: null,
   }
 }
 
@@ -54,6 +55,7 @@ function battle(field: Field, units: Unit[]): Battle {
     units,
     couriers: [],
     volleys: [],
+    contacts: [],
     dispatches: [],
     crossings: [],
     keyGround: [],

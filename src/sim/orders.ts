@@ -9,7 +9,7 @@ import {
   type Vec2,
 } from "./types"
 import { isRouting } from "./morale"
-import { distance, normalise, scale, sub } from "./vec"
+import { bearing, distance, normalise, scale, sub } from "./vec"
 
 /**
  * C1 Order Delivery.
@@ -46,15 +46,22 @@ export function estimateDelay(from: Vec2, to: Vec2): number {
   return distance(from, to) / COURIER_SPEED
 }
 
-function describe(body: OrderBody, unit: Unit): string {
+function describe(battle: Battle, body: OrderBody, unit: Unit): string {
   switch (body.kind) {
     case "move":
       return `${unit.name} received its Order: march, and form ${describeFormation(body.arrivalFormation)} on arrival`
     case "form":
       return `${unit.name} received its Order: form ${describeFormation(body.formation)}`
+    case "charge":
+      return `${unit.name} received its Order: go at ${named(battle, body.targetId)}`
     case "halt":
       return `${unit.name} received its Order: halt`
   }
+}
+
+/** What the Order names, as the Dispatch should read it. */
+function named(battle: Battle, unitId: UnitId): string {
+  return battle.units.find((u) => u.id === unitId)?.name ?? "whatever is left of it"
 }
 
 /**
@@ -104,13 +111,18 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
   }
   unit.order = { order, arrivedAt: battle.time }
   unit.route = []
+  // A rider arriving with anything else puts down whatever the Unit was
+  // committed to. A Charge is a committed run and Contact is over in seconds,
+  // so in practice a Courier is never in time to call one back — the delay does
+  // the committing, rather than a rule making the Unit deaf.
+  unit.charging = null
   // A new Order clears whatever Initiative was holding the Unit back: the rule
   // will fire again on the next tick if it still applies.
   unit.suspendedBy = null
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
-    text: describe(order.body, unit),
+    text: describe(battle, order.body, unit),
   })
 }
 
@@ -147,6 +159,18 @@ export function ghosts(battle: Battle): Ghost[] {
         facing: unit.facing,
         formation: body.formation,
       })
+    } else if (body.kind === "charge") {
+      // On the Unit it names, which is moving — so the mark follows it, and the
+      // player watches the rider chase a target that has gone somewhere else.
+      const target = battle.units.find((u) => u.id === body.targetId)
+      if (target) {
+        out.push({
+          unitId: unit.id,
+          position: target.position,
+          facing: bearing(target.position, unit.position),
+          formation: unit.formation,
+        })
+      }
     }
   }
   // A Unit still working a move Order has not arrived: `order` is only cleared

@@ -1,5 +1,5 @@
 import type { Arm, FormationName, Grade, Unit, Vec2 } from "./types"
-import { rotate } from "./vec"
+import { axes, dot, rotate } from "./vec"
 
 /**
  * C3 Formation Geometry.
@@ -184,6 +184,17 @@ export function footprint(arm: Arm, formation: FormationName, strength: number):
     width: frontage(arm, formation, strength),
     depth: depth(arm, formation, strength),
   }
+}
+
+/**
+ * How far a Footprint reaches along `axis`, standing on `facing`. The measure
+ * behind every question of the form "how much of this Unit does that one meet" —
+ * how much of a Face bears on a target, and how many metres of front two blocks
+ * touch over.
+ */
+export function spanAlong(shape: Footprint, facing: number, axis: Vec2): number {
+  const { along, across } = axes(facing)
+  return Math.abs(shape.depth * dot(along, axis)) + Math.abs(shape.width * dot(across, axis))
 }
 
 export function faces(arm: Arm, formation: FormationName): 0 | 1 | 4 {

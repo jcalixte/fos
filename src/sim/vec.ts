@@ -59,3 +59,13 @@ export function rotate(a: Vec2, angle: number): Vec2 {
   const s = Math.sin(angle)
   return { x: a.x * c - a.y * s, y: a.x * s + a.y * c }
 }
+
+/** The unit vector along an angle, and the one square across it. */
+export function axes(angle: number): { along: Vec2; across: Vec2 } {
+  const along = { x: Math.cos(angle), y: Math.sin(angle) }
+  return { along, across: { x: -along.y, y: along.x } }
+}
+
+export function dot(a: Vec2, b: Vec2): number {
+  return a.x * b.x + a.y * b.y
+}

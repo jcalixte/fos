@@ -12,10 +12,20 @@ import {
   frontage,
   poseOf,
   slots,
+  spanAlong,
+  unitFootprint,
 } from "./formation"
 import { GROUND_COST, GROUNDS, movementCost } from "./ground"
 import { aim, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
-import { canRally, describeMorale, isRouting, shake } from "./morale"
+import {
+  canCharge,
+  CHARGE_RANGE,
+  gapTo,
+  RECOIL_DISTANCE,
+  resolveContact,
+  struckSide,
+} from "./charge"
+import { canRally, describeMorale, dread, isRouting, shake } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts, issueOrder } from "./orders"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, Unit } from "./types"
@@ -40,6 +50,7 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     morale: 1,
     moraleCeiling: 1,
     routing: null,
+    charging: null,
     ...overrides,
   }
 }
@@ -52,6 +63,7 @@ function emptyBattle(field: Field, units: Unit[]): Battle {
     units,
     couriers: [],
     volleys: [],
+    contacts: [],
     dispatches: [],
     crossings: [],
     keyGround: [],
@@ -905,5 +917,213 @@ describe("C7 Morale", () => {
     expect(describeMorale(battalion({ morale: 0.6 }))).toBe("wavering")
     expect(describeMorale(battalion({ morale: 0.3 }))).toBe("shaken")
     expect(describeMorale(battalion({ morale: 0.1 }))).toBe("on the point of breaking")
+  })
+})
+
+describe("C6 Fighting — the Charge", () => {
+  /** A regiment of horse: four hundred sabres in two ranks, two hundred metres of them. */
+  function regiment(overrides: Partial<Unit> = {}): Unit {
+    return battalion({
+      id: "ca",
+      name: "1er Hussards",
+      arm: "cavalry",
+      strength: 400,
+      formation: "line",
+      facing: 0,
+      ...overrides,
+    })
+  }
+
+  /** Stand the horse so the two Footprints are `gap` metres apart, due west. */
+  function place(horse: Unit, target: Unit, gap: number): void {
+    const axis = { x: 1, y: 0 }
+    const mine = spanAlong(unitFootprint(horse), horse.facing, axis)
+    const theirs = spanAlong(unitFootprint(target), target.facing, axis)
+    horse.position = { x: target.position.x - (gap + (mine + theirs) / 2), y: target.position.y }
+  }
+
+  function targetOf(overrides: Partial<Unit> = {}): Unit {
+    return battalion({
+      id: "au",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 1000, y: 1000 },
+      facing: Math.PI,
+      ...overrides,
+    })
+  }
+
+  /** Horse `gap` metres short of a battalion, with the Order already in its hand. */
+  function chargeAt(gap: number, target: Partial<Unit> = {}, horse: Partial<Unit> = {}) {
+    const enemy = targetOf(target)
+    const cavalry = regiment(horse)
+    place(cavalry, enemy, gap)
+    cavalry.order = {
+      order: {
+        id: "o1",
+        unitId: cavalry.id,
+        body: { kind: "charge", targetId: enemy.id },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    return { cavalry, enemy, battle: emptyBattle(blankField(250, 250), [cavalry, enemy]) }
+  }
+
+  /** The blocks already touching, and the Contact resolved on the spot. */
+  function struck(target: Partial<Unit> = {}, horse: Partial<Unit> = {}) {
+    const enemy = targetOf(target)
+    const cavalry = regiment(horse)
+    place(cavalry, enemy, 1)
+    cavalry.charging = { targetId: enemy.id, launchedAt: 0, recoiling: false }
+    const battle = emptyBattle(blankField(250, 250), [cavalry, enemy])
+    resolveContact(battle, cavalry, enemy)
+    return { battle, cavalry, enemy, contact: battle.contacts[0] }
+  }
+
+  /** Run the whole thing out and hand back the Contact it came to. */
+  function untilItStrikes(gap: number, target: Partial<Unit> = {}) {
+    const { cavalry, enemy, battle } = chargeAt(gap, target)
+    while (battle.time < 600 && battle.contacts.length === 0) step(battle)
+    return { cavalry, enemy, battle, contact: battle.contacts[0] }
+  }
+
+  it("is for the two Arms that can run at somebody, and not for the guns", () => {
+    expect(canCharge("cavalry")).toBe(true)
+    expect(canCharge("infantry")).toBe(true)
+    expect(canCharge("artillery")).toBe(false)
+  })
+
+  it("walks up at the Formation's pace, and only runs the last hundred and fifty metres", () => {
+    const far = chargeAt(CHARGE_RANGE + 250)
+    const near = chargeAt(CHARGE_RANGE - 50)
+    const walked = -far.cavalry.position.x
+    const ran = -near.cavalry.position.x
+    for (let i = 0; i < 10; i++) {
+      step(far.battle)
+      step(near.battle)
+    }
+    // A second of each: the Formation's 2.5 m/s against the gallop's 7.
+    expect(walked + far.cavalry.position.x).toBeCloseTo(2.5, 1)
+    expect(ran + near.cavalry.position.x).toBeCloseTo(7, 1)
+  })
+
+  it("has no Face to strike while it is changing Formation, however it is standing", () => {
+    const caught = targetOf({ changing: { from: "line", to: "square", elapsed: 5, duration: 30 } })
+    // Head-on, and still nothing: half its files are between two layouts.
+    expect(struckSide(caught, { x: 0, y: 1000 })).toBeNull()
+    expect(struckSide(targetOf(), { x: 0, y: 1000 })).toBe(0)
+  })
+
+  it("undoes a battalion caught in march column, which has no Face to offer at all", () => {
+    const { cavalry, enemy, contact } = struck({
+      formation: "march-column",
+      order: {
+        order: {
+          id: "p1",
+          unitId: "au",
+          body: { kind: "form", formation: "march-column" },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      },
+    })
+    expect(contact.side).toBeNull()
+    expect(contact.outcome).toBe("broke")
+    expect(isRouting(enemy)).toBe(true)
+    // Off a Face there is no fight, so the charge is not paid for at all.
+    expect(contact.casualties).toBe(0)
+    expect(cavalry.strength).toBe(400)
+  })
+
+  it("makes square worth the drill out of Frontage alone, with no rule of its own", () => {
+    const line = struck({ formation: "line" })
+    const square = struck({ formation: "square" })
+    expect(line.contact.side).toBe(0)
+    expect(square.contact.side).toBe(0)
+    // A quarter of the Frontage means a quarter of the sabres reach it. Nothing
+    // in C6 knows what a square is; it knows how wide one is.
+    expect(square.contact.width).toBeLessThan(line.contact.width / 3)
+    expect(square.contact.targetCasualties).toBeLessThan(line.contact.targetCasualties / 3)
+    expect(square.enemy.morale).toBeGreaterThan(line.enemy.morale)
+  })
+
+  it("is thrown back by a steady line and carries a shaken one, the geometry being equal", () => {
+    expect(struck({ morale: 1 }).contact.outcome).toBe("recoiled")
+    expect(struck({ morale: 0.4 }).contact.outcome).toBe("broke")
+  })
+
+  it("decides by Morale and not by Strength: the loser Breaks with most of its men", () => {
+    const { enemy, contact } = struck({ morale: 0.4 })
+    expect(contact.outcome).toBe("broke")
+    expect(1 - enemy.strength / 700).toBeLessThan(0.15)
+    expect(enemy.strength).toBeGreaterThan(500)
+  })
+
+  it("beats cavalry that received it standing, which is why you countercharge", () => {
+    const { cavalry, enemy, contact } = struck({
+      id: "au",
+      army: "austrian",
+      name: "Husaren 5",
+      arm: "cavalry",
+      strength: 400,
+      formation: "line",
+      facing: Math.PI,
+    })
+    // The Contact names the outcome; the Rout itself is Morale's to declare, on
+    // the tick after, through the rule that gets to say why.
+    expect(contact.outcome).toBe("broke")
+    expect(enemy.morale).toBeLessThanOrEqual(0)
+    expect(cavalry.morale).toBeGreaterThan(0)
+  })
+
+  it("keeps a Contact only for the step it was struck in", () => {
+    const { battle } = untilItStrikes(6, { morale: 1 })
+    expect(battle.contacts).toHaveLength(1)
+    step(battle)
+    expect(battle.contacts).toHaveLength(0)
+  })
+
+  it("lets a battalion make square against a charge let go at a distance", () => {
+    const { enemy, contact } = untilItStrikes(290)
+    expect(enemy.formation).toBe("square")
+    expect(contact.side).not.toBeNull()
+    expect(contact.outcome).toBe("recoiled")
+  })
+
+  it("catches it half-formed when the charge is let go from a hundred and forty metres", () => {
+    // Thirty seconds of drill against twenty of gallop. Initiative tries, and
+    // trying is worse than standing: a battalion mid-drill has no Face at all.
+    const { enemy, contact } = untilItStrikes(140)
+    expect(contact.side).toBeNull()
+    expect(isRouting(enemy)).toBe(true)
+  })
+
+  it("rides clear when it is thrown back, keeping its shape, which a Rout does not", () => {
+    const { cavalry, enemy, battle } = chargeAt(6, { formation: "square" })
+    while (battle.time < 600 && cavalry.order !== null) step(battle)
+    expect(cavalry.charging).toBeNull()
+    expect(isRouting(cavalry)).toBe(false)
+    expect(cavalry.formation).toBe("line")
+    expect(gapTo(cavalry, enemy)).toBeGreaterThanOrEqual(RECOIL_DISTANCE)
+  })
+
+  it("pulls up rather than pursuing, because Pursuit is not built", () => {
+    const { cavalry, enemy, battle } = chargeAt(80)
+    enemy.routing = { heading: 0, brokeAt: 0 }
+    step(battle)
+    expect(cavalry.order).toBeNull()
+    expect(cavalry.charging).toBeNull()
+    expect(battle.dispatches.some((d) => d.text.includes("pulled up"))).toBe(true)
+  })
+
+  it("costs a Unit with nothing turned toward the charge three times the nerve", () => {
+    const horse = regiment()
+    const facing = targetOf()
+    const exposed = targetOf()
+    dread(facing, horse, false, 10)
+    dread(exposed, horse, true, 10)
+    expect(1 - facing.morale).toBeGreaterThan(0)
+    expect(1 - exposed.morale).toBeCloseTo((1 - facing.morale) * 3, 5)
   })
 })

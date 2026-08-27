@@ -101,6 +101,7 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     morale: FULL_MORALE,
     moraleCeiling: FULL_MORALE,
     routing: null,
+    charging: null,
   }
 }
 
@@ -161,6 +162,7 @@ export function assemble(scenario: AssembledScenario): Battle {
     units,
     couriers: [],
     volleys: [],
+    contacts: [],
     dispatches: [],
     crossings,
     keyGround: file.keyGround,

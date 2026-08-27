@@ -66,6 +66,8 @@ export interface Unit {
   moraleCeiling: number
   /** Set once the Unit has Broken. A Routing Unit is deaf to Orders. */
   routing: Rout | null
+  /** The Charge it is committed to, once an Order has let it go. */
+  charging: Charge | null
 }
 
 /** What a Unit is doing after its Morale gave out. */
@@ -74,6 +76,44 @@ export interface Rout {
   heading: number
   /** Battle time it Broke, in seconds. */
   brokeAt: number
+}
+
+/**
+ * A Charge under way: a committed run at one other Unit. A state and not an
+ * Order, the way a Rout is — an Order lets the Unit go, and after that the
+ * geometry and the two Units' Morale decide it.
+ */
+export interface Charge {
+  targetId: UnitId
+  /** Battle time it was let go, in seconds. */
+  launchedAt: number
+  /** Set once the Face held: the chargers are running back out of it. */
+  recoiling: boolean
+}
+
+/**
+ * One Contact: two blocks touching. Like a Volley it is an event and not a
+ * state, and for a stronger reason — Contact is decided in seconds and is never
+ * something a Unit sits in.
+ */
+export interface Contact {
+  id: string
+  /** Battle time, in seconds. */
+  at: number
+  unitId: UnitId
+  targetId: UnitId
+  /** Where the blocks met, in metres. */
+  where: Vec2
+  /** Which Face was struck — 0 front, 1 right, 2 rear, 3 left — or null for none. */
+  side: number | null
+  /** Metres of front that met. */
+  width: number
+  /** Men the chargers lost to it. */
+  casualties: number
+  /** Men the Unit they struck lost to it. */
+  targetCasualties: number
+  /** How it ended. Contact ends when one Unit Breaks, or not at all. */
+  outcome: "broke" | "recoiled"
 }
 
 /**
@@ -97,7 +137,7 @@ export interface Volley {
   casualties: number
 }
 
-export type OrderKind = "move" | "form" | "halt"
+export type OrderKind = "move" | "form" | "charge" | "halt"
 
 export interface MoveOrder {
   kind: "move"
@@ -112,11 +152,22 @@ export interface FormOrder {
   formation: FormationName
 }
 
+/**
+ * A committed run at one named Unit. It carries no destination: what the player
+ * aimed at is a Unit, and the Unit moves — which is the whole difficulty, since
+ * the Courier takes a minute and a half to arrive and the target has been
+ * somewhere else since.
+ */
+export interface ChargeOrder {
+  kind: "charge"
+  targetId: UnitId
+}
+
 export interface HaltOrder {
   kind: "halt"
 }
 
-export type OrderBody = MoveOrder | FormOrder | HaltOrder
+export type OrderBody = MoveOrder | FormOrder | ChargeOrder | HaltOrder
 
 export interface Order {
   id: string
@@ -188,6 +239,8 @@ export interface Battle {
   couriers: Courier[]
   /** Fired this step only, and cleared at the top of the next one. */
   volleys: Volley[]
+  /** Struck this step only, and cleared at the top of the next one. */
+  contacts: Contact[]
   dispatches: Dispatch[]
   crossings: Crossing[]
   keyGround: KeyGround[]

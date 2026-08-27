@@ -1,7 +1,7 @@
 import { unitSpeed } from "./battle"
 import { describeMorale } from "./morale"
 import { ghosts, type Ghost } from "./orders"
-import type { Battle, FormationName, Unit, Vec2, Volley } from "./types"
+import type { Battle, Contact, FormationName, Unit, Vec2, Volley } from "./types"
 
 /**
  * What the renderer is allowed to see. The simulation runs at 10Hz and the
@@ -31,6 +31,10 @@ export interface UnitSnapshot {
   morale: string
   /** True while it is Routing: out of command, and running. */
   routing: boolean
+  /** The Unit it is committed to a Charge on, by id, or null. */
+  charging: string | null
+  /** True once that Charge has been thrown back and is running back out. */
+  recoiling: boolean
   /**
    * Metres per second over the ground it is standing on, in the Formation it is
    * standing in. Drawn from the simulation rather than recomputed, because the
@@ -53,6 +57,8 @@ export interface BattleSnapshot {
   ghosts: Ghost[]
   /** Fired in the step this snapshot was taken of, and nowhere else. */
   volleys: Volley[]
+  /** Struck in the step this snapshot was taken of, and nowhere else. */
+  contacts: Contact[]
 }
 
 export function snapshot(battle: Battle): BattleSnapshot {
@@ -78,6 +84,8 @@ export function snapshot(battle: Battle): BattleSnapshot {
       hasOrder: unit.order !== null,
       morale: describeMorale(unit),
       routing: unit.routing !== null,
+      charging: unit.charging?.targetId ?? null,
+      recoiling: unit.charging?.recoiling ?? false,
       speed: unitSpeed(battle, unit),
     })),
     couriers: battle.couriers.map((courier) => ({
@@ -88,5 +96,6 @@ export function snapshot(battle: Battle): BattleSnapshot {
     })),
     ghosts: ghosts(battle),
     volleys: battle.volleys.map((v) => ({ ...v, from: { ...v.from } })),
+    contacts: battle.contacts.map((c) => ({ ...c, where: { ...c.where } })),
   }
 }

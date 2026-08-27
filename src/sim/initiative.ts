@@ -1,5 +1,7 @@
+import { chargersOf } from "./charge"
 import { cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import {
+  allows,
   baseSpeed,
   beginChange,
   canFire,
@@ -126,6 +128,17 @@ function enemyNear(unit: Unit, battle: Battle): boolean {
 }
 
 /**
+ * True if enemy cavalry is committed to a Charge on this Unit and near enough
+ * that there is any point doing something about it.
+ */
+function chargedByCavalry(unit: Unit, battle: Battle): boolean {
+  return chargersOf(battle, unit).some(
+    (horse) =>
+      horse.arm === "cavalry" && distance(unit.position, horse.position) <= ENGAGEMENT_RANGE,
+  )
+}
+
+/**
  * The Formation to deploy into when caught travelling. The Order's arrival
  * Formation is the player's own answer, so use it when it can fight; a Unit
  * ordered to arrive in column still has to survive the last three hundred
@@ -141,10 +154,11 @@ function deployInto(unit: Unit): FormationName {
 
 /**
  * The list, in priority order: whether a Unit is still obeying anybody at all,
- * then how it chooses to travel and when it stops travelling. Forming square
- * against cavalry joins in the middle when the Charge lands — order matters, and
- * Morale outranks everything, because a battalion that has broken is not going
- * to file into column for the bridge on the way past.
+ * then how it chooses to travel and when it stops travelling. Order matters
+ * throughout: Morale outranks everything, because a battalion that has broken is
+ * not going to file into column for the bridge on the way past, and making
+ * square outranks every reason to be marching, because nothing else that
+ * happens to a battalion is as urgent as horse at the gallop.
  */
 export const RULES: InitiativeRule[] = [
   {
@@ -171,8 +185,36 @@ export const RULES: InitiativeRule[] = [
     },
   },
   {
-    // First, and not guarded by the enemy being away, unlike every other
-    // marching rule. A Unit too wide for the gap is stopped dead at the mouth
+    // Third, under the two Morale rules and over everything about marching. A
+    // Charge coming on is the most urgent thing that happens to a battalion,
+    // and it will stop mid-march and mid-Order to meet it.
+    //
+    // It answers a Charge and not the sight of cavalry. A battalion that
+    // squared up whenever horse stood within cannon shot would be frozen for
+    // free, all day, at no risk to the horse — and Initiative would be doing
+    // the anticipating that is the player's whole job. The rule preserves; it
+    // does not command.
+    //
+    // Thirty seconds of drill against twenty-one of gallop: this only lands in
+    // time against a Charge let go at a distance. Walking the last hundred and
+    // fifty metres up under a Move Order first is how a Charge is made to
+    // arrive before the square does, and seeing that coming is the player's.
+    name: "formed square, cavalry coming on",
+    applies: (unit, battle) => {
+      if (pinned(unit)) return null
+      if (!allows(unit.arm, "square")) return null
+      if (!chargedByCavalry(unit, battle)) return null
+      // Not at the mouth of a gap a square will not fit through, for the same
+      // reason the deploying rule is not: it would be stopped on the bank in a
+      // Formation that cannot cross, and the rule below would file it straight
+      // back into column.
+      if (squeezedBy(unit, battle, "square")) return null
+      return { formation: "square" }
+    },
+  },
+  {
+    // First of the marching rules, and not guarded by the enemy being away,
+    // unlike every other one. A Unit too wide for the gap is stopped dead at the mouth
     // of it, so if deploying outranked this a battalion sent over a bridge with
     // the enemy within cannon shot would stand on the near bank in line for the
     // rest of the battle. Forming column to cross under fire is the period's

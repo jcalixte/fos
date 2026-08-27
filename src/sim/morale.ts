@@ -1,6 +1,6 @@
 import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { TRAVELLING_FORMATION } from "./formation"
-import type { Battle, Grade, Unit, Vec2 } from "./types"
+import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
 import { bearing, distance } from "./vec"
 
 /**
@@ -41,6 +41,18 @@ const STEADINESS: Record<Grade, number> = { conscript: 0.75, line: 1, elite: 1.2
  * justified it, and worst of all from behind.
  */
 const FLANK_SHOCK = 1.5
+
+/**
+ * What a Charge coming on costs the Unit it is aimed at, per second, before
+ * anybody has laid a hand on anybody. A deliberate rule and not geometry, in
+ * exactly the way FLANK_SHOCK is: infantry broke at the sight of cavalry far
+ * more often than it broke at the sabre, and that — not the arithmetic of the
+ * Contact — is what thirty seconds of drill into square is buying.
+ */
+const DREAD: Record<Arm, number> = { infantry: 0.004, cavalry: 0.012, artillery: 0 }
+
+/** What having no Face turned toward the charge multiplies it by. */
+const DREAD_EXPOSED = 3
 
 /**
  * Morale back per second. Ten minutes from nothing to full, which on a
@@ -124,6 +136,18 @@ export function shake(unit: Unit, casualties: number, from: Vec2): void {
   unit.morale -= (share * SHOCK * flanking(unit, from)) / STEADINESS[unit.grade]
 }
 
+/**
+ * What a Charge closing on the Unit costs it while it is still only closing.
+ * Called by C8 for each step the chargers are running, with `exposed` set when
+ * nothing the Unit has is turned their way — which is three times as dear,
+ * because a battalion that cannot reply has nothing to do but watch.
+ */
+export function dread(unit: Unit, charger: Unit, exposed: boolean, dt: number): void {
+  if (isRouting(unit)) return
+  const rate = DREAD[charger.arm] * (exposed ? DREAD_EXPOSED : 1)
+  unit.morale -= (rate * dt) / STEADINESS[unit.grade]
+}
+
 /** Morale creeping back toward the Ceiling, hastened by its own Headquarters. */
 export function recover(battle: Battle, unit: Unit, dt: number): void {
   if (unit.morale >= unit.moraleCeiling) return
@@ -161,6 +185,8 @@ export function breakUnit(battle: Battle, unit: Unit): void {
   unit.routing = { heading: away, brokeAt: battle.time }
   unit.morale = 0
   unit.route = []
+  // Whatever it was committed to, it is not committed to it any more.
+  unit.charging = null
   unit.formation = TRAVELLING_FORMATION[unit.arm]
   unit.changing = null
   unit.facing = away

@@ -1,6 +1,7 @@
-import { fireZone, footprint, grid, type FireZone } from "./formation"
+import { fireZone, footprint, grid, spanAlong, type FireZone } from "./formation"
 import { fireEffect, isRouting, shake } from "./morale"
-import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
+import type { Arm, Battle, Grade, Unit } from "./types"
+import { axes, dot } from "./vec"
 
 /**
  * C6 Fighting — the Volley.
@@ -90,21 +91,6 @@ export interface Aim {
   overlap: number
 }
 
-function axes(angle: number): { along: Vec2; across: Vec2 } {
-  const along = { x: Math.cos(angle), y: Math.sin(angle) }
-  return { along, across: { x: -along.y, y: along.x } }
-}
-
-function dot(a: Vec2, b: Vec2): number {
-  return a.x * b.x + a.y * b.y
-}
-
-/** How far a Unit's Footprint reaches along `axis`, standing on `facing`. */
-function span(shape: { width: number; depth: number }, facing: number, axis: Vec2): number {
-  const { along, across } = axes(facing)
-  return Math.abs(shape.depth * dot(along, axis)) + Math.abs(shape.width * dot(across, axis))
-}
-
 /**
  * The band a Face beats, matched to the one the renderer draws: `across` metres
  * wide, standing off the Unit's own edge, `range` deep. Odd sides are the
@@ -121,8 +107,8 @@ function bearsOnSide(unit: Unit, zone: FireZone, side: number, target: Unit): Ai
   const face = axes(unit.facing + side * QUARTER_TURN)
   const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
   const shape = footprint(target.arm, target.formation, target.strength)
-  const depthwise = span(shape, target.facing, face.along)
-  const widthwise = span(shape, target.facing, face.across)
+  const depthwise = spanAlong(shape, target.facing, face.along)
+  const widthwise = spanAlong(shape, target.facing, face.across)
 
   const along = dot(offset, face.along)
   const near = along - depthwise / 2

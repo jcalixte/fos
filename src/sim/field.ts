@@ -175,3 +175,18 @@ export function averageCostUnder(
   }
   return n === 0 ? 1 : total / n
 }
+
+/**
+ * The divisor the ground under a Footprint puts on a Unit's pace, whatever pace
+ * it was going to make. Floored, because a Ground never stops a Unit dead: the
+ * impassable kind is not walked onto at all rather than walked over slowly.
+ */
+export function groundDivisor(
+  field: Field,
+  centre: Vec2,
+  width: number,
+  depth: number,
+  facing: number,
+): number {
+  return Math.max(0.5, averageCostUnder(field, centre, width, depth, facing))
+}
