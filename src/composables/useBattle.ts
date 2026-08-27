@@ -43,6 +43,11 @@ export interface BattleUi {
   selected: string | null
   /** A Charge is armed and waiting for the player to pick what to go at. */
   arming: boolean
+  /**
+   * The Unit is waiting to be pointed: the next press on the Field is a
+   * direction and not a destination.
+   */
+  pointing: boolean
   arrivalFormation: FormationName | null
   dispatches: Dispatch[]
   gradeNames: Record<string, Record<Grade, string>>
@@ -82,6 +87,7 @@ export function useBattle(scenarioPath: string) {
     units: [],
     selected: null,
     arming: false,
+    pointing: false,
     arrivalFormation: null,
     dispatches: [],
     gradeNames: {},
@@ -345,6 +351,42 @@ export function useBattle(scenarioPath: string) {
   function setArming(on: boolean): void {
     ui.arming = on
     viewState.arming = on
+    if (on) ui.pointing = false
+  }
+
+  /**
+   * Wait for a direction. The counterpart of arming a Charge, and armed for the
+   * same reason: what the player presses next is neither a Unit nor a piece of
+   * ground to stand on, so the press has to be spoken for in advance.
+   */
+  function armPoint(): void {
+    const unit = commandable()
+    if (!unit || ui.phase !== "battle" || unit.routing) return
+    setArming(false)
+    ui.pointing = !ui.pointing
+  }
+
+  /**
+   * Point a Unit where it stands. A Move Order onto the ground the Unit is
+   * already on — no new kind of Order, because a Move already carries an
+   * arrival facing and this is one with no ground in it.
+   *
+   * It is the only Order guns can obey without hitching up: a battery In
+   * Battery has no speed at all, and the Initiative rule that limbers it stands
+   * down when the Order leaves it nothing to march. Ordered anywhere else, even
+   * fifty metres, the guns come off their trails and go on their limbers.
+   *
+   * The destination is the Unit's own centre and never where the press landed.
+   * A six-gun battery is 108m across, so a press on its flank is a destination
+   * fifty metres away — which is a march, and would limber it up to make it.
+   */
+  function pointAt(unit: UnitSnapshot, facing: number): void {
+    order({
+      kind: "move",
+      destination: { ...unit.position },
+      arrivalFacing: facing,
+      arrivalFormation: ui.arrivalFormation ?? unit.formation,
+    })
   }
 
   /** The selected Unit in the Battle itself, when it is yours to arrange. */
@@ -431,6 +473,25 @@ export function useBattle(scenarioPath: string) {
    */
   let aim: { from: Vec2; facing: number } | null = null
 
+  /**
+   * A Unit being pointed by a drag off its own body: where the press began, and
+   * the Unit's own centre. Two points, because they answer two questions — the
+   * press point says whether this was a drag or a slip, and the centre is what
+   * the bearing has to be read from, since the body of a battery is a hundred
+   * metres wide and a press on its flank already points somewhere.
+   */
+  let turning: { from: Vec2; centre: Vec2 } | null = null
+
+  /**
+   * True if a press begun on a Unit's body and let go at `to` amounts to a
+   * direction. Two tests, because two things can go wrong: a press that went
+   * nowhere is a slip and must not spend a Courier ride, and a release too near
+   * the Unit's own centre has no bearing in it however far the finger went.
+   */
+  function pointed(held: { from: Vec2; centre: Vec2 }, to: Vec2): boolean {
+    return distance(held.from, to) >= COMMIT_THRESHOLD && distance(held.centre, to) >= AIM_THRESHOLD
+  }
+
   function onPointerDown(event: PointerEvent): void {
     const v = view.value
     const r = runner.value
@@ -462,6 +523,20 @@ export function useBattle(scenarioPath: string) {
       return
     }
 
+    // Asked for two gestures ago, so it takes the press before anything else
+    // can read it — a direction is any ground at all, the Unit's own body
+    // included, and hit-testing first would have the player pointing a Unit at
+    // itself by selecting whatever stands that way.
+    if (ui.pointing) {
+      ui.pointing = false
+      const aimed = commandable()
+      if (aimed && distance(aimed.position, point) > AIM_THRESHOLD) {
+        pointAt(aimed, bearing(aimed.position, point))
+      }
+      dragFrom = null
+      return
+    }
+
     // Pressing on any Unit selects it, enemy included — you cannot order an
     // enemy about, but you can read it, and a press that lands on one must not
     // quietly become an Order aimed at where it stands.
@@ -486,10 +561,23 @@ export function useBattle(scenarioPath: string) {
       return
     }
     if (hit) {
-      if (hit.id !== ui.selected) setArming(false)
+      // A press on a Unit already in hand aims it where it stands. The gesture
+      // is dead otherwise — selecting what is already selected — and turning on
+      // the spot is the one Order whose destination the player cannot press,
+      // because the Unit is standing on the whole of it.
+      const again = hit.id === ui.selected
+      if (!again) setArming(false)
       ui.selected = hit.id
       seedArrival(hit)
       dragFrom = null
+      if (again && ui.phase === "battle" && !hit.routing) {
+        turning = { from: point, centre: { ...hit.position } }
+        viewState.drag = {
+          at: turning.centre,
+          facing: hit.facing,
+          formation: ui.arrivalFormation ?? hit.formation,
+        }
+      }
       return
     }
     const from = commandable()
@@ -521,6 +609,16 @@ export function useBattle(scenarioPath: string) {
       if (unit && distance(unit.position, point) > AIM_THRESHOLD) {
         deployFacing(bearing(unit.position, point))
       }
+      return
+    }
+    if (turning && viewState.drag) {
+      // The same two tests the release is judged by, so the outline never shows
+      // a facing the letting-go would refuse.
+      const unit = unitById(ui.selected)
+      viewState.drag.facing = pointed(turning, point)
+        ? bearing(turning.centre, point)
+        : (unit?.facing ?? 0)
+      viewState.drag.formation = ui.arrivalFormation ?? unit?.formation ?? "line"
       return
     }
     if (!dragFrom || !viewState.drag) return
@@ -606,6 +704,18 @@ export function useBattle(scenarioPath: string) {
       aim = null
       return
     }
+    if (turning) {
+      const point = fieldPoint(event)
+      const unit = commandable()
+      const held = turning
+      turning = null
+      viewState.drag = null
+      // Nothing pointed leaves the Unit selected, unlike a press on bare
+      // ground that goes nowhere: the player pressed the Unit and meant to
+      // have it, so a slip costs the gesture and not the selection.
+      if (unit && pointed(held, point)) pointAt(unit, bearing(held.centre, point))
+      return
+    }
     if (!dragFrom || !viewState.drag) return
     const point = fieldPoint(event)
     const travelled = distance(dragFrom, point)
@@ -635,7 +745,9 @@ export function useBattle(scenarioPath: string) {
     ui.selected = null
     dragFrom = null
     aim = null
+    turning = null
     viewState.drag = null
+    ui.pointing = false
     setArming(false)
   }
 
@@ -656,6 +768,7 @@ export function useBattle(scenarioPath: string) {
     order,
     form,
     armCharge,
+    armPoint,
     deselect,
     unitById,
     onPointerDown,

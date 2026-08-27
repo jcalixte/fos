@@ -201,6 +201,7 @@ onBeforeUnmount(() => {
         :arrival-formation="ui.arrivalFormation"
         :charging-name="chargingName"
         :arming="ui.arming"
+        :pointing="ui.pointing"
         :deploying="ui.phase === 'deployment'"
         :disabled="
           selected.army !== ui.playerArmy || (ui.phase !== 'battle' && ui.phase !== 'deployment')
@@ -208,11 +209,16 @@ onBeforeUnmount(() => {
         @form="battle.form($event as FormationName)"
         @arrival-formation="ui.arrivalFormation = $event"
         @charge="battle.armCharge()"
+        @point="battle.armPoint()"
         @halt="battle.order({ kind: 'halt' })"
       />
       <p v-if="ui.arming" class="ml-4 shrink-0 text-xs whitespace-nowrap text-error">
         Press the Unit to go at.<br />
         Escape, or open ground, calls it off.
+      </p>
+      <p v-else-if="ui.pointing" class="ml-4 shrink-0 text-xs whitespace-nowrap text-primary">
+        Press where you want it looking.<br />
+        It comes round where it stands, and does not move.
       </p>
       <p
         v-else-if="ui.phase === 'deployment' && selected"

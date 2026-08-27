@@ -13,6 +13,8 @@ const props = defineProps<{
   chargingName: string | null
   /** A Charge is armed on this Unit and waiting to be aimed. */
   arming: boolean
+  /** The Unit is waiting for a direction to come round onto. */
+  pointing: boolean
   /** Deployment: the army is being arranged, so nothing here is an Order yet. */
   deploying: boolean
   disabled: boolean
@@ -22,6 +24,7 @@ const emit = defineEmits<{
   form: [formation: FormationName]
   arrivalFormation: [formation: FormationName]
   charge: []
+  point: []
   halt: []
 }>()
 
@@ -124,17 +127,39 @@ const label = describeFormation
           >
             {{ label(option) }}
           </button>
-          <button
-            v-if="orderable"
-            type="button"
-            class="btn btn-ghost btn-xs"
-            :disabled="deaf"
-            @click="emit('halt')"
-          >
+        </div>
+
+        <!-- Halt, point and charge are not Formations, and stood inside the
+             Form group they read as though they were — as though a battalion
+             could be in attack column or charging but not both. They are Orders
+             about what the Unit is doing; the Formation is the shape it does it
+             in, and a column charges in column. Their own group, and no label:
+             the verbs say it, and calling the group "Order" would be a second
+             lie, since forming is an Order too. -->
+        <div v-if="orderable" class="flex items-center gap-2">
+          <button type="button" class="btn btn-ghost btn-xs" :disabled="deaf" @click="emit('halt')">
             halt
           </button>
+          <!-- Offered to every Arm and not only to guns. Any Unit can be told
+               to come round where it stands; it is only for artillery that it is
+               the sole way to do it, since a battery ordered anywhere at all
+               hitches up to get there. -->
           <button
-            v-if="mounted && orderable"
+            type="button"
+            class="btn btn-xs"
+            :class="pointing ? 'btn-primary' : 'btn-ghost'"
+            :disabled="deaf"
+            :title="
+              pointing
+                ? 'now press where you want it looking'
+                : 'come round on the spot, without moving — or drag off its body'
+            "
+            @click="emit('point')"
+          >
+            {{ pointing ? "press a direction" : "point" }}
+          </button>
+          <button
+            v-if="mounted"
             type="button"
             class="btn btn-xs"
             :class="arming ? 'btn-error' : 'btn-ghost'"
