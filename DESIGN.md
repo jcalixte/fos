@@ -898,6 +898,14 @@ issued at all.
 
 - **Initiative's effect on a live Order was never stated.** Cancelling would strand a battalion in square in an empty field until a new Order arrived ninety seconds later. Resolved: Initiative **suspends**, never cancels.
 
+- **The Field offered a Charge that C6 would refuse.** Aiming outlined every enemy, a Routing one
+  included, while C6 pulls the chargers up the moment the Order reaches them because Pursuit is not
+  built. So the player picked a mob, paid the Courier ride, and watched the regiment stand still —
+  the one shape of bug ADR-0002 cannot absolve, since the delay is the game and spending it on
+  nothing is not. Resolved by stating what may be aimed at *next to the pull-up* rather than in the
+  screen: no outline on a Routing Unit and no Order sent, so the offer is exactly what the
+  simulation will accept, and building Pursuit moves both at once.
+
 ---
 
 ## Annex — full roof grid
