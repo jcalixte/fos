@@ -53,6 +53,15 @@ export interface BattleUi {
   returns: ArmyReturn[]
   /** Breaking off has been offered and is waiting to be taken or dropped. */
   conceding: boolean
+  /**
+   * Every piece of Key Ground and who ended on it, filled in with the Return.
+   * The armies' own counts do not add up to it — a piece nobody reached is in
+   * neither of them, and it is exactly that case the reader has to see to
+   * understand a day decided on condition rather than on ground.
+   */
+  keyGround: { name: string; holder: string | null }[]
+  /** What decided it, carried through so the Return can point at the figure. */
+  decidedBy: Outcome["by"] | null
 }
 
 export function useBattle(scenarioPath: string) {
@@ -80,6 +89,8 @@ export function useBattle(scenarioPath: string) {
     verdict: null,
     returns: [],
     conceding: false,
+    keyGround: [],
+    decidedBy: null,
   })
 
   /**
@@ -115,34 +126,33 @@ export function useBattle(scenarioPath: string) {
             detail: "Too much of it was running for the rest to stay.",
           }
     }
-    const held = outcome.keyGround.filter((g) => g.holder !== null)
     if (outcome.winner === null) {
+      const held = outcome.keyGround.filter((g) => g.holder !== null)
       return {
         headline: "The clock has run out, undecided.",
         detail:
           held.length === 0
-            ? "Neither army was left standing on the Key Ground."
-            : "The Key Ground was evenly shared.",
+            ? "Neither army was left standing on the Key Ground, and neither is in the worse state."
+            : "The Key Ground was evenly shared, and neither army is in the worse state.",
       }
+    }
+    if (outcome.by === "condition") {
+      return mine
+        ? {
+            headline: "The clock has run out, and the Field is yours.",
+            detail:
+              "The Key Ground was even, and theirs is the army in the worse state for the day.",
+          }
+        : {
+            headline: "The clock has run out, and the Field is theirs.",
+            detail:
+              "The Key Ground was even, and yours is the army in the worse state for the day.",
+          }
     }
     const names = outcome.keyGround
       .filter((g) => g.holder === outcome.winner)
       .map((g) => g.name)
       .join(", ")
-    // No names means the Key Ground was even and the day went on condition
-    // instead — the one case where the winner took nothing and won anyway.
-    if (!names) {
-      return mine
-        ? {
-            headline: "The clock has run out, and the Field is yours.",
-            detail:
-              "Neither army took the Key Ground, and theirs is in the worse state for trying.",
-          }
-        : {
-            headline: "The clock has run out, and the Field is theirs.",
-            detail: "Neither army took the Key Ground, and yours is in the worse state for trying.",
-          }
-    }
     return mine
       ? { headline: "The clock has run out, and you hold the Field.", detail: `You hold ${names}.` }
       : {
@@ -235,6 +245,8 @@ export function useBattle(scenarioPath: string) {
     ui.phase = "over"
     ui.verdict = readVerdict(r.battle.outcome)
     ui.returns = armyReturns(r.battle)
+    ui.keyGround = r.battle.outcome.keyGround
+    ui.decidedBy = r.battle.outcome.by
     ui.running = false
     r.running = false
   }

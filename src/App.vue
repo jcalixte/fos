@@ -175,6 +175,8 @@ onBeforeUnmount(() => {
             :detail="ui.verdict?.detail ?? ''"
             :returns="ui.returns"
             :player-army="ui.playerArmy"
+            :key-ground="ui.keyGround"
+            :decided-by="ui.decidedBy"
           />
         </div>
       </div>

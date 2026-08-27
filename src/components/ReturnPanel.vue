@@ -7,7 +7,28 @@ const props = defineProps<{
   detail: string
   returns: ArmyReturn[]
   playerArmy: string
+  /** Every piece on the Field, so a count of nought reads as one and not none. */
+  keyGround: { name: string; holder: string | null }[]
+  /** What decided the day, so the Return can point at the figure that did it. */
+  decidedBy: "army-break" | "key-ground" | "condition" | "conceded" | null
 }>()
+
+/**
+ * The column the day turned on, marked so the table answers "why did they win"
+ * on its own. Army Break and condition are both read off the share an army
+ * spent, which is the same figure asked at two different moments. Breaking off
+ * marks nothing: no figure here decided it, the commander did.
+ */
+const deciding = computed(() =>
+  props.decidedBy === "key-ground"
+    ? "ground"
+    : props.decidedBy === "condition" || props.decidedBy === "army-break"
+      ? "spent"
+      : null,
+)
+
+/** Pieces of Key Ground neither army ended on. */
+const unheld = computed(() => props.keyGround.filter((g) => g.holder === null).map((g) => g.name))
 
 /**
  * A Pixi colour as CSS, for a swatch and never for type. The Rosters' two
@@ -50,10 +71,14 @@ const ordered = computed(() =>
     (a, b) => Number(b.id === props.playerArmy) - Number(a.id === props.playerArmy),
   ),
 )
+
+function mark(column: "ground" | "spent"): string {
+  return deciding.value === column ? "text-base-content" : ""
+}
 </script>
 
 <template>
-  <div class="w-full max-w-lg rounded-box bg-base-300/95 p-6 shadow-xl">
+  <div class="w-full max-w-2xl rounded-box bg-base-300/95 p-6 shadow-xl">
     <p class="text-lg font-semibold">{{ headline }}</p>
     <p class="mt-1 text-sm text-base-content/70">{{ detail }}</p>
 
@@ -61,11 +86,12 @@ const ordered = computed(() =>
       <thead>
         <tr class="text-xs uppercase tracking-wide text-base-content/45">
           <th class="pb-1 text-left font-medium">Return</th>
+          <th class="pb-1 text-right font-medium" :class="mark('ground')">Ground</th>
           <th class="pb-1 text-right font-medium">In hand</th>
           <th class="pb-1 text-right font-medium">Running</th>
           <th class="pb-1 text-right font-medium">Gone</th>
           <th class="pb-1 text-right font-medium">Lost</th>
-          <th class="pb-1 text-right font-medium">Spent</th>
+          <th class="pb-1 text-right font-medium" :class="mark('spent')">Spent</th>
         </tr>
       </thead>
       <tbody>
@@ -81,6 +107,10 @@ const ordered = computed(() =>
             </span>
             <span class="mt-0.5 block pl-5 text-xs text-base-content/50">{{ ground(row) }}</span>
           </td>
+          <td class="py-2 text-right tabular-nums" :class="mark('ground')">
+            {{ row.keyGround.length
+            }}<span class="text-xs text-base-content/40">/{{ keyGround.length }}</span>
+          </td>
           <td class="py-2 text-right tabular-nums">{{ row.inHand }}</td>
           <td class="py-2 text-right tabular-nums">{{ row.running }}</td>
           <td class="py-2 text-right tabular-nums">{{ row.gone }}</td>
@@ -88,15 +118,21 @@ const ordered = computed(() =>
             {{ men(row.mustered - row.strength) }}
             <span class="text-xs text-base-content/40">/ {{ men(row.mustered) }}</span>
           </td>
-          <td class="py-2 text-right tabular-nums">{{ spent(row.spent) }}</td>
+          <td class="py-2 text-right tabular-nums" :class="mark('spent')">
+            {{ spent(row.spent) }}
+          </td>
         </tr>
       </tbody>
     </table>
 
-    <p class="mt-4 text-xs leading-relaxed text-base-content/45">
-      Units in hand, Units running and Units gone off the Field; men lost of the men mustered; and
-      the share of itself each army spent, weighted by Grade — a third is where an army quits the
-      Field. Key Ground is named under the army that ended on it.
+    <p v-if="unheld.length > 0" class="mt-3 text-xs text-base-content/50">
+      Neither army ended on {{ unheld.join(", ") }}.
+    </p>
+
+    <p class="mt-3 text-xs leading-relaxed text-base-content/45">
+      Pieces of Key Ground held, Units in hand, Units running and Units gone off the Field; men lost
+      of the men mustered; and the share of itself each army spent, weighted by Grade — a third is
+      where an army quits the Field. The column the day turned on is the bright one.
     </p>
     <p class="mt-3 text-xs text-base-content/40">Reload to march it again from the same seed.</p>
   </div>
