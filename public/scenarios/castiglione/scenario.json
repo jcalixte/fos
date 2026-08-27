@@ -1,0 +1,383 @@
+{
+  "name": "Castiglione",
+  "summary": "5 August 1796, and the everyday case the design is measured against. Wurmser stands across the Castiglione road with his right on the Solferino heights and his left out in the open plain, resting on the entrenched knoll of Monte Medolano — a flank anchored on a hillock and beyond that hanging in the air. Bonaparte has to hold the whole line by the throat long enough for the column coming up from Guidizzolo to walk onto that flank from behind. The Field is a reading of the morainic ground south of Lake Garda rather than a survey of it: hills across the north, plain to the south, and the Redone between the two armies costing a battalion time without funnelling it anywhere.",
+  "field": {
+    "cells": [240, 150],
+    "cellSize": 8,
+    "ground": "ground.png",
+    "heightmap": "height.png",
+    "elevation": [0, 90]
+  },
+  "clock": 2400,
+  "seed": 179608,
+  "armies": [
+    {
+      "id": "french",
+      "name": "French",
+      "colour": "#2f4d8f",
+      "brief": "Take hold of the whole Austrian line and do not let go of it, because the column coming up from Guidizzolo arrives behind their left twenty minutes in and has to find them still facing you. Marmont's horse battery is the answer to the guns on Monte Medolano, and it will not move until it is hitched up. The knoll is the only ground here that counts at the end.",
+      "roster": "/rosters/french-castiglione.json",
+      "headquarters": { "x": 330, "y": 830 },
+      "deploymentZone": [140, 180, 520, 940]
+    },
+    {
+      "id": "austrian",
+      "name": "Austrian",
+      "colour": "#e3e7ef",
+      "brief": "Hold the position until the light goes. Your right is on the heights and can look after itself; your left rests on the battery on Monte Medolano and then simply stops, with nothing past it but the road up from Medole. Whatever comes up that road is behind you, and the knoll is the one piece of ground the day is counted on.",
+      "roster": "/rosters/austrian-castiglione.json",
+      "headquarters": { "x": 1620, "y": 620 },
+      "deploymentZone": [1080, 180, 620, 940]
+    }
+  ],
+  "crossings": [],
+  "keyGround": [
+    {
+      "name": "Monte Medolano",
+      "position": { "x": 1190, "y": 900 },
+      "radius": 80
+    }
+  ],
+  "plan": [
+    {
+      "at": 30,
+      "unitId": "fr-11e-legere",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 700, "y": 300 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "fr-32e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 720, "y": 330 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 90,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 720, "y": 500 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 130,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 740, "y": 660 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 170,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 740, "y": 820 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 220,
+      "unitId": "fr-5e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 720, "y": 980 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 300,
+      "unitId": "fr-20e-dragons",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 620, "y": 1090 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "fr-batterie-pied",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 700, "y": 420 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 600,
+      "unitId": "fr-32e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1080, "y": 340 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 660,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1080, "y": 540 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 780,
+      "unitId": "fr-marmont",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1000, "y": 880 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 900,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1140, "y": 680 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 960,
+      "unitId": "fr-1er-hussards",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1000, "y": 1090 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1100, "y": 830 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1200,
+      "unitId": "fr-verdier",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1150, "y": 960 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1320,
+      "unitId": "fr-5e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1080, "y": 1010 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1440,
+      "unitId": "fr-verdier",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1210, "y": 905 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1620,
+      "unitId": "fr-1er-hussards",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1350, "y": 1080 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1800,
+      "unitId": "fr-32e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1300, "y": 350 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1920,
+      "unitId": "fr-69e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1220, "y": 940 },
+        "arrivalFacing": -1.75,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 2040,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1280, "y": 840 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "au-grenz",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1090, "y": 270 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 180,
+      "unitId": "au-dragoner",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1500, "y": 780 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 360,
+      "unitId": "au-ir52",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1330, "y": 850 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 540,
+      "unitId": "au-husaren",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1430, "y": 1020 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 720,
+      "unitId": "au-ir10",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1250, "y": 1030 },
+        "arrivalFacing": 1.75,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 900,
+      "unitId": "au-grenz",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1250, "y": 320 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "au-ir43-2",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1320, "y": 520 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1260,
+      "unitId": "au-husaren",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1340, "y": 1090 },
+        "arrivalFacing": 1.45,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1440,
+      "unitId": "au-ir53",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1300, "y": 970 },
+        "arrivalFacing": 2.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1620,
+      "unitId": "au-dragoner",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1420, "y": 900 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1800,
+      "unitId": "au-ir10",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1450, "y": 1060 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1980,
+      "unitId": "au-ir52",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1450, "y": 860 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 2160,
+      "unitId": "au-ir44",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1450, "y": 680 },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    }
+  ]
+}

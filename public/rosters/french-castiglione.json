@@ -1,0 +1,140 @@
+{
+  "id": "french-castiglione",
+  "name": "Armée d'Italie, aile de Castiglione",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-32e",
+      "name": "32e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 780,
+      "formation": "line",
+      "position": { "x": 300, "y": 300 },
+      "facing": 0
+    },
+    {
+      "id": "fr-51e",
+      "name": "51e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "position": { "x": 300, "y": 470 },
+      "facing": 0
+    },
+    {
+      "id": "fr-11e-legere",
+      "name": "11e Légère",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "open-order",
+      "position": { "x": 460, "y": 280 },
+      "facing": 0
+    },
+    {
+      "id": "fr-4e-legere",
+      "name": "4e Légère",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 640,
+      "formation": "line",
+      "position": { "x": 300, "y": 640 },
+      "facing": 0
+    },
+    {
+      "id": "fr-45e",
+      "name": "45e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 750,
+      "formation": "line",
+      "position": { "x": 300, "y": 810 },
+      "facing": 0
+    },
+    {
+      "id": "fr-5e",
+      "name": "1er/5e de Ligne",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 800,
+      "formation": "line",
+      "position": { "x": 300, "y": 980 },
+      "facing": 0
+    },
+    {
+      "id": "fr-verdier",
+      "name": "Grenadiers réunis (Verdier)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 480,
+      "formation": "attack-column",
+      "position": { "x": 460, "y": 700 },
+      "facing": 0
+    },
+    {
+      "id": "fr-marmont",
+      "name": "Batterie à cheval (Marmont)",
+      "arm": "artillery",
+      "grade": "elite",
+      "strength": 90,
+      "formation": "in-battery",
+      "position": { "x": 450, "y": 880 },
+      "facing": 0
+    },
+    {
+      "id": "fr-batterie-pied",
+      "name": "2e Cie, 4e Rgt d'Artillerie à Pied",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 105,
+      "formation": "in-battery",
+      "position": { "x": 450, "y": 400 },
+      "facing": 0
+    },
+    {
+      "id": "fr-1er-hussards",
+      "name": "1er Hussards",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 280,
+      "formation": "line",
+      "position": { "x": 400, "y": 1040 },
+      "facing": 0
+    },
+    {
+      "id": "fr-20e-dragons",
+      "name": "20e Dragons",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 260,
+      "formation": "line",
+      "position": { "x": 230, "y": 980 },
+      "facing": 0
+    },
+    {
+      "id": "fr-69e",
+      "name": "1er/69e de Ligne (tête de colonne Fiorella)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "march-column",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 1200,
+        "entry": { "x": 1420, "y": 1140 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 1290, "y": 1030 },
+          "arrivalFacing": -1.75,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

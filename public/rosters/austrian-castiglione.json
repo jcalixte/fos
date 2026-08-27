@@ -1,0 +1,121 @@
+{
+  "id": "austrian-castiglione",
+  "name": "Armee Wurmser, Stellung bei Castiglione",
+  "grades": {
+    "conscript": "Rekrut",
+    "line": "Linie",
+    "elite": "Grenadier"
+  },
+  "entries": [
+    {
+      "id": "au-ir43-1",
+      "name": "1. Bataillon IR 43 Thurn",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "line",
+      "position": { "x": 1380, "y": 320 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir43-2",
+      "name": "2. Bataillon IR 43 Thurn",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "position": { "x": 1380, "y": 490 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-grenz",
+      "name": "1. Banal-Grenz-Regiment",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 520,
+      "formation": "open-order",
+      "position": { "x": 1230, "y": 300 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir44",
+      "name": "1. Bataillon IR 44 Belgiojoso",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "line",
+      "position": { "x": 1380, "y": 660 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir52",
+      "name": "2. Bataillon IR 52 Erzherzog Anton",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "position": { "x": 1380, "y": 830 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-batterie-solferino",
+      "name": "Positionsbatterie Nr. 2",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 120,
+      "formation": "in-battery",
+      "position": { "x": 1250, "y": 500 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir53",
+      "name": "1. Bataillon IR 53 Jellačić",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "position": { "x": 1380, "y": 1000 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-medolano",
+      "name": "Batterie auf dem Monte Medolano",
+      "arm": "artillery",
+      "grade": "elite",
+      "strength": 135,
+      "formation": "in-battery",
+      "position": { "x": 1190, "y": 900 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir10",
+      "name": "2. Bataillon IR 10 Jordis",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 780,
+      "formation": "line",
+      "position": { "x": 1200, "y": 1040 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-husaren",
+      "name": "Husaren-Regiment Erdödy",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 300,
+      "formation": "line",
+      "position": { "x": 1540, "y": 940 },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-dragoner",
+      "name": "Dragoner-Regiment Erzherzog Johann",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 280,
+      "formation": "line",
+      "position": { "x": 1560, "y": 620 },
+      "facing": 3.14159
+    }
+  ]
+}
