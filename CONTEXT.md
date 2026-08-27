@@ -321,6 +321,9 @@ _Avoid_: game speed, time scale, simulation speed
 - The **Headquarters** hastens a **Rally**, which is its third job after couriers and sight
 - A Routing **Unit** that crosses a formed one throws it into **Disorder**
 - A **Unit** delivers a **Volley** on its own reload clock, or presses a **Charge** into **Contact**
+- A **Unit** has to be halted to deliver a **Volley**, because what has to be halted is the
+  **Face** — so a **Formation** with no **Face** and reach to fire with, which is **Open Order**
+  alone, fires on the move and pays for it in the reload
 - A **Volley**'s effect turns mostly on the target's **Formation**: a column offers a quarter of
   a line's frontage and far more depth to plough through
 - A **Unit**'s fire falls off as its **Morale** drops and **Disorder** sets in — which is the

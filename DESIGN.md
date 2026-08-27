@@ -976,6 +976,41 @@ far flank.
   screen: no outline on a Routing Unit and no Order sent, so the offer is exactly what the
   simulation will accept, and building Pursuit moves both at once.
 
+- **"Fire and movement do not mix" was a rule about the Order, and it denied Open Order the one
+  thing it exists for.** A Unit fires only where it covered no ground in the step, which is right
+  and load-bearing — it is what makes **Halt** worth an Order and an advance under fire cost
+  something. But it was applied to every Formation that has reach, and skirmishing *is* fire and
+  movement: men advancing, firing and falling back inside the swarm. Open Order reaches 150m
+  against a line's 100m and walks at 1.2 m/s against its 0.8, and every bit of that was worthless,
+  because the screen had to stand still to shoot like the line it was screening. What halting
+  actually buys is a dressed **Face**, so the rule now reads off the Face and not the Order: a
+  Formation with no Face has no line to dress and fires on the march. Derived from `faces` and
+  `range`, so nothing is authored per Formation and F8 stands — and it picks out Open Order alone,
+  march column and limbered guns having no reach and cavalry no fire at all. Paid for in the
+  reload, by one global scalar, and never on the Volley, which stays purely geometric: a
+  skirmisher gets a shot off every forty-five seconds against a halted battalion's twenty-two.
+
+- **A skirmish screen's fire did not thin until 240 metres.** The Faceless case measured both
+  bodies by their longest side rather than along the line of fire, so 700 men in Open Order — 187m
+  across and 18m deep — were credited with 93m of their own standoff whichever way they shot. The
+  gap a ball crossed was therefore zero out to nearly two hundred metres, and a screen's Volley at
+  140m was worth exactly what it was worth at 60. Harmless while skirmishers had to halt to matter;
+  the moment they fire on the march it is the difference between harassment and out-ranging a line
+  for nothing. Now read the way a Face reads it — the extent each body actually presents along the
+  bearing — so a screen's beaten ground is its own Footprint blown out by the range on every side,
+  9m of standoff to the front and 93m along the screen. The renderer samples the same standoff
+  rather than drawing a circle, because a beaten ground drawn where the fire is not is the one kind
+  of lie F5 cannot afford. Measured: 18.4 men a Volley at 60m against a line's 29.1, 9.6 at 140m,
+  and nothing past 159.
+
+- **Two places still read movement as displacement alone, and are left doing so.** A battalion
+  wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which
+  traverses and then fires, and generous for a line mid-wheel. And a square at 0.25 m/s clears the
+  threshold, so a square edging away from cavalry never fires, though fifteen metres a minute is a
+  firing square in any account of the period. Both are known and neither is fixed here: the first
+  wants facing changes to read as un-dressed, the second wants a speed below which a Unit counts
+  as standing, and both are dials that would want a playtest to set.
+
 ---
 
 ## Annex — full roof grid

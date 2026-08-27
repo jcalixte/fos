@@ -28,6 +28,9 @@ to Crossings, Initiative as an ordered rule list, Arrivals, and the Dispatch fee
 Fighting, and what ends it. A Unit standing still with an enemy in its beaten ground fires on the
 period's clock, and what that costs comes out of the geometry: how many weapons bear, and how much
 depth their shot has to find. Guns are laid on their target; muskets point where the rank points.
+Standing still is what dresses the Face, so skirmishers in Open Order, having none, fire on the
+march and reload at half the rate — over a beaten ground that is the screen's own Footprint blown
+out by its reach, so its fire thins with the range like anybody else's.
 Then Morale decides its fate rather than Strength — a battalion Breaks at about a fifth of its men,
 Routs away from whatever broke it, is deaf to Orders while it runs, and Rallies with a lower Morale
 Ceiling than it had before.
