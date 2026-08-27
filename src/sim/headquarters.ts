@@ -37,14 +37,14 @@ export const HEADQUARTERS_SPEED = 4
  * cavalry has no fire at all, and a regiment of horse trotting up to the tables
  * is the most harrying thing on the Field.
  */
-export const HARRIED_RANGE = 200
+export const HARRIED_RANGE = 150
 
 /**
  * Metres an enemy must get *back* to before the staff settles again. A Unit
  * hovering on the threshold would otherwise flap the state — and every flap is
  * two Dispatches and a change in what every Order costs.
  */
-const HARRIED_RELEASE = 260
+const HARRIED_RELEASE = 210
 
 /** Metres at which an enemy Unit is up to the tables, and has overrun it. */
 export const OVERRUN_RANGE = 60
