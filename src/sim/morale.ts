@@ -120,15 +120,33 @@ export function hasBroken(unit: Unit): boolean {
 }
 
 /**
+ * The words Morale is read in, worst rung first. An ordered ladder and not a set
+ * of labels, because the renderer draws Morale as a rung on it (C10) and these
+ * words are the whole of what it is given.
+ */
+export const MORALE_WORDS = ["on the point of breaking", "shaken", "wavering", "steady"] as const
+
+export type MoraleWord = (typeof MORALE_WORDS)[number]
+
+/**
  * Morale in words rather than as a number. T11 paid for Morale-as-health-bar by
  * giving up a bar the player can count down, so the panel says how a battalion
  * is holding up and never how much of it is left.
  */
-export function describeMorale(unit: Unit): string {
+export function describeMorale(unit: Unit): MoraleWord {
   if (unit.morale >= 0.75) return "steady"
   if (unit.morale >= 0.5) return "wavering"
   if (unit.morale >= 0.25) return "shaken"
   return "on the point of breaking"
+}
+
+/**
+ * Which rung of the ladder a word stands on, 0 the lowest. The ordering without
+ * the number behind it: enough to draw a Unit coming apart by degrees, and no
+ * more of the Morale figure than T11 lets off the simulation.
+ */
+export function moraleRung(word: MoraleWord): number {
+  return MORALE_WORDS.indexOf(word)
 }
 
 /**

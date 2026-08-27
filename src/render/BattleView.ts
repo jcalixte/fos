@@ -10,7 +10,8 @@ import {
   poseFootprint,
 } from "@/sim/formation"
 import { chargeable } from "@/sim/charge"
-import type { Battle, Field, FormationName, HeldGround, Vec2 } from "@/sim/types"
+import { moraleRung } from "@/sim/morale"
+import type { Arm, Battle, Field, FormationName, Grade, HeldGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
 import { buildContourCanvas, buildTerrainCanvas } from "./terrain"
@@ -44,6 +45,124 @@ const GRAB_FLOOR_PX = 28
 /** Points around a Faceless Unit's beaten ground. Enough that it reads smooth. */
 const ALL_ROUND_STEPS = 48
 
+/**
+ * Three reads the Field owes the player that no panel can give him, because he
+ * is looking at the map and not at a Unit: what a Unit *is*, how good it is, and
+ * how it is holding up. The whole Field is on screen at about 0.7px/m (T8), so a
+ * battalion in line is a 100px bar three pixels thick — there is no inside to
+ * draw in, and each read has to have a channel of its own or they smear
+ * together.
+ *
+ * - **Arm** takes the length, the one axis with pixels to spend: infantry is
+ *   solid, cavalry breaks into squadrons, a battery is guns standing apart.
+ * - **Grade** takes the keyline, in dark ink: an elite battalion is hard-edged
+ *   and a conscript one lets the grass through its outline.
+ * - **Morale** takes the dressing and the Face, and brings the Rout's own colour
+ *   in with it, so a Unit is visibly coming apart before it goes.
+ *
+ * Hue is not available to any of them: it says which army, and one of the two
+ * armies is white (#e3e7ef), which rules out saying anything by paling a Unit
+ * out. Everything here is geometry or dark ink for that reason.
+ */
+
+/**
+ * Squadrons a cavalry Unit is drawn in. Cosmetic, and it has to stay that way:
+ * Frontage is C3's and the simulation never sees these gaps. A regiment that
+ * fought in four squadrons is the reason for the number, not a rule.
+ */
+const SQUADRONS = 4
+
+/** How wide a squadron interval is drawn, in screen pixels. */
+const SQUADRON_GAP_PX = 3
+
+/** One dash and one gap of a broken line, in screen pixels. */
+const DASH_PX = 7
+
+/**
+ * How deep a Unit must be drawn before its whole outline may be broken, in
+ * screen pixels. Under this a battalion in line is 2.6px front to rear, and
+ * dashes laid along both long edges land two pixels apart and close up into a
+ * chain of little boxes — which reads as segmentation, the one thing cavalry's
+ * squadron intervals are supposed to be saying. So a broken outline is for
+ * square and nothing else; every thinner Unit breaks only its Face, which is a
+ * single line and can only read as broken.
+ */
+const RAGGED_FLOOR_PX = 10
+
+/**
+ * How a Grade shows on a Unit's outline. Drill is what buys a battalion its hard
+ * edge, so Grade is drawn as how hard that edge is: an elite Unit is cut out of
+ * the grass in dark ink and a conscript one bleeds into it. Weight and not
+ * pattern, for the reason RAGGED_FLOOR_PX gives.
+ *
+ * Dark ink throughout, because it has to read on a white army as well as on a
+ * blue one.
+ */
+interface GradeEdge {
+  /** Keyline width, in screen pixels. */
+  width: number
+  alpha: number
+}
+
+const GRADE_EDGE: Record<Grade, GradeEdge> = {
+  elite: { width: 2.8, alpha: 0.9 },
+  line: { width: 2, alpha: 0.65 },
+  conscript: { width: 1, alpha: 0.3 },
+}
+
+/**
+ * How a rung of Morale is drawn. Two carriers, because a Unit in march column
+ * has no Face to say it with:
+ *
+ * - the dressed edge, all the way round and never broken, walks in colour from
+ *   white to the same orange a mob is drawn in (`mobBase`);
+ * - the Face line, which does break, because it is one line and a broken single
+ *   line cannot read as anything but broken.
+ *
+ * The shared orange is the point of the whole thing: a Rout stops being a shape
+ * changing without warning and becomes the end of something the player watched.
+ *
+ * Worst rung first, matching `MORALE_WORDS`.
+ */
+interface MoraleInk {
+  colour: number
+  /** Share of a dash period of the Face line that is ink. 1 draws it unbroken. */
+  faceDuty: number
+  /** Face line width, in screen pixels. */
+  face: number
+  faceAlpha: number
+  /** Dressed edge width, in screen pixels. */
+  dress: number
+  dressAlpha: number
+}
+
+const MORALE_INK: MoraleInk[] = [
+  { colour: 0xd8632f, faceDuty: 0.3, face: 1.8, faceAlpha: 0.95, dress: 1.7, dressAlpha: 0.9 },
+  { colour: 0xe3874a, faceDuty: 0.5, face: 2, faceAlpha: 0.9, dress: 1.5, dressAlpha: 0.7 },
+  { colour: 0xf2e3cb, faceDuty: 0.75, face: 2.2, faceAlpha: 0.85, dress: 1.2, dressAlpha: 0.5 },
+  { colour: 0xffffff, faceDuty: 1, face: 2.4, faceAlpha: 0.8, dress: 1.2, dressAlpha: 0.35 },
+]
+
+/**
+ * How a Figure is drawn per Arm, across the Face by front-to-rear, as multiples
+ * of the Figure size. A trooper is his horse and stands 2.4m nose to tail
+ * against a man's 0.6m, so the mark is long — which is also the only thing that
+ * tells cavalry from infantry once the Figures overlap into one smear.
+ */
+const FIGURE_ASPECT: Record<Arm, { across: number; deep: number }> = {
+  infantry: { across: 1, deep: 1 },
+  cavalry: { across: 0.8, deep: 1.9 },
+  artillery: { across: 1.15, deep: 1.15 },
+}
+
+/** A rectangle in Unit-local metres: +x across the Face, +y toward the rear. */
+interface LocalRect {
+  x: number
+  y: number
+  width: number
+  depth: number
+}
+
 export interface ViewState {
   selected: string | null
   playerArmy: string
@@ -75,13 +194,34 @@ function lighten(colour: number, amount: number): number {
   return (mix(r) << 16) | (mix(g) << 8) | mix(b)
 }
 
-function figureTexture(): Texture {
+/**
+ * One mark per Arm. Drawn pointing up the canvas because a Figure is a child of
+ * the Unit's container and turns with it, and the slot layout puts the Face
+ * along local -y — so "up" here comes out as "toward the enemy" on the Field.
+ */
+function figureTexture(arm: Arm): Texture {
   const canvas = document.createElement("canvas")
   canvas.width = 16
   canvas.height = 16
   const context = canvas.getContext("2d")
   if (!context) throw new Error("no 2d context for a Figure")
   context.fillStyle = "#ffffff"
+  if (arm === "cavalry") {
+    // A capsule the full height of the canvas: stretched by FIGURE_ASPECT it
+    // becomes a horse and rider seen from above, and a rank of them reads as
+    // streaks where a rank of infantry reads as a smear.
+    context.beginPath()
+    context.roundRect(3.5, 0.5, 9, 15, 4.5)
+    context.fill()
+    return Texture.from(canvas)
+  }
+  if (arm === "artillery") {
+    // The only mark on the Field with corners. A gun is a piece of furniture and
+    // not a body, and at 18m between pieces it is the one Figure with room to be
+    // seen as an individual thing.
+    context.fillRect(1, 1, 14, 14)
+    return Texture.from(canvas)
+  }
   context.beginPath()
   context.arc(8, 8, 7, 0, Math.PI * 2)
   context.fill()
@@ -126,9 +266,17 @@ const CLASH_MS = 750
 
 interface UnitVisual {
   container: Container
+  /** Body and keyline, under the Figures: what the Unit is, and how good it is. */
   base: Graphics
   figures: Sprite[]
-  /** What the slot layout was last built for, so it is rebuilt only when it moves. */
+  /**
+   * Dressing, Face and selection, over the Figures. A Figure is drawn larger
+   * than an infantry line is deep — 4.3m against 3.6m at this scale — so a
+   * battalion's Figures blanket its own block. Anything the player has to read
+   * off the edge has to be laid over them or it is simply not there.
+   */
+  trim: Graphics
+  /** What the drawing was last built for, so it is rebuilt only when it changes. */
   builtFor: string
 }
 
@@ -158,7 +306,7 @@ export class BattleView {
   private unitLayer = new Container()
   private effects = new Graphics()
   private visuals = new Map<string, UnitVisual>()
-  private texture: Texture | null = null
+  private textures: Record<Arm, Texture> | null = null
   private field: Field | null = null
   private host: HTMLElement | null = null
   private observer: ResizeObserver | null = null
@@ -188,7 +336,11 @@ export class BattleView {
       this.layout()
     })
     this.observer.observe(host)
-    this.texture = figureTexture()
+    this.textures = {
+      infantry: figureTexture("infantry"),
+      cavalry: figureTexture("cavalry"),
+      artillery: figureTexture("artillery"),
+    }
     this.app.stage.addChild(this.world)
     this.world.addChild(this.overlay, this.fireLayer, this.ghostLayer, this.unitLayer, this.effects)
   }
@@ -553,16 +705,23 @@ export class BattleView {
 
   private drawUnits(units: UnitSnapshot[], view: ViewState): void {
     const seen = new Set<string>()
-    const figureMetres = Math.max(2.2, MIN_FIGURE_PX * this.metresPerPixel())
+    const line = this.metresPerPixel()
+    const figureMetres = Math.max(2.2, MIN_FIGURE_PX * line)
     for (const unit of units) {
       seen.add(unit.id)
       let visual = this.visuals.get(unit.id)
       if (!visual) {
         const container = new Container()
+        // The Figures are added and dropped as a Unit loses men, so the two
+        // Graphics cannot hold their place by insertion order alone.
+        container.sortableChildren = true
         const base = new Graphics()
-        container.addChild(base)
+        base.zIndex = 0
+        const trim = new Graphics()
+        trim.zIndex = 2
+        container.addChild(base, trim)
         this.unitLayer.addChild(container)
-        visual = { container, base, figures: [], builtFor: "" }
+        visual = { container, base, trim, figures: [], builtFor: "" }
         this.visuals.set(unit.id, visual)
       }
       visual.container.position.set(unit.position.x, unit.position.y)
@@ -580,17 +739,28 @@ export class BattleView {
         ),
       )
 
-      // Rebuild the slot layout only when it has actually changed shape. A Unit
-      // simply marching is a container move and nothing else.
-      const key = `${unit.formation}|${unit.changingTo}|${unit.changeProgress.toFixed(3)}|${figureCount}|${figureMetres.toFixed(2)}|${unit.strength}|${unit.routing}`
-      if (visual.builtFor !== key) {
-        visual.builtFor = key
-        this.buildFigures(visual, unit, figureCount, figureMetres, colour)
-        this.buildBase(visual, unit, colour, selected)
-      } else {
-        this.buildBase(visual, unit, colour, selected)
-      }
-      for (const figure of visual.figures) figure.tint = lighten(colour, 0.45)
+      // Rebuild only when the drawing has actually changed. A Unit simply
+      // marching is a container move and nothing else — which matters more now
+      // than it did, because a frayed outline is a few dozen dashes and used to
+      // be one rectangle.
+      const key = [
+        unit.formation,
+        unit.changingTo,
+        unit.changeProgress.toFixed(3),
+        figureCount,
+        figureMetres.toFixed(2),
+        unit.strength,
+        unit.routing,
+        unit.grade,
+        unit.morale,
+        selected,
+        line.toFixed(3),
+      ].join("|")
+      if (visual.builtFor === key) continue
+      visual.builtFor = key
+      this.buildFigures(visual, unit, figureCount, figureMetres, colour)
+      this.buildBase(visual, unit, colour, line)
+      this.buildTrim(visual, unit, selected, line)
     }
     for (const [id, visual] of this.visuals) {
       if (seen.has(id)) continue
@@ -606,10 +776,13 @@ export class BattleView {
     size: number,
     colour: number,
   ): void {
-    const slots = figureSlots(unit, count)
+    const texture = this.textures?.[unit.arm] ?? Texture.WHITE
+    const aspect = FIGURE_ASPECT[unit.arm]
+    const slots = this.dressSlots(unit, figureSlots(unit, count))
     while (visual.figures.length < slots.length) {
-      const sprite = new Sprite(this.texture ?? Texture.WHITE)
+      const sprite = new Sprite(texture)
       sprite.anchor.set(0.5)
+      sprite.zIndex = 1
       visual.container.addChild(sprite)
       visual.figures.push(sprite)
     }
@@ -618,51 +791,252 @@ export class BattleView {
     }
     for (let i = 0; i < slots.length; i++) {
       const sprite = visual.figures[i]
+      sprite.texture = texture
       sprite.position.set(slots[i].x, slots[i].y)
-      sprite.width = size
-      sprite.height = size
+      sprite.width = size * aspect.across
+      sprite.height = size * aspect.deep
       sprite.tint = lighten(colour, 0.45)
     }
   }
 
-  private buildBase(
-    visual: UnitVisual,
-    unit: UnitSnapshot,
-    colour: number,
-    selected: boolean,
-  ): void {
-    const line = this.metresPerPixel()
+  /**
+   * Open the squadron intervals in a cavalry Unit's Figures. The base is drawn
+   * with the same gaps, but a Figure is wider than the interval and would paper
+   * straight over them, so the Figures have to be squeezed into the squadrons
+   * too or the gaps are invisible.
+   *
+   * Renderer-only, exactly like `tween`: the slots C3 handed over are the ones
+   * the simulation fights on, and these are the ones the player looks at.
+   */
+  private dressSlots(unit: UnitSnapshot, slots: Vec2[]): Vec2[] {
+    if (unit.arm !== "cavalry" || unit.routing) return slots
+    const shape = poseFootprint(unit)
+    const along = shape.width >= shape.depth ? "x" : "y"
+    const span = along === "x" ? shape.width : shape.depth
+    const gap = this.gapFraction(span)
+    if (gap <= 0) return slots
+    return slots.map((slot) => {
+      const u = ((along === "x" ? slot.x : slot.y) + span / 2) / span
+      const moved = (this.squeeze(u, gap) - 0.5) * span
+      return along === "x" ? { x: moved, y: slot.y } : { x: slot.x, y: moved }
+    })
+  }
+
+  /** One squadron interval as a share of the Unit's length, or 0 if it will not fit. */
+  private gapFraction(span: number): number {
+    if (span <= 0) return 0
+    const gap = (SQUADRON_GAP_PX * this.metresPerPixel()) / span
+    // Three intervals eating a third of the regiment is a different formation,
+    // not a legibility aid. A Unit too short to spare them keeps none.
+    return gap * (SQUADRONS - 1) > 0.33 ? 0 : gap
+  }
+
+  /**
+   * Squeeze a position along the Unit, 0 to 1, into whichever of `SQUADRONS`
+   * blocks it falls in, leaving `gap` between each pair.
+   */
+  private squeeze(u: number, gap: number): number {
+    const block = (1 - gap * (SQUADRONS - 1)) / SQUADRONS
+    const slice = 1 / SQUADRONS
+    const index = Math.min(SQUADRONS - 1, Math.max(0, Math.floor(u / slice)))
+    return index * (block + gap) + ((u - index * slice) / slice) * block
+  }
+
+  /**
+   * The Unit's body, and the outline that says what quality of troops it is.
+   * Under the Figures, which is where the Arm read belongs: what the player is
+   * being shown is the shape a Unit of this Arm occupies the ground in.
+   */
+  private buildBase(visual: UnitVisual, unit: UnitSnapshot, colour: number, line: number): void {
     const g = visual.base
     g.clear()
     if (unit.routing) {
-      this.mobBase(g, unit, colour, selected, line)
+      this.mobBase(g, unit, colour, line)
+      return
+    }
+    const edge = GRADE_EDGE[unit.grade]
+    for (const rect of this.bodyRects(unit, line)) {
+      // A dark keyline first, so an army colour never has to fight the grass it
+      // is standing on to be seen — and, now, so Grade has somewhere to live
+      // that neither army's colour can drown.
+      const around = this.rectCorners({
+        x: rect.x - line,
+        y: rect.y - line,
+        width: rect.width + line * 2,
+        depth: rect.depth + line * 2,
+      })
+      this.strokePoly(g, around, 1, line * DASH_PX, {
+        width: line * edge.width,
+        color: 0x11150f,
+        alpha: edge.alpha,
+      })
+      g.rect(rect.x, rect.y, rect.width, rect.depth).fill({ color: colour, alpha: 0.85 })
+    }
+  }
+
+  /**
+   * The rectangles a Unit's body is drawn as, in Unit-local metres. One for
+   * infantry; one per squadron for cavalry, because a regiment is drawn with its
+   * intervals open and that is what tells it from a battalion when both are a
+   * hundred-pixel bar; and one per gun for artillery, because a battery is
+   * pieces standing eighteen metres apart and never a block at all.
+   *
+   * The intervals are cosmetic. Frontage is C3's, and widening it here to make
+   * room for them would be the renderer deciding how much ground a regiment
+   * covers.
+   */
+  private bodyRects(unit: UnitSnapshot, line: number): LocalRect[] {
+    const shape = poseFootprint(unit)
+    if (unit.arm === "artillery") {
+      const guns = Math.max(1, bodyCount(unit.arm, unit.strength))
+      const long = Math.max(shape.width, shape.depth)
+      const short = Math.min(shape.width, shape.depth)
+      const side = Math.max(4 * line, Math.min(short, (long / guns) * 0.8))
+      return figureSlots(unit, guns).map((slot) => ({
+        x: slot.x - side / 2,
+        y: slot.y - side / 2,
+        width: side,
+        depth: side,
+      }))
+    }
+    const whole: LocalRect = {
+      x: -shape.width / 2,
+      y: -shape.depth / 2,
+      width: shape.width,
+      depth: shape.depth,
+    }
+    if (unit.arm !== "cavalry") return [whole]
+    const alongWidth = shape.width >= shape.depth
+    const span = alongWidth ? shape.width : shape.depth
+    const gap = this.gapFraction(span)
+    if (gap <= 0) return [whole]
+    const block = ((1 - gap * (SQUADRONS - 1)) / SQUADRONS) * span
+    const stride = block + gap * span
+    return Array.from({ length: SQUADRONS }, (_, i) => {
+      const start = -span / 2 + i * stride
+      return alongWidth
+        ? { x: start, y: whole.y, width: block, depth: shape.depth }
+        : { x: whole.x, y: start, width: shape.width, depth: block }
+    })
+  }
+
+  /**
+   * Dressing, Face and selection ring — everything the player reads off a Unit's
+   * edge, laid over the Figures that would otherwise cover it.
+   *
+   * Morale is the whole of the first two. The dressed edge goes all the way
+   * round, so a Unit in march column with no Face at all still says how it is
+   * holding up; the Face line takes the same ink at more weight, because the
+   * Face is what a Charge resolves against and it is the last thing to go.
+   */
+  private buildTrim(visual: UnitVisual, unit: UnitSnapshot, selected: boolean, line: number): void {
+    const g = visual.trim
+    g.clear()
+    if (unit.routing) {
+      // A mob has no dressing left to fray, and is already drawn in the colour
+      // Morale walks toward. Saying it twice would say it less.
+      if (selected) {
+        const r = mobRadius(unit.arm, unit.strength) + 6 * line
+        g.circle(0, 0, r).stroke({ width: line * 2, color: 0xf5e6a8, alpha: 0.95 })
+      }
       return
     }
     const shape = poseFootprint(unit)
     const width = shape.width
     const depth = shape.depth
-    // A dark keyline first, so an army colour never has to fight the grass it
-    // is standing on to be seen.
-    g.rect(-width / 2 - line, -depth / 2 - line, width + line * 2, depth + line * 2)
-    g.stroke({ width: line * 2.5, color: 0x11150f, alpha: 0.7 })
-    g.rect(-width / 2, -depth / 2, width, depth).fill({ color: colour, alpha: 0.85 })
-    g.stroke({ width: line * 1.2, color: 0xffffff, alpha: 0.35 })
-    // The Face is what a Charge resolves against, so it is what gets the ink.
+    const ink = MORALE_INK[moraleRung(unit.morale)]
+    const dash = line * DASH_PX
+    const outline = this.rectCorners({ x: -width / 2, y: -depth / 2, width, depth })
     const faceCount = faces(unit.arm, unit.changingTo ?? unit.formation)
-    if (faceCount > 0) {
-      g.moveTo(-width / 2, -depth / 2).lineTo(width / 2, -depth / 2)
-      if (faceCount === 4) {
-        g.moveTo(width / 2, -depth / 2).lineTo(width / 2, depth / 2)
-        g.moveTo(width / 2, depth / 2).lineTo(-width / 2, depth / 2)
-        g.moveTo(-width / 2, depth / 2).lineTo(-width / 2, -depth / 2)
+    if (faceCount === 4) {
+      // Square is prepared every way, so every side is a Face and the whole
+      // outline takes the Face's ink. It is also the one Formation deep enough
+      // to be broken all round without closing up into a chain.
+      const duty = Math.min(width, depth) >= RAGGED_FLOOR_PX * line ? ink.faceDuty : 1
+      this.strokePoly(g, outline, duty, dash, {
+        width: line * ink.face,
+        color: ink.colour,
+        alpha: ink.faceAlpha,
+      })
+    } else {
+      this.strokePoly(g, outline, 1, dash, {
+        width: line * ink.dress,
+        color: ink.colour,
+        alpha: ink.dressAlpha,
+      })
+      if (faceCount === 1) {
+        this.strokeOpen(
+          g,
+          [
+            { x: -width / 2, y: -depth / 2 },
+            { x: width / 2, y: -depth / 2 },
+          ],
+          ink.faceDuty,
+          dash,
+          { width: line * ink.face, color: ink.colour, alpha: ink.faceAlpha },
+        )
       }
-      g.stroke({ width: line * 2.4, color: 0xffffff, alpha: 0.8 })
     }
     if (selected) {
       const pad = 6 * line
       g.rect(-width / 2 - pad, -depth / 2 - pad, width + pad * 2, depth + pad * 2)
       g.stroke({ width: line * 2, color: 0xf5e6a8, alpha: 0.95 })
     }
+  }
+
+  private rectCorners(rect: LocalRect): Vec2[] {
+    return [
+      { x: rect.x, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y + rect.depth },
+      { x: rect.x, y: rect.y + rect.depth },
+    ]
+  }
+
+  /** A closed outline, whole or broken. */
+  private strokePoly(
+    g: Graphics,
+    points: Vec2[],
+    duty: number,
+    period: number,
+    style: { width: number; color: number; alpha: number },
+  ): void {
+    this.strokeOpen(g, [...points, points[0]], duty, period, style)
+  }
+
+  /**
+   * An outline laid down as dashes, `duty` of each `period` being ink. Pixi has
+   * no dashed stroke, and a broken line is not a decoration here — it is how a
+   * conscript battalion's outline and a shaken one's dressing are drawn, so it
+   * has to be walked by hand.
+   */
+  private strokeOpen(
+    g: Graphics,
+    points: Vec2[],
+    duty: number,
+    period: number,
+    style: { width: number; color: number; alpha: number },
+  ): void {
+    if (duty >= 1) {
+      g.moveTo(points[0].x, points[0].y)
+      for (const point of points.slice(1)) g.lineTo(point.x, point.y)
+      g.stroke(style)
+      return
+    }
+    const ink = Math.max(period * duty, period * 0.15)
+    for (let i = 0; i + 1 < points.length; i++) {
+      const a = points[i]
+      const b = points[i + 1]
+      const length = Math.hypot(b.x - a.x, b.y - a.y)
+      if (length <= 0) continue
+      const ux = (b.x - a.x) / length
+      const uy = (b.y - a.y) / length
+      for (let at = 0; at < length; at += period) {
+        const end = Math.min(length, at + ink)
+        g.moveTo(a.x + ux * at, a.y + uy * at).lineTo(a.x + ux * end, a.y + uy * end)
+      }
+    }
+    g.stroke(style)
   }
 
   /**
@@ -709,13 +1083,7 @@ export class BattleView {
    * rather than a colour the player has to learn. Two arcs off centre for the
    * edge, so the crowd does not read as a tidy counter.
    */
-  private mobBase(
-    g: Graphics,
-    unit: UnitSnapshot,
-    colour: number,
-    selected: boolean,
-    line: number,
-  ): void {
+  private mobBase(g: Graphics, unit: UnitSnapshot, colour: number, line: number): void {
     const r = mobRadius(unit.arm, unit.strength)
     g.circle(0, 0, r + line).stroke({ width: line * 2.5, color: 0x11150f, alpha: 0.7 })
     // Thinner than a block's fill: a crowd is gaps, and the Figures on top of
@@ -732,9 +1100,6 @@ export class BattleView {
       color: 0xd8632f,
       alpha: 0.4,
     })
-    if (selected) {
-      g.circle(0, 0, r + 6 * line).stroke({ width: line * 2, color: 0xf5e6a8, alpha: 0.95 })
-    }
   }
 
   private drawEffects(

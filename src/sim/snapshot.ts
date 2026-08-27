@@ -1,5 +1,5 @@
 import { unitSpeed } from "./battle"
-import { describeMorale } from "./morale"
+import { describeMorale, type MoraleWord } from "./morale"
 import { ghosts, type Ghost } from "./orders"
 import type { Battle, Contact, FormationName, Standing, Unit, Vec2, Volley } from "./types"
 
@@ -32,7 +32,7 @@ export interface UnitSnapshot {
    * How the Unit is holding up, in words. T11 gave up the countable bar on
    * purpose, so the screen never sees the number behind this.
    */
-  morale: string
+  morale: MoraleWord
   /** True while it is Routing: out of command, and running. */
   routing: boolean
   /** The Unit it is committed to a Charge on, by id, or null. */
