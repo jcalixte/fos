@@ -9,9 +9,10 @@ import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/format
 import type { Dispatch, FormationName, Grade, OrderBody, Outcome, Unit, Vec2 } from "@/sim/types"
 import { armyReturns, type ArmyReturn } from "@/sim/return"
 import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
+import { takeCommand, type ScenarioFile } from "@/sim/scenario"
 import { bearing, distance } from "@/sim/vec"
 
-export type Phase = "loading" | "deployment" | "battle" | "over"
+export type Phase = "loading" | "command" | "deployment" | "battle" | "over"
 
 /** Metres of drag below which the player is placing, not aiming. */
 const AIM_THRESHOLD = 24
@@ -51,6 +52,9 @@ export interface BattleUi {
   arrivalFormation: FormationName | null
   dispatches: Dispatch[]
   gradeNames: Record<string, Record<Grade, string>>
+  /** Both armies, as they are offered before one of them is taken. */
+  armies: { id: string; name: string; colour: string; brief: string }[]
+  /** Empty until an Army is taken, which is the first thing a battle asks. */
   playerArmy: string
   /** How the battle ended, once it has, and what the player is to make of it. */
   verdict: { headline: string; detail: string } | null
@@ -72,6 +76,8 @@ export interface BattleUi {
 export function useBattle(scenarioPath: string) {
   const view = shallowRef<BattleView | null>(null)
   const runner = shallowRef<BattleRunner | null>(null)
+  /** The decoded Scenario, kept for the half of it an Army is read out of. */
+  let scenario: ScenarioFile | null = null
 
   const ui = reactive<BattleUi>({
     phase: "loading",
@@ -91,7 +97,8 @@ export function useBattle(scenarioPath: string) {
     arrivalFormation: null,
     dispatches: [],
     gradeNames: {},
-    playerArmy: "french",
+    armies: [],
+    playerArmy: "",
     verdict: null,
     returns: [],
     conceding: false,
@@ -172,7 +179,7 @@ export function useBattle(scenarioPath: string) {
 
   const viewState: ViewState = {
     selected: null,
-    playerArmy: "french",
+    playerArmy: "",
     headquarters: null,
     keyGround: [],
     deploymentZone: null,
@@ -191,8 +198,13 @@ export function useBattle(scenarioPath: string) {
     try {
       const loaded = await loadScenario(scenarioPath)
       const battle = loaded.battle
-      const player = loaded.file.armies[0]
-      ui.playerArmy = player.id
+      scenario = loaded.file
+      ui.armies = loaded.file.armies.map((army) => ({
+        id: army.id,
+        name: army.name,
+        colour: army.colour,
+        brief: army.brief ?? "",
+      }))
       ui.scenarioName = loaded.file.name
       ui.scenarioSummary = loaded.file.summary
       ui.clock = battle.clock
@@ -209,13 +221,10 @@ export function useBattle(scenarioPath: string) {
       r.tempo = ui.tempo
       runner.value = r
 
-      viewState.playerArmy = player.id
       viewState.armyColours = armyColours(battle)
-      viewState.headquarters = battle.armies[0].headquarters?.position ?? null
       viewState.keyGround = battle.keyGround
-      viewState.deploymentZone = player.deploymentZone ?? null
 
-      ui.phase = "deployment"
+      ui.phase = "command"
       ui.units = r.current.units
       last = performance.now()
       frame = requestAnimationFrame(tick)
@@ -277,6 +286,27 @@ export function useBattle(scenarioPath: string) {
   function unitById(id: string | null): UnitSnapshot | null {
     if (!id) return null
     return ui.units.find((u) => u.id === id) ?? null
+  }
+
+  /**
+   * Take an Army, which is the first thing a battle asks and the one decision
+   * that cannot be revisited: an army is arranged by the hand that will command
+   * it. Everything an Army owns is read out of the Scenario here — where its
+   * Headquarters stands, the ground it may arrange itself on, and which half of
+   * the Plan stops being authored intent, because you are the intent now.
+   */
+  function commandArmy(armyId: string): void {
+    const r = runner.value
+    if (!r || !scenario || ui.phase !== "command") return
+    const mine = scenario.armies.find((a) => a.id === armyId)
+    if (!mine) return
+    ui.playerArmy = mine.id
+    viewState.playerArmy = mine.id
+    viewState.headquarters =
+      r.battle.armies.find((a) => a.id === mine.id)?.headquarters?.position ?? null
+    viewState.deploymentZone = mine.deploymentZone ?? null
+    takeCommand(r.battle, mine.id)
+    ui.phase = "deployment"
   }
 
   function beginBattle(): void {
@@ -759,6 +789,7 @@ export function useBattle(scenarioPath: string) {
   return {
     ui,
     start,
+    commandArmy,
     beginBattle,
     setTempo,
     toggleFireZones,

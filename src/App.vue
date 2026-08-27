@@ -152,6 +152,44 @@ onBeforeUnmount(() => {
           </div>
         </div>
 
+        <!-- Which army you take, asked before the Field is arranged: an army is
+             deployed by the hand that will command it, and the Plan the other
+             one fights to is the Scenario's and not yours. -->
+        <div
+          v-else-if="ui.phase === 'command'"
+          class="absolute inset-0 grid place-items-center overflow-auto bg-base-300/80 p-6 backdrop-blur-sm"
+        >
+          <div class="max-w-2xl">
+            <h2 class="text-lg font-semibold">{{ ui.scenarioName }}</h2>
+            <p class="mt-2 text-xs leading-relaxed text-base-content/70">
+              {{ ui.scenarioSummary }}
+            </p>
+            <p class="mt-5 text-xs font-semibold tracking-wide text-base-content/80">
+              Which army do you take?
+            </p>
+            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+              <button
+                v-for="army in ui.armies"
+                :key="army.id"
+                type="button"
+                class="rounded-box border border-base-content/15 bg-base-200 p-4 text-left transition hover:border-primary hover:bg-base-100"
+                @click="battle.commandArmy(army.id)"
+              >
+                <span class="flex items-center gap-2">
+                  <span
+                    class="size-3 shrink-0 rounded-full border border-base-content/25"
+                    :style="{ background: army.colour }"
+                  />
+                  <span class="text-sm font-semibold">{{ army.name }}</span>
+                </span>
+                <span class="mt-2 block text-xs leading-relaxed text-base-content/70">
+                  {{ army.brief }}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div
           v-else-if="ui.phase === 'deployment'"
           class="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-4"
