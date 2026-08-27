@@ -558,6 +558,22 @@ export function canFire(arm: Arm, formation: FormationName): boolean {
   return spec(arm, formation).range > 0
 }
 
+/**
+ * True if the Formation's fire does not need the Unit standing still. Derived
+ * and not authored: a Formation with no Face has no line to dress, so there is
+ * nothing that halting would put in order — every man loads and levels on his
+ * own account and walks on. A Face is exactly the thing that has to be halted
+ * to be presented.
+ *
+ * Only Open Order comes out of this. March column and limbered guns have no
+ * reach to fire with, cavalry none at all, and line, square and a battery in
+ * battery all present a Face.
+ */
+export function firesOnTheMove(arm: Arm, formation: FormationName): boolean {
+  const s = spec(arm, formation)
+  return s.range > 0 && s.faces === 0
+}
+
 /** What each Arm marches in when it has ground to cover and nothing pins it. */
 export const TRAVELLING_FORMATION: Record<Arm, FormationName> = {
   infantry: "march-column",

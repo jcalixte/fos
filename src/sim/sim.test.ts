@@ -9,6 +9,7 @@ import {
   faces,
   figureSlots,
   fireZone,
+  firesOnTheMove,
   frontage,
   mobRadius,
   poseOf,
@@ -197,6 +198,17 @@ describe("C3 Formation Geometry", () => {
     // Slung muskets and hitched guns beat nothing.
     expect(fireZone("infantry", "march-column", 720)).toBeNull()
     expect(fireZone("artillery", "limbered", 120)).toBeNull()
+  })
+
+  it("lets only the Formations with no Face fire on the move", () => {
+    // Nothing authored says so: it falls out of having a Face to dress, or none.
+    expect(firesOnTheMove("infantry", "open-order")).toBe(true)
+    expect(firesOnTheMove("infantry", "line")).toBe(false)
+    expect(firesOnTheMove("infantry", "square")).toBe(false)
+    expect(firesOnTheMove("artillery", "in-battery")).toBe(false)
+    // No Face either, but nothing to fire with.
+    expect(firesOnTheMove("infantry", "march-column")).toBe(false)
+    expect(firesOnTheMove("cavalry", "line")).toBe(false)
   })
 
   it("lays out one slot per man, and none of them on top of each other", () => {
@@ -867,6 +879,16 @@ describe("C6 Fighting", () => {
     resolveFire(battle, shooter, STEP, true)
     expect(enemy.strength).toBeLessThan(before)
     expect(battle.volleys).toHaveLength(1)
+  })
+
+  it("fires on the move in open order, which is the whole of what it is for", () => {
+    const { battle, shooter, enemy } = facingOff(60, {}, { formation: "open-order" })
+    const before = enemy.strength
+    resolveFire(battle, shooter, STEP, false)
+    expect(enemy.strength).toBeLessThan(before)
+    expect(battle.volleys).toHaveLength(1)
+    // And pays for it in the reload, never in how much the Volley finds.
+    expect(shooter.reload).toBeCloseTo(reloadSeconds("infantry", shooter.grade) * 2)
   })
 
   it("holds its fire until it has reloaded", () => {

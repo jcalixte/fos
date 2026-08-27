@@ -1,4 +1,4 @@
-import { fireZone, footprint, grid, spanAlong, type FireZone } from "./formation"
+import { fireZone, firesOnTheMove, footprint, grid, spanAlong, type FireZone } from "./formation"
 import { fireEffect, isRouting, shake } from "./morale"
 import type { Arm, Battle, Grade, Unit } from "./types"
 import { axes, dot } from "./vec"
@@ -33,6 +33,17 @@ const RELOAD_SECONDS: Record<Arm, number> = { infantry: 22.5, cavalry: 0, artill
 
 /** Veterans load faster; conscripts fumble the cartridge. Both stay in F9's band. */
 const RELOAD_BY_GRADE: Record<Grade, number> = { conscript: 1.1, line: 1, elite: 0.9 }
+
+/**
+ * What loading on the walk costs, for the Formations that may do it at all. One
+ * global scalar and not a per-Formation number (F8): a skirmisher gets his shot
+ * off every forty-five seconds against a halted battalion's twenty-two, because
+ * he is loading between paces and not because Open Order was given a fire rate.
+ *
+ * The price is paid here and never on the Volley itself, which stays purely
+ * geometric — the same discipline Grade is held to.
+ */
+const RELOAD_ON_THE_MOVE = 2
 
 export function reloadSeconds(arm: Arm, grade: Grade): number {
   return RELOAD_SECONDS[arm] * RELOAD_BY_GRADE[grade]
@@ -221,16 +232,21 @@ export function volleyCasualties(unit: Unit, shot: Aim): number {
  * One Unit's fire for one step.
  *
  * `halted` is the period's own rule and not a nicety: fire and movement do not
- * mix when reloading takes both hands and twelve separate motions. So a line
- * that wants to shoot has to stop, which is what makes the Halt Order worth
- * having and an advance under fire cost something.
+ * mix when reloading takes both hands and twelve separate motions, and a line
+ * cannot deliver anything at all until it is dressed. So a battalion that wants
+ * to shoot has to stop, which is what makes the Halt Order worth having and an
+ * advance under fire cost something.
+ *
+ * What is halted is the *Face*, though, and skirmishers have none: Open Order
+ * fires on the move, at half the rate, because that is the whole of what the
+ * Formation is for. Which Formations those are is derived and not authored.
  *
  * A Unit reloads whatever it is doing, so a battalion arriving in position with
  * loaded muskets fires the moment it dresses, exactly as it should.
  */
 export function resolveFire(battle: Battle, unit: Unit, dt: number, halted: boolean): void {
   unit.reload = Math.max(0, unit.reload - dt)
-  if (!halted) return
+  if (!halted && !firesOnTheMove(unit.arm, unit.formation)) return
   if (unit.reload > 0) return
   const shot = aim(battle, unit)
   if (!shot) return
@@ -240,7 +256,7 @@ export function resolveFire(battle: Battle, unit: Unit, dt: number, halted: bool
   // Casualties cost the target Morale as well as men, and cost it more from off
   // its Face. Morale is what decides its fate; the men are just the bill (F10).
   shake(shot.target, casualties, unit.position)
-  unit.reload = reloadSeconds(unit.arm, unit.grade)
+  unit.reload = reloadSeconds(unit.arm, unit.grade) * (halted ? 1 : RELOAD_ON_THE_MOVE)
 
   const zone = fireZone(unit.arm, unit.formation, unit.strength)
   if (!zone) return
