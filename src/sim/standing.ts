@@ -58,6 +58,25 @@ export function describeLatitude(latitude: Latitude): string {
   return latitude.replaceAll("-", " ")
 }
 
+/**
+ * What the rung permits, in the words the button says it in on hover. The
+ * metres are read off `leash` rather than written into the prose, so a tuned
+ * dial cannot leave the definition lying about what the Unit will do.
+ */
+export function explainLatitude(latitude: Latitude): string {
+  const bound = leash(latitude)
+  switch (latitude) {
+    case "stand-off":
+      return `gives ground rather than be closed with, up to ${bound}m off its Post — and turns its back to do it`
+    case "hold-ground":
+      return "stands where it was put and shoots what comes into reach, and gives no ground and takes none"
+    case "close-up":
+      return `walks up to ${bound}m off its Post to bring an enemy under its fire, and stops the moment anything bears`
+    case "follow-up":
+      return `takes up to ${bound}m off its Post from an enemy who has broken, and closes up on one that has not`
+  }
+}
+
 /** The whole brief in words, as the Dispatch reads it out on arrival. */
 export function describeStanding(standing: Standing): string {
   const feet = describeLatitude(standing.latitude)
