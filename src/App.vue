@@ -224,10 +224,6 @@ onBeforeUnmount(() => {
       <p v-else-if="ui.phase === 'deployment'" class="text-xs text-base-content/55">
         {{ ui.scenarioSummary }}
       </p>
-      <p v-else-if="ui.phase === 'battle'" class="text-xs text-base-content/55">
-        Click a Unit to read it. To order one of yours: select it, then press where you want it and
-        drag to set the facing it arrives on. A click that does not drag never sends anything.
-      </p>
     </footer>
   </div>
 </template>
