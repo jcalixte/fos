@@ -12,7 +12,8 @@ pnpm test          # the simulation, headless — no canvas involved
 pnpm lint          # oxlint  (pnpm lint:fix to autofix)
 pnpm fmt           # oxfmt   (pnpm fmt:check to verify only)
 pnpm build         # type-check and build to static assets
-node scripts/make-bridge-fixture.mjs   # repaint the fixture Field
+node scripts/make-bridge-fixture.mjs     # repaint the bridge fixture's Field
+node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what stands on it
 ```
 
 Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify.
@@ -55,6 +56,16 @@ have a Headquarters behind the ridge and ground of their own to arrange on, and 
 guard has a Plan that crosses and goes for the hamlet. A Scenario carries a Plan for each army and
 fires only the one the player has not taken — command it, and its Plan is dropped.
 
+The Standing Order, which is the brief a Unit carries rather than an Order it carries out. One
+rung of a ladder — stand off, hold ground, close up, follow up — and whether it is to hold its
+fire. Above holding ground a Unit may give ground rather than be closed with, walk far enough
+forward to bring an enemy under its fire, or take the ground an enemy who has given way has left;
+and every one of those is bounded in metres from its Post, which is the ground the player last
+gave it. So a battalion drifts a hundred metres off what it was given and can never choose
+somewhere else, which is what keeps a well-briefed army from commanding itself
+([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). It is free at Deployment
+and costs a Courier after, and it is the one Order that arrives without disturbing the march.
+
 Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
 ## Layout
@@ -64,7 +75,7 @@ Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
 | `src/sim/` | the simulation: pure, no DOM, no renderer ([ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md)) |
 | `src/render/` | PixiJS drawing, and the only place interpolation happens |
 | `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle |
-| `public/scenarios/`, `public/rosters/` | the battles themselves, as data |
+| `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |
 | `scripts/` | the fixture Field painter |
 
 <!-- docs:start -->
@@ -79,4 +90,5 @@ Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
   - [0004 — Initiative is an ordered rule list](./docs/adr/0004-initiative-is-an-ordered-rule-list.md)
   - [0005 — Terrain is authored as images](./docs/adr/0005-terrain-is-authored-as-images.md)
   - [0006 — A battle ends on the clock](./docs/adr/0006-a-battle-ends-on-the-clock.md)
+  - [0007 — A Standing Order sets a Unit's Latitude](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)
 <!-- docs:end -->

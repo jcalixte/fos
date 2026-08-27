@@ -1,14 +1,39 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, useTemplateRef } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef } from "vue"
+import BattleMenu from "@/components/BattleMenu.vue"
 import ReturnPanel from "@/components/ReturnPanel.vue"
 import DispatchPanel from "@/components/DispatchPanel.vue"
 import UnitCard from "@/components/UnitCard.vue"
 import { useBattle } from "@/composables/useBattle"
+import {
+  type CatalogueEntry,
+  type LastBattle,
+  loadCatalogue,
+  recallBattle,
+} from "@/scenario/catalogue"
 import type { FormationName, Grade } from "@/sim/types"
 
-const battle = useBattle("/scenarios/bridge-march")
+const battle = useBattle()
 const { ui } = battle
 const host = useTemplateRef<HTMLElement>("host")
+
+const battles = ref<CatalogueEntry[]>([])
+const catalogueLoading = ref(true)
+const last = ref<LastBattle | null>(recallBattle())
+
+/**
+ * Put a battle on the Field. The host is always mounted — the menu is drawn over
+ * it, so there is a box to hand the moment one is chosen.
+ */
+function take(path: string, army?: string): void {
+  if (host.value) void battle.start(host.value, path, army)
+}
+
+/** Put the Field away. The shortcut is re-read here: it may be this battle now. */
+function toMenu(): void {
+  battle.leave()
+  last.value = recallBattle()
+}
 
 const selected = computed(() => battle.unitById(ui.selected))
 const gradeName = computed(() => {
@@ -32,9 +57,15 @@ function onKey(event: KeyboardEvent): void {
   }
 }
 
-onMounted(() => {
-  if (host.value) battle.start(host.value)
+onMounted(async () => {
   globalThis.addEventListener("keydown", onKey)
+  try {
+    battles.value = await loadCatalogue()
+  } catch (error) {
+    ui.error = error instanceof Error ? error.message : String(error)
+  } finally {
+    catalogueLoading.value = false
+  }
 })
 onBeforeUnmount(() => {
   globalThis.removeEventListener("keydown", onKey)
@@ -50,9 +81,11 @@ onBeforeUnmount(() => {
         Field of Strategy
         <span class="text-primary">III</span>
       </h1>
-      <p class="text-xs text-base-content/60">{{ ui.scenarioName }}</p>
+      <p v-if="ui.phase !== 'menu'" class="text-xs text-base-content/60">
+        {{ ui.scenarioName }}
+      </p>
 
-      <div class="ml-auto flex items-center gap-5">
+      <div v-if="ui.phase !== 'menu'" class="ml-auto flex items-center gap-5">
         <p class="font-mono text-sm tabular-nums">
           {{ clock(ui.time) }}
           <span class="text-base-content/40">/ {{ clock(ui.clock) }}</span>
@@ -131,6 +164,17 @@ onBeforeUnmount(() => {
         >
           Begin the battle
         </button>
+
+        <!-- Leaving is not breaking off: nothing is decided and nothing is
+             saved, the Field is simply put away. -->
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs"
+          title="put this Field away and choose another battle"
+          @click="toMenu()"
+        >
+          battles
+        </button>
       </div>
     </header>
 
@@ -145,12 +189,22 @@ onBeforeUnmount(() => {
           @contextmenu.prevent="battle.deselect()"
         />
 
-        <div v-if="ui.error" class="absolute inset-0 grid place-items-center bg-base-300/90 p-8">
-          <div class="max-w-md text-center">
-            <p class="text-sm font-semibold text-error">The Scenario would not load</p>
-            <p class="mt-2 font-mono text-xs text-base-content/70">{{ ui.error }}</p>
-          </div>
-        </div>
+        <p
+          v-if="ui.phase === 'loading'"
+          class="absolute inset-0 grid place-items-center text-xs text-base-content/50"
+        >
+          Reading the Field…
+        </p>
+
+        <BattleMenu
+          v-else-if="ui.phase === 'menu'"
+          :battles="battles"
+          :last="last"
+          :error="ui.error"
+          :loading="catalogueLoading"
+          @take="take($event)"
+          @resume="take($event.path, $event.army)"
+        />
 
         <!-- Which army you take, asked before the Field is arranged: an army is
              deployed by the hand that will command it, and the Plan the other
@@ -220,6 +274,7 @@ onBeforeUnmount(() => {
       </div>
 
       <DispatchPanel
+        v-if="ui.phase !== 'menu' && ui.phase !== 'loading'"
         class="w-80 shrink-0 max-lg:hidden"
         :dispatches="ui.dispatches"
         :selected="ui.selected"
@@ -245,6 +300,8 @@ onBeforeUnmount(() => {
           selected.army !== ui.playerArmy || (ui.phase !== 'battle' && ui.phase !== 'deployment')
         "
         @form="battle.form($event as FormationName)"
+        @latitude="battle.brief({ latitude: $event })"
+        @hold-fire="battle.brief({ holdFire: $event })"
         @arrival-formation="ui.arrivalFormation = $event"
         @charge="battle.armCharge()"
         @point="battle.armPoint()"

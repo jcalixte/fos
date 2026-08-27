@@ -136,6 +136,8 @@ function mark(column: "ground" | "spent"): string {
       of the men mustered; and the share of itself each army spent, weighted by Grade — all of it is
       where an army quits the Field. The column the day turned on is the bright one.
     </p>
-    <p class="mt-3 text-xs text-base-content/40">Reload to march it again from the same seed.</p>
+    <p class="mt-3 text-xs text-base-content/40">
+      Take it again from the menu to march it from the same seed.
+    </p>
   </div>
 </template>

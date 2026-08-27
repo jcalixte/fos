@@ -1,18 +1,28 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
+import { rememberBattle } from "@/scenario/catalogue"
 import { concede, isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
 import { issueOrder } from "@/sim/orders"
 import { canCharge, chargeable } from "@/sim/charge"
 import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
-import type { Dispatch, FormationName, Grade, OrderBody, Outcome, Unit, Vec2 } from "@/sim/types"
+import type {
+  Dispatch,
+  FormationName,
+  Grade,
+  Latitude,
+  OrderBody,
+  Outcome,
+  Unit,
+  Vec2,
+} from "@/sim/types"
 import { armyReturns, type ArmyReturn } from "@/sim/return"
 import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
 import { takeCommand, type ScenarioFile } from "@/sim/scenario"
 import { bearing, distance } from "@/sim/vec"
 
-export type Phase = "loading" | "command" | "deployment" | "battle" | "over"
+export type Phase = "menu" | "loading" | "command" | "deployment" | "battle" | "over"
 
 /** Metres of drag below which the player is placing, not aiming. */
 const AIM_THRESHOLD = 24
@@ -73,14 +83,10 @@ export interface BattleUi {
   decidedBy: Outcome["by"] | null
 }
 
-export function useBattle(scenarioPath: string) {
-  const view = shallowRef<BattleView | null>(null)
-  const runner = shallowRef<BattleRunner | null>(null)
-  /** The decoded Scenario, kept for the half of it an Army is read out of. */
-  let scenario: ScenarioFile | null = null
-
-  const ui = reactive<BattleUi>({
-    phase: "loading",
+/** A Battle Ui as it stands with no Scenario on the Field. */
+function blankUi(): BattleUi {
+  return {
+    phase: "menu",
     error: null,
     scenarioName: "",
     scenarioSummary: "",
@@ -104,7 +110,34 @@ export function useBattle(scenarioPath: string) {
     conceding: false,
     keyGround: [],
     decidedBy: null,
-  })
+  }
+}
+
+/** A View State as it stands with no Scenario on the Field. */
+function blankViewState(): ViewState {
+  return {
+    selected: null,
+    playerArmy: "",
+    headquarters: null,
+    keyGround: [],
+    deploymentZone: null,
+    drag: null,
+    placing: null,
+    armyColours: {},
+    fireZones: false,
+    arming: false,
+  }
+}
+
+export function useBattle() {
+  const view = shallowRef<BattleView | null>(null)
+  const runner = shallowRef<BattleRunner | null>(null)
+  /** The decoded Scenario, kept for the half of it an Army is read out of. */
+  let scenario: ScenarioFile | null = null
+  /** Where the Scenario on the Field was loaded from, so it can be remembered. */
+  let scenarioPath = ""
+
+  const ui = reactive<BattleUi>(blankUi())
 
   /**
    * The Outcome in the second person. The simulation decides who was left
@@ -177,26 +210,32 @@ export function useBattle(scenarioPath: string) {
         }
   }
 
-  const viewState: ViewState = {
-    selected: null,
-    playerArmy: "",
-    headquarters: null,
-    keyGround: [],
-    deploymentZone: null,
-    drag: null,
-    placing: null,
-    armyColours: {},
-    fireZones: false,
-    arming: false,
-  }
+  const viewState: ViewState = blankViewState()
 
   let frame = 0
   let last = 0
   let uiClock = 0
+  /**
+   * Bumped by every start and by every leave. A Field takes a moment to decode,
+   * and the player can walk out of it while it is still coming: without this,
+   * that Scenario finishes loading into a menu and mounts a renderer nobody can
+   * reach or put away.
+   */
+  let loads = 0
 
-  async function start(host: HTMLElement): Promise<void> {
+  /**
+   * Put a Scenario on the Field. `army` takes it in the same breath, skipping
+   * the offer — that is the shortcut back onto a Field under work, and it is
+   * the only way the first decision of a battle is ever made for the player.
+   */
+  async function start(host: HTMLElement, path: string, army?: string): Promise<void> {
+    const load = ++loads
+    ui.phase = "loading"
+    ui.error = null
+    scenarioPath = path
     try {
-      const loaded = await loadScenario(scenarioPath)
+      const loaded = await loadScenario(path)
+      if (load !== loads) return
       const battle = loaded.battle
       scenario = loaded.file
       ui.armies = loaded.file.armies.map((army) => ({
@@ -214,6 +253,10 @@ export function useBattle(scenarioPath: string) {
 
       const v = markRaw(new BattleView())
       await v.mount(host)
+      if (load !== loads) {
+        v.destroy()
+        return
+      }
       v.setField(battle.field)
       view.value = v
 
@@ -228,10 +271,31 @@ export function useBattle(scenarioPath: string) {
       ui.units = r.current.units
       last = performance.now()
       frame = requestAnimationFrame(tick)
+      if (army) commandArmy(army)
     } catch (error) {
-      ui.error = error instanceof Error ? error.message : String(error)
-      ui.phase = "loading"
+      if (load !== loads) return
+      const message = error instanceof Error ? error.message : String(error)
+      leave()
+      ui.error = message
     }
+  }
+
+  /**
+   * Take the army off this Field and go back to the menu. Whatever the battle
+   * had reached is gone: nothing here is saved, and there is nothing to come
+   * back to.
+   */
+  function leave(): void {
+    loads++
+    cancelAnimationFrame(frame)
+    frame = 0
+    view.value?.destroy()
+    view.value = null
+    runner.value = null
+    scenario = null
+    scenarioPath = ""
+    Object.assign(ui, blankUi())
+    Object.assign(viewState, blankViewState())
   }
 
   function tick(now: number): void {
@@ -307,6 +371,7 @@ export function useBattle(scenarioPath: string) {
     viewState.deploymentZone = mine.deploymentZone ?? null
     takeCommand(r.battle, mine.id)
     ui.phase = "deployment"
+    rememberBattle({ path: scenarioPath, army: mine.id })
   }
 
   function beginBattle(): void {
@@ -468,6 +533,34 @@ export function useBattle(scenarioPath: string) {
       return
     }
     order({ kind: "form", formation })
+  }
+
+  /**
+   * Give the selected Unit a new brief, by whichever means the phase allows: a
+   * hand on the map before the clock runs, and a Courier once it does. Free at
+   * Deployment because that is the hour a subordinate is briefed in; couriered
+   * after, because every other instruction is and a dial that was not would
+   * hand back instantaneous army-wide command (ADR-0007).
+   *
+   * Both halves of the brief ride together whichever button was pressed. The
+   * Order carries the whole of it, so a rider who left before the player
+   * changed his mind about the fire cannot arrive and undo the change.
+   */
+  function brief(change: { latitude?: Latitude; holdFire?: boolean }): void {
+    const carrying = deployable() ?? commandable()
+    if (!carrying) return
+    const standing = {
+      latitude: change.latitude ?? carrying.standing.latitude,
+      holdFire: change.holdFire ?? carrying.standing.holdFire,
+    }
+    if (ui.phase === "deployment") {
+      const unit = deployable()
+      if (!unit) return
+      unit.standing = standing
+      resync()
+      return
+    }
+    order({ kind: "standing", ...standing })
   }
 
   function order(body: OrderBody): void {
@@ -700,6 +793,11 @@ export function useBattle(scenarioPath: string) {
       x: Math.max(zx + half, Math.min(zx + zw - half, point.x)),
       y: Math.max(zy + half, Math.min(zy + zh - half, point.y)),
     }
+    // Arranging the army is how a Unit is given its ground before there is
+    // anybody to ride an Order to it, so the Post goes where the hand puts it.
+    // Left behind, a Unit deployed across the zone would open the battle with
+    // its whole Latitude already spent.
+    unit.post = { ...unit.position }
   }
 
   /**
@@ -789,6 +887,7 @@ export function useBattle(scenarioPath: string) {
   return {
     ui,
     start,
+    leave,
     commandArmy,
     beginBattle,
     setTempo,
@@ -798,6 +897,7 @@ export function useBattle(scenarioPath: string) {
     breakOff,
     order,
     form,
+    brief,
     armCharge,
     armPoint,
     deselect,
