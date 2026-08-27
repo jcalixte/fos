@@ -222,6 +222,22 @@ export interface FireZone {
   depth: number
 }
 
+/**
+ * The Unit's own body standing in the way of its fire on `bearing` — the
+ * Faceless counterpart of a Face's standoff, and read the same way: how far the
+ * Footprint reaches that way, halved.
+ *
+ * Half the longest side would do in every direction at once, and that is what a
+ * skirmish screen's beaten ground used to be: 700 men in Open Order are 187m
+ * across and 18m deep, so the swarm was credited with 93m of standoff whichever
+ * way it shot, and its fire did not begin to thin until 240m. What it actually
+ * is is the Footprint blown out by the range on every side, which is 9m of
+ * standoff to the front and 93m along the screen.
+ */
+export function allRoundStandoff(zone: FireZone, facing: number, bearing: number): number {
+  return spanAlong({ width: zone.width, depth: zone.depth }, facing, axes(bearing).along) / 2
+}
+
 /** Null when the Unit cannot fire at all. */
 export function fireZone(arm: Arm, formation: FormationName, strength: number): FireZone | null {
   const range = spec(arm, formation).range

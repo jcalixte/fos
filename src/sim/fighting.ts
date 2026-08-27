@@ -1,4 +1,12 @@
-import { fireZone, firesOnTheMove, footprint, grid, spanAlong, type FireZone } from "./formation"
+import {
+  allRoundStandoff,
+  fireZone,
+  firesOnTheMove,
+  footprint,
+  grid,
+  spanAlong,
+  type FireZone,
+} from "./formation"
 import { fireEffect, isRouting, shake } from "./morale"
 import type { Arm, Battle, Grade, Unit } from "./types"
 import { axes, dot } from "./vec"
@@ -137,14 +145,25 @@ function bearsOnSide(unit: Unit, zone: FireZone, side: number, target: Unit): Ai
   return { target, side, gap: Math.max(0, near - standoff), overlap: (to - from) / across }
 }
 
-/** The whole-circle case: skirmishers have no Face and shoot every way at once. */
+/**
+ * The whole-circle case: skirmishers have no Face and shoot every way at once.
+ *
+ * Both bodies are measured along the line of fire and not by their longest side,
+ * exactly as a Face measures them — so the gap a shot crosses is the ground
+ * actually between the two of them, and a screen's fire thins with the range
+ * instead of carrying flat to the edge of its own Frontage.
+ */
 function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
   const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
+  const bearing = Math.atan2(offset.y, offset.x)
+  const line = axes(bearing).along
   const shape = footprint(target.arm, target.formation, target.strength)
-  const reach = Math.hypot(offset.x, offset.y) - Math.max(shape.width, shape.depth) / 2
-  const gap = Math.max(0, reach - Math.max(zone.width, zone.depth) / 2)
-  if (gap > zone.range) return null
-  return { target, side: 0, gap, overlap: 1 }
+  const near =
+    Math.hypot(offset.x, offset.y) -
+    spanAlong(shape, target.facing, line) / 2 -
+    allRoundStandoff(zone, unit.facing, bearing)
+  if (near > zone.range) return null
+  return { target, side: 0, gap: Math.max(0, near), overlap: 1 }
 }
 
 /**

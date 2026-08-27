@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
 import {
+  allRoundStandoff,
   bodyCount,
   faces,
   figureSlots,
@@ -39,6 +40,9 @@ const MIN_FIGURE_PX = 3
 
 /** Smallest a Unit may be to press on, in screen pixels. */
 const GRAB_FLOOR_PX = 28
+
+/** Points around a Faceless Unit's beaten ground. Enough that it reads smooth. */
+const ALL_ROUND_STEPS = 48
 
 export interface ViewState {
   selected: string | null
@@ -450,8 +454,18 @@ export class BattleView {
       const alpha = unit.id === view.selected ? 0.16 : 0.07
       const line = this.metresPerPixel()
       if (zone.faces === 0) {
-        // No Face: skirmishers shoot every way at once.
-        g.circle(unit.position.x, unit.position.y, zone.range + zone.width / 2)
+        // No Face: skirmishers shoot every way at once, so the beaten ground is
+        // the screen's own Footprint blown out by the range on every side — a
+        // long lozenge and not a circle. Sampled off the same standoff the sim
+        // reads, so what is drawn is where the fire reaches and not near it.
+        const ring: number[] = []
+        for (let i = 0; i < ALL_ROUND_STEPS; i++) {
+          const bearing = (i / ALL_ROUND_STEPS) * Math.PI * 2
+          const reach = zone.range + allRoundStandoff(zone, unit.facing, bearing)
+          ring.push(unit.position.x + Math.cos(bearing) * reach)
+          ring.push(unit.position.y + Math.sin(bearing) * reach)
+        }
+        g.poly(ring)
           .fill({ color: colour, alpha: alpha * 0.7 })
           .stroke({ width: line * 1.5, color: colour, alpha: alpha * 3 })
         continue

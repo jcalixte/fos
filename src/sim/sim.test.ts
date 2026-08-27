@@ -891,6 +891,17 @@ describe("C6 Fighting", () => {
     expect(shooter.reload).toBeCloseTo(reloadSeconds("infantry", shooter.grade) * 2)
   })
 
+  it("thins a screen's fire with the range, and not with its own Frontage", () => {
+    const near = facingOff(60, {}, { formation: "open-order" })
+    const far = facingOff(140, {}, { formation: "open-order" })
+    expect(volleyCasualties(far.shooter, aim(far.battle, far.shooter)!)).toBeLessThan(
+      volleyCasualties(near.shooter, aim(near.battle, near.shooter)!) * 0.8,
+    )
+    // And it reaches as far as the range says, not as far as the swarm is wide.
+    const beyond = facingOff(200, {}, { formation: "open-order" })
+    expect(aim(beyond.battle, beyond.shooter)).toBeNull()
+  })
+
   it("holds its fire until it has reloaded", () => {
     const { battle, shooter } = facingOff(60)
     resolveFire(battle, shooter, STEP, true)
