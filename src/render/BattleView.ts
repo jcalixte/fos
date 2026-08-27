@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
 import { bodyCount, faces, figureSlots, fireZone, footprint, poseFootprint } from "@/sim/formation"
+import { chargeable } from "@/sim/charge"
 import type { Battle, Field, FormationName, KeyGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
@@ -45,9 +46,10 @@ export interface ViewState {
   /** Show every Unit's beaten ground. Off, only the selected Unit shows its own. */
   fireZones: boolean
   /**
-   * A Charge is armed and waiting to be aimed. Every enemy is outlined while it
-   * is, because the thing the player is about to pick is a Unit and not a point
-   * on the ground — the only Order in the game of which that is true.
+   * A Charge is armed and waiting to be aimed. Every enemy that may be charged
+   * is outlined while it is, because the thing the player is about to pick is a
+   * Unit and not a point on the ground — the only Order in the game of which
+   * that is true.
    */
   arming: boolean
 }
@@ -648,13 +650,18 @@ export class BattleView {
     }
   }
 
-  /** Every enemy outlined while a Charge is looking for one to be aimed at. */
+  /**
+   * Every enemy a Charge may be aimed at, outlined while one is looking for a
+   * target. A Routing enemy is not one of them and gets no outline: the offer
+   * has to be exactly what C6 will accept, or the player spends a Courier ride
+   * and watches the regiment stand still.
+   */
   private drawArming(units: UnitSnapshot[], view: ViewState): void {
     if (!view.arming) return
     const g = this.effects
     const mpp = this.metresPerPixel()
     for (const unit of units) {
-      if (unit.army === view.playerArmy) continue
+      if (!chargeable(unit, view.playerArmy)) continue
       const shape = poseFootprint(unit)
       const grown = { width: shape.width + 12 * mpp, depth: shape.depth + 12 * mpp }
       this.strokeFootprint(g, unit.position, unit.facing, grown, 0xe0663c, 0.85, mpp * 2)

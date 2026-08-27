@@ -79,6 +79,26 @@ const LETHALITY: Record<Arm, number> = { infantry: 0.035, cavalry: 0.1, artiller
  */
 const IMPETUS = 2
 
+/**
+ * Whether a Charge may be aimed at this Unit at all. A Routing one may not: the
+ * chargers pull up the instant the Order arrives, because Pursuit is not built,
+ * so offering it spends a Courier ride and leaves the regiment standing still
+ * with nothing but a Dispatch to show for it.
+ *
+ * The rule lives next to the pull-up rather than in the screen, so what the
+ * player is offered and what the simulation will accept cannot drift — and so
+ * that building Pursuit moves both at once.
+ *
+ * Typed on the two fields the answer turns on, because what the screen holds is
+ * a Snapshot and C6 has no business importing the renderer's view of a Unit.
+ */
+export function chargeable(
+  target: { army: string; routing: boolean },
+  playerArmy: string,
+): boolean {
+  return target.army !== playerArmy && !target.routing
+}
+
 /** Artillery does not charge. It is being dragged about by horses as it is. */
 export function canCharge(arm: Arm): boolean {
   return CHARGE_SPEED[arm] > 0

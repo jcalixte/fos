@@ -19,6 +19,7 @@ import { GROUND_COST, GROUNDS, movementCost } from "./ground"
 import { aim, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
 import {
   canCharge,
+  chargeable,
   CHARGE_RANGE,
   gapTo,
   RECOIL_DISTANCE,
@@ -1115,6 +1116,16 @@ describe("C6 Fighting — the Charge", () => {
     expect(cavalry.order).toBeNull()
     expect(cavalry.charging).toBeNull()
     expect(battle.dispatches.some((d) => d.text.includes("pulled up"))).toBe(true)
+  })
+
+  it("does not offer a Unit it would only pull up in front of", () => {
+    // What the screen outlines while a Charge is being aimed, and what the
+    // press will spend a Courier on. It has to agree with the pull-up above, or
+    // the player buys ninety seconds of ride and gets a regiment standing still.
+    const formed = { army: "austrian", routing: false }
+    expect(chargeable(formed, "french")).toBe(true)
+    expect(chargeable({ ...formed, routing: true }, "french")).toBe(false)
+    expect(chargeable({ ...formed, army: "french" }, "french")).toBe(false)
   })
 
   it("costs a Unit with nothing turned toward the charge three times the nerve", () => {
