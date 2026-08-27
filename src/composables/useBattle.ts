@@ -3,9 +3,10 @@ import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { loadScenario } from "@/scenario/loader"
 import { BattleRunner } from "@/sim/runner"
 import { issueOrder } from "@/sim/orders"
-import { canFire, FIGHTING_FORMATION, poseFootprint } from "@/sim/formation"
-import type { Dispatch, FormationName, Grade, OrderBody, Vec2 } from "@/sim/types"
-import type { UnitSnapshot } from "@/sim/snapshot"
+import { canCharge } from "@/sim/charge"
+import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
+import type { Dispatch, FormationName, Grade, OrderBody, Unit, Vec2 } from "@/sim/types"
+import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
 import { bearing, distance } from "@/sim/vec"
 
 export type Phase = "loading" | "deployment" | "battle" | "over"
@@ -38,6 +39,8 @@ export interface BattleUi {
   ordersInFlight: number
   units: UnitSnapshot[]
   selected: string | null
+  /** A Charge is armed and waiting for the player to pick what to go at. */
+  arming: boolean
   arrivalFormation: FormationName | null
   dispatches: Dispatch[]
   gradeNames: Record<string, Record<Grade, string>>
@@ -61,6 +64,7 @@ export function useBattle(scenarioPath: string) {
     ordersInFlight: 0,
     units: [],
     selected: null,
+    arming: false,
     arrivalFormation: null,
     dispatches: [],
     gradeNames: {},
@@ -77,6 +81,7 @@ export function useBattle(scenarioPath: string) {
     placing: null,
     armyColours: {},
     fireZones: false,
+    arming: false,
   }
 
   let frame = 0
@@ -185,6 +190,75 @@ export function useBattle(scenarioPath: string) {
     return unit && unit.army === ui.playerArmy ? unit : null
   }
 
+  /**
+   * Arm a Charge. Two acts, not one: a Charge is the only Order aimed at a Unit
+   * rather than at a piece of ground, and a press that lands on a Unit has
+   * always meant "read this one". Arming first is what keeps it meaning that —
+   * a slip cannot spend ninety seconds of Courier time on a committed run.
+   */
+  function armCharge(): void {
+    const unit = commandable()
+    if (!unit || ui.phase !== "battle" || unit.routing) return
+    if (!canCharge(unit.arm)) return
+    setArming(!ui.arming)
+  }
+
+  function setArming(on: boolean): void {
+    ui.arming = on
+    viewState.arming = on
+  }
+
+  /** The selected Unit in the Battle itself, when it is yours to arrange. */
+  function deployable(): Unit | null {
+    const r = runner.value
+    if (!r || ui.phase !== "deployment" || !ui.selected) return null
+    const unit = r.battle.units.find((u) => u.id === ui.selected)
+    return unit && unit.army === ui.playerArmy ? unit : null
+  }
+
+  /**
+   * Form up at Deployment. Not an Order: it sets the Formation outright, with no
+   * Courier to ride and no drill to serve.
+   *
+   * Sending the real thing here would have been the wrong model twice over. The
+   * clock is stopped, so the dispatch would sit frozen on the Field until the
+   * battle began, and then a rider would set off and the army would spend its
+   * first minutes drilling instead of standing where it was put. Deployment is
+   * the hour before the battle, when an army is arranged rather than commanded.
+   */
+  function deployFormation(formation: FormationName): void {
+    const unit = deployable()
+    if (!unit || !allows(unit.arm, formation) || unit.formation === formation) return
+    unit.formation = formation
+    // Nothing has stepped yet, so there is no change under way to abandon —
+    // cleared rather than trusted, because a half-formed battalion at
+    // Deployment would be a bug somewhere else and this must not carry it.
+    unit.changing = null
+    clampIntoZone(unit, unit.position)
+    resync()
+  }
+
+  /** Face a Unit at Deployment. Instant, for the same reason forming up is. */
+  function deployFacing(facing: number): void {
+    const unit = deployable()
+    if (!unit) return
+    unit.facing = facing
+    resync()
+  }
+
+  /**
+   * Form up, by whichever means the phase allows: an Order once the clock runs,
+   * and a hand on the map before it does. The screen presses one button either
+   * way and has no business knowing which of the two it got.
+   */
+  function form(formation: FormationName): void {
+    if (ui.phase === "deployment") {
+      deployFormation(formation)
+      return
+    }
+    order({ kind: "form", formation })
+  }
+
   function order(body: OrderBody): void {
     const r = runner.value
     if (!r || !ui.selected || ui.phase !== "battle") return
@@ -210,6 +284,14 @@ export function useBattle(scenarioPath: string) {
 
   let dragFrom: Vec2 | null = null
 
+  /**
+   * Deployment: the point an aiming press began at, and the facing the Unit
+   * had before it. The facing is applied live so the player aims by watching
+   * the battalion turn, so the old one has to be kept to put back if the drag
+   * is walked back and cancelled.
+   */
+  let aim: { from: Vec2; facing: number } | null = null
+
   function onPointerDown(event: PointerEvent): void {
     const v = view.value
     const r = runner.value
@@ -230,7 +312,14 @@ export function useBattle(scenarioPath: string) {
       if (unit) {
         ui.selected = unit.id
         viewState.placing = { id: unit.id, at: point }
+        return
       }
+      // Bare ground, with one of yours in hand: point where you want it
+      // looking. The body of a Unit is already spoken for by placing it, so the
+      // facing gesture has to begin off it — which reads well enough, since
+      // what the player presses is the direction rather than the battalion.
+      const aimed = deployable()
+      if (aimed) aim = { from: point, facing: aimed.facing }
       return
     }
 
@@ -238,12 +327,25 @@ export function useBattle(scenarioPath: string) {
     // enemy about, but you can read it, and a press that lands on one must not
     // quietly become an Order aimed at where it stands.
     const hit = v.unitAt(ui.units, point)
+    if (ui.arming) {
+      // The one press that means something else, and only because the player
+      // asked for it two gestures ago. Anywhere but an enemy calls it off.
+      setArming(false)
+      if (hit && hit.army !== ui.playerArmy) {
+        order({ kind: "charge", targetId: hit.id })
+        // The selection stays on the Unit that was let go, not on what it was
+        // let go at: what the player wants to watch now is their own regiment.
+        dragFrom = null
+        return
+      }
+    }
     if (hit && hit.army !== ui.playerArmy) {
       ui.selected = hit.id
       dragFrom = null
       return
     }
     if (hit) {
+      if (hit.id !== ui.selected) setArming(false)
       ui.selected = hit.id
       // Seed from what the Unit is standing in, unless that is a travelling
       // Formation — Initiative puts Units into column on its own, and seeding
@@ -275,6 +377,17 @@ export function useBattle(scenarioPath: string) {
       movePlaced(point)
       return
     }
+    if (aim) {
+      const unit = deployable()
+      // Aimed from the Unit, not from where the press landed: the player is
+      // pointing at a direction on the Field, and the bearing has to be read
+      // from the battalion doing the looking. Too near it to mean anything and
+      // the facing is left alone rather than snapped to a pixel of jitter.
+      if (unit && distance(unit.position, point) > AIM_THRESHOLD) {
+        deployFacing(bearing(unit.position, point))
+      }
+      return
+    }
     if (!dragFrom || !viewState.drag) return
     const dragged = unitById(ui.selected)
     viewState.drag.facing =
@@ -298,28 +411,45 @@ export function useBattle(scenarioPath: string) {
     }
     const unit = r.battle.units.find((u) => u.id === placing.id)
     if (!unit) return
-    const shape = poseFootprint({
-      arm: unit.arm,
-      strength: unit.strength,
-      formation: unit.formation,
-      changingTo: null,
-      changeProgress: 0,
-    })
-    // A Unit is placed by its centre, so its whole Footprint has to fit.
+    clampIntoZone(unit, point)
+    resync()
+  }
+
+  /**
+   * Hold a Unit inside its zone. A Unit is placed by its centre, so its whole
+   * Footprint has to fit — and the Footprint is read fresh every time, because
+   * Formation decides it. A 720-man battalion measures 144m by 3.6m in line and
+   * 2.8m by 162m in march column, so the margin it needs moves with the
+   * Formation, and a battalion legally placed in one would hang out of the zone
+   * in the other if the margin were not recomputed.
+   *
+   * Known simplification: the margin is the larger of the two dimensions, so it
+   * ignores facing and reserves a square. Conservative, never wrong, and it
+   * costs a battalion a few metres of a zone it has hundreds of.
+   */
+  function clampIntoZone(unit: Unit, point: Vec2): void {
     const zone = viewState.deploymentZone
     if (!zone) return
     const [zx, zy, zw, zh] = zone
+    const shape = unitFootprint(unit)
     const half = Math.max(shape.width, shape.depth) / 2
     unit.position = {
       x: Math.max(zx + half, Math.min(zx + zw - half, point.x)),
       y: Math.max(zy + half, Math.min(zy + zh - half, point.y)),
     }
-    r.current = {
-      ...r.current,
-      units: r.current.units.map((u) =>
-        u.id === unit.id ? { ...u, position: { ...unit.position } } : u,
-      ),
-    }
+  }
+
+  /**
+   * Re-read the screen's copy after arranging the Battle by hand. Deployment
+   * mutates Units directly rather than sending Orders, so nothing steps and
+   * nothing would otherwise take a new snapshot. Both snapshots are set to the
+   * same one: with the clock stopped there is nothing to interpolate between,
+   * and leaving `previous` behind would slide the Unit back every frame.
+   */
+  function resync(): void {
+    const r = runner.value
+    if (!r) return
+    r.current = snapshot(r.battle)
     r.previous = r.current
     ui.units = r.current.units
   }
@@ -327,6 +457,18 @@ export function useBattle(scenarioPath: string) {
   function onPointerUp(event: PointerEvent): void {
     if (viewState.placing) {
       viewState.placing = null
+      return
+    }
+    if (aim) {
+      const cancelled = distance(aim.from, fieldPoint(event)) < COMMIT_THRESHOLD
+      if (cancelled) {
+        // A press on bare ground that went nowhere, which is what clicking away
+        // from everything looks like. Put the facing back and let go of the
+        // Unit, the same as it means once the battle is running.
+        deployFacing(aim.facing)
+        ui.selected = null
+      }
+      aim = null
       return
     }
     if (!dragFrom || !viewState.drag) return
@@ -357,7 +499,9 @@ export function useBattle(scenarioPath: string) {
   function deselect(): void {
     ui.selected = null
     dragFrom = null
+    aim = null
     viewState.drag = null
+    setArming(false)
   }
 
   onBeforeUnmount(() => {
@@ -373,6 +517,8 @@ export function useBattle(scenarioPath: string) {
     toggleFireZones,
     togglePause,
     order,
+    form,
+    armCharge,
     deselect,
     unitById,
     onPointerDown,

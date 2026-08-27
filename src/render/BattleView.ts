@@ -44,6 +44,12 @@ export interface ViewState {
   armyColours: Record<string, number>
   /** Show every Unit's beaten ground. Off, only the selected Unit shows its own. */
   fireZones: boolean
+  /**
+   * A Charge is armed and waiting to be aimed. Every enemy is outlined while it
+   * is, because the thing the player is about to pick is a Unit and not a point
+   * on the ground — the only Order in the game of which that is true.
+   */
+  arming: boolean
 }
 
 /** Mix a colour toward white, so Figures read against their own Unit's base. */
@@ -84,6 +90,25 @@ interface Flash {
 
 /** How long a flash and its smoke stay on screen, in milliseconds. */
 const FLASH_MS = 420
+
+/**
+ * Two blocks touching, on screen. The same renderer-only trick as a Flash and
+ * for the same reason: the simulation keeps a Contact for one step, and one step
+ * at 10Hz is six frames of nothing much.
+ */
+interface Clash {
+  at: Vec2
+  /** The way the charge went in, in radians. */
+  facing: number
+  /** Metres of front that met, which is how wide it is drawn. */
+  width: number
+  /** True when it ended in a Break rather than in the chargers being thrown back. */
+  broke: boolean
+  born: number
+}
+
+/** Longer than a flash: a Contact is the loudest thing that happens. */
+const CLASH_MS = 750
 
 interface UnitVisual {
   container: Container
@@ -126,6 +151,8 @@ export class BattleView {
   private pxPerMetre = 1
   private flashes: Flash[] = []
   private flashed = new Set<string>()
+  private clashes: Clash[] = []
+  private clashed = new Set<string>()
 
   async mount(host: HTMLElement): Promise<void> {
     this.host = host
@@ -224,6 +251,7 @@ export class BattleView {
     const byId = new Map(previous.units.map((u) => [u.id, u]))
     const units = current.units.map((u) => tween(byId.get(u.id), u, alpha))
     this.collectFlashes(current)
+    this.collectClashes(current)
     this.drawOverlay(view)
     this.drawFireZones(units, view)
     this.drawGhosts(current, view)
@@ -254,6 +282,69 @@ export class BattleView {
     }
     const alive = this.flashes.filter((f) => now - f.born < FLASH_MS)
     if (alive.length !== this.flashes.length) this.flashes = alive
+  }
+
+  /**
+   * Raise a clash for every Contact not seen yet. The direction is read off the
+   * two Units where they stood in the step it happened, which is the one frame
+   * they were touching in.
+   */
+  private collectClashes(current: BattleSnapshot): void {
+    const now = performance.now()
+    for (const contact of current.contacts) {
+      if (this.clashed.has(contact.id)) continue
+      this.clashed.add(contact.id)
+      const charger = current.units.find((u) => u.id === contact.unitId)
+      const target = current.units.find((u) => u.id === contact.targetId)
+      const facing =
+        charger && target
+          ? Math.atan2(
+              target.position.y - charger.position.y,
+              target.position.x - charger.position.x,
+            )
+          : 0
+      this.clashes.push({
+        at: { ...contact.where },
+        facing,
+        width: contact.width,
+        broke: contact.outcome === "broke",
+        born: now,
+      })
+    }
+    if (this.clashes.length === 0) {
+      this.clashed.clear()
+      return
+    }
+    const alive = this.clashes.filter((c) => now - c.born < CLASH_MS)
+    if (alive.length !== this.clashes.length) this.clashes = alive
+  }
+
+  /**
+   * A Contact: a bar of steel across the front that met, and a ring going out of
+   * it. Pale when the Face held and the chargers were thrown back, red when
+   * something broke — the two outcomes have to read apart at a glance, because
+   * they are the only two there are.
+   */
+  private drawClashes(): void {
+    const now = performance.now()
+    const mpp = this.metresPerPixel()
+    const g = this.effects
+    for (const clash of this.clashes) {
+      const t = Math.min(1, (now - clash.born) / CLASH_MS)
+      const fade = (1 - t) ** 1.6
+      if (fade <= 0.01) continue
+      const across = { x: -Math.sin(clash.facing), y: Math.cos(clash.facing) }
+      const half = Math.max(6 * mpp, clash.width / 2)
+      const colour = clash.broke ? 0xe0663c : 0xdfe4ec
+      g.circle(clash.at.x, clash.at.y, half * (0.4 + 0.9 * t)).stroke({
+        width: mpp * 2,
+        color: colour,
+        alpha: 0.6 * fade,
+      })
+      g.moveTo(clash.at.x - across.x * half, clash.at.y - across.y * half)
+        .lineTo(clash.at.x + across.x * half, clash.at.y + across.y * half)
+        .stroke({ width: mpp * 4, color: colour, alpha: 0.95 * fade })
+    }
   }
 
   /**
@@ -538,6 +629,38 @@ export class BattleView {
     }
   }
 
+  /**
+   * Every Charge under way, as a taut line onto what it is aimed at. The Unit is
+   * visibly running, but which of several enemies it was let go at is a fact
+   * about the Order and not about the running, so it has to be drawn.
+   */
+  private drawCharges(units: UnitSnapshot[]): void {
+    const g = this.effects
+    const mpp = this.metresPerPixel()
+    for (const unit of units) {
+      if (!unit.charging) continue
+      const target = units.find((u) => u.id === unit.charging)
+      if (!target) continue
+      const colour = unit.recoiling ? 0x8d94a0 : 0xe0663c
+      g.moveTo(unit.position.x, unit.position.y)
+        .lineTo(target.position.x, target.position.y)
+        .stroke({ width: mpp * 1.5, color: colour, alpha: unit.recoiling ? 0.3 : 0.55 })
+    }
+  }
+
+  /** Every enemy outlined while a Charge is looking for one to be aimed at. */
+  private drawArming(units: UnitSnapshot[], view: ViewState): void {
+    if (!view.arming) return
+    const g = this.effects
+    const mpp = this.metresPerPixel()
+    for (const unit of units) {
+      if (unit.army === view.playerArmy) continue
+      const shape = poseFootprint(unit)
+      const grown = { width: shape.width + 12 * mpp, depth: shape.depth + 12 * mpp }
+      this.strokeFootprint(g, unit.position, unit.facing, grown, 0xe0663c, 0.85, mpp * 2)
+    }
+  }
+
   private drawEffects(
     previous: BattleSnapshot,
     current: BattleSnapshot,
@@ -549,6 +672,9 @@ export class BattleView {
     g.clear()
     const mpp = this.metresPerPixel()
     this.drawFlashes()
+    this.drawClashes()
+    this.drawCharges(units)
+    this.drawArming(units, view)
     const before = new Map(previous.couriers.map((c) => [c.id, c]))
 
     for (const courier of current.couriers) {

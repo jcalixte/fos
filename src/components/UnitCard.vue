@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue"
+import { canCharge } from "@/sim/charge"
 import { baseSpeed, drillSeconds, formationsFor, frontage } from "@/sim/formation"
 import { describeFormation, type FormationName, type Grade } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
@@ -8,12 +9,19 @@ const props = defineProps<{
   unit: UnitSnapshot
   gradeName: string
   arrivalFormation: FormationName | null
+  /** What it is committed to a Charge on, by name. Null when it is not. */
+  chargingName: string | null
+  /** A Charge is armed on this Unit and waiting to be aimed. */
+  arming: boolean
+  /** Deployment: the army is being arranged, so nothing here is an Order yet. */
+  deploying: boolean
   disabled: boolean
 }>()
 
 const emit = defineEmits<{
   form: [formation: FormationName]
   arrivalFormation: [formation: FormationName]
+  charge: []
   halt: []
 }>()
 
@@ -24,6 +32,17 @@ const width = computed(() =>
 const busy = computed(() => props.unit.changingTo !== null)
 /** A Routing Unit is deaf, so offering it buttons would be a lie. */
 const deaf = computed(() => props.unit.routing || props.disabled)
+/** Guns do not charge, and neither does a Unit already committed to one. */
+const mounted = computed(() => canCharge(props.unit.arm) && !props.unit.charging)
+
+/**
+ * Halting, charging and choosing an arrival Formation are all Orders, and there
+ * are no Orders at Deployment — nothing is marching to be halted, no rider will
+ * carry anything until the clock runs, and a Unit standing in its zone has no
+ * arrival to dress for. Hidden rather than disabled: a greyed row the player can
+ * never reach in this phase reads as something broken.
+ */
+const orderable = computed(() => !props.deploying)
 
 /**
  * Metres a minute over the ground it is on. Shown because the ground can halve
@@ -73,6 +92,12 @@ const label = describeFormation
 
         <p class="min-w-52 text-xs">
           <span v-if="unit.routing" class="text-error">routing — out of command</span>
+          <span v-else-if="unit.recoiling" class="text-warning">
+            thrown back from {{ chargingName ?? "it" }}, and blown
+          </span>
+          <span v-else-if="unit.charging" class="text-error">
+            gone at {{ chargingName ?? "the enemy" }}
+          </span>
           <span v-else-if="busy" class="text-warning">
             taking up {{ label(unit.changingTo!) }} — {{ remaining }}s
           </span>
@@ -99,12 +124,29 @@ const label = describeFormation
           >
             {{ label(option) }}
           </button>
-          <button type="button" class="btn btn-ghost btn-xs" :disabled="deaf" @click="emit('halt')">
+          <button
+            v-if="orderable"
+            type="button"
+            class="btn btn-ghost btn-xs"
+            :disabled="deaf"
+            @click="emit('halt')"
+          >
             halt
+          </button>
+          <button
+            v-if="mounted && orderable"
+            type="button"
+            class="btn btn-xs"
+            :class="arming ? 'btn-error' : 'btn-ghost'"
+            :disabled="deaf"
+            :title="arming ? 'now press the Unit to go at' : 'aim a Charge at a Unit'"
+            @click="emit('charge')"
+          >
+            {{ arming ? "pick a target" : "charge" }}
           </button>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div v-if="orderable" class="flex items-center gap-2">
           <span class="text-xs tracking-wide text-base-content/50 uppercase">Arrive in</span>
           <button
             v-for="option in options"

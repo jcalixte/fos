@@ -15,6 +15,7 @@ const gradeName = computed(() => {
   if (!unit) return ""
   return ui.gradeNames[unit.army]?.[unit.grade as Grade] ?? unit.grade
 })
+const chargingName = computed(() => battle.unitById(selected.value?.charging ?? null)?.name ?? null)
 
 function clock(seconds: number): string {
   const m = Math.floor(seconds / 60)
@@ -131,7 +132,8 @@ onBeforeUnmount(() => {
           >
             <span class="font-semibold text-base-content">Deployment.</span>
             Drag your Units inside the marked zone, and drag the Headquarters to where you mean to
-            stand — every Order you give will be ridden from there.
+            stand — every Order you give will be ridden from there. Select a Unit to form it up, and
+            drag from open ground to point it: before the clock runs, both are free.
           </p>
         </div>
 
@@ -166,11 +168,28 @@ onBeforeUnmount(() => {
         :unit="selected"
         :grade-name="gradeName"
         :arrival-formation="ui.arrivalFormation"
-        :disabled="ui.phase !== 'battle' || selected.army !== ui.playerArmy"
-        @form="battle.order({ kind: 'form', formation: $event as FormationName })"
+        :charging-name="chargingName"
+        :arming="ui.arming"
+        :deploying="ui.phase === 'deployment'"
+        :disabled="
+          selected.army !== ui.playerArmy || (ui.phase !== 'battle' && ui.phase !== 'deployment')
+        "
+        @form="battle.form($event as FormationName)"
         @arrival-formation="ui.arrivalFormation = $event"
+        @charge="battle.armCharge()"
         @halt="battle.order({ kind: 'halt' })"
       />
+      <p v-if="ui.arming" class="ml-4 shrink-0 text-xs whitespace-nowrap text-error">
+        Press the Unit to go at.<br />
+        Escape, or open ground, calls it off.
+      </p>
+      <p
+        v-else-if="ui.phase === 'deployment' && selected"
+        class="ml-4 shrink-0 text-xs whitespace-nowrap text-base-content/55"
+      >
+        Drag its body to move it.<br />
+        Drag from open ground to face it.
+      </p>
       <p v-else-if="ui.phase === 'deployment'" class="text-xs text-base-content/55">
         {{ ui.scenarioSummary }}
       </p>
