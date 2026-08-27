@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed } from "vue"
+import HelpTip from "@/components/HelpTip.vue"
 import { canCharge } from "@/sim/charge"
 import { baseSpeed, drillSeconds, formationsFor, frontage } from "@/sim/formation"
-import { describeLatitude, LATITUDES } from "@/sim/standing"
+import { describeLatitude, explainLatitude, LATITUDES } from "@/sim/standing"
 import { describeFormation, type FormationName, type Grade, type Latitude } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
 
@@ -83,6 +84,7 @@ const rungs = LATITUDES
 
 const label = describeFormation
 const rung = describeLatitude
+const explain = explainLatitude
 </script>
 
 <template>
@@ -167,59 +169,66 @@ const rung = describeLatitude
                to come round where it stands; it is only for artillery that it is
                the sole way to do it, since a battery ordered anywhere at all
                hitches up to get there. -->
-          <button
-            type="button"
-            class="btn btn-xs"
-            :class="pointing ? 'btn-primary' : 'btn-ghost'"
-            :disabled="deaf"
-            :title="
+          <HelpTip
+            :tip="
               pointing
                 ? 'now press where you want it looking'
                 : 'come round on the spot, without moving — or drag off its body'
             "
-            @click="emit('point')"
           >
-            {{ pointing ? "press a direction" : "point" }}
-          </button>
-          <button
+            <button
+              type="button"
+              class="btn btn-xs"
+              :class="pointing ? 'btn-primary' : 'btn-ghost'"
+              :disabled="deaf"
+              @click="emit('point')"
+            >
+              {{ pointing ? "press a direction" : "point" }}
+            </button>
+          </HelpTip>
+          <HelpTip
             v-if="mounted"
-            type="button"
-            class="btn btn-xs"
-            :class="arming ? 'btn-error' : 'btn-ghost'"
-            :disabled="deaf"
-            :title="arming ? 'now press the Unit to go at' : 'aim a Charge at a Unit'"
-            @click="emit('charge')"
+            :tip="arming ? 'now press the Unit to go at' : 'aim a Charge at a Unit'"
           >
-            {{ arming ? "pick a target" : "charge" }}
-          </button>
+            <button
+              type="button"
+              class="btn btn-xs"
+              :class="arming ? 'btn-error' : 'btn-ghost'"
+              :disabled="deaf"
+              @click="emit('charge')"
+            >
+              {{ arming ? "pick a target" : "charge" }}
+            </button>
+          </HelpTip>
         </div>
 
         <div class="flex items-center gap-2">
           <span class="text-xs tracking-wide text-base-content/50 uppercase">Standing</span>
-          <button
-            v-for="option in rungs"
-            :key="`rung-${option}`"
-            type="button"
-            class="btn btn-xs"
-            :class="unit.standing.latitude === option ? 'btn-primary' : 'btn-ghost'"
-            :disabled="deaf"
-            @click="emit('latitude', option)"
-          >
-            {{ rung(option) }}
-          </button>
+          <HelpTip v-for="option in rungs" :key="`rung-${option}`" :tip="explain(option)">
+            <button
+              type="button"
+              class="btn btn-xs"
+              :class="unit.standing.latitude === option ? 'btn-primary' : 'btn-ghost'"
+              :disabled="deaf"
+              @click="emit('latitude', option)"
+            >
+              {{ rung(option) }}
+            </button>
+          </HelpTip>
           <!-- Its own button and not a fifth rung: what a Unit does with its
                feet and what it does with its muskets are different questions,
                and a battalion may be told to close up and to hold its fire. -->
-          <button
-            type="button"
-            class="btn btn-xs"
-            :class="unit.standing.holdFire ? 'btn-warning' : 'btn-ghost'"
-            :disabled="deaf"
-            title="it will not open fire at all, at any range, until this is lifted"
-            @click="emit('holdFire', !unit.standing.holdFire)"
-          >
-            hold fire
-          </button>
+          <HelpTip tip="it will not open fire at all, at any range, until this is lifted">
+            <button
+              type="button"
+              class="btn btn-xs"
+              :class="unit.standing.holdFire ? 'btn-warning' : 'btn-ghost'"
+              :disabled="deaf"
+              @click="emit('holdFire', !unit.standing.holdFire)"
+            >
+              hold fire
+            </button>
+          </HelpTip>
         </div>
 
         <div v-if="orderable" class="flex items-center gap-2">
