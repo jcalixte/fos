@@ -25,6 +25,14 @@ export const COURIER_SPEED = 13
 /** How close the rider must get to count as having handed the Order over. */
 const HANDOVER_RANGE = 6
 
+/**
+ * Metres from its destination at which a Unit counts as arrived. Here rather
+ * than in C8 beside the march that spends it: what counts as having got there
+ * is a fact about the Order, the sibling of what counts as having received it,
+ * and both the march and the Dispatch that reads the Order out need it.
+ */
+export const ARRIVAL_RANGE = 8
+
 export function issueOrder(battle: Battle, unitId: UnitId, body: OrderBody, from: Vec2): Order {
   const order: Order = {
     id: `o${battle.nextId++}`,
@@ -49,6 +57,15 @@ export function estimateDelay(from: Vec2, to: Vec2): number {
 function describe(battle: Battle, body: OrderBody, unit: Unit): string {
   switch (body.kind) {
     case "move":
+      // A Move onto the ground the Unit is already standing on carries no
+      // march at all: it is how a Unit is turned where it stands, which is the
+      // only thing guns in battery can do without hitching up. Reading that
+      // out as a march is a lie the player can see on the Field.
+      if (distance(unit.position, body.destination) <= ARRIVAL_RANGE) {
+        return body.arrivalFormation === unit.formation
+          ? `${unit.name} received its Order: come round where it stands`
+          : `${unit.name} received its Order: come round where it stands, and form ${describeFormation(body.arrivalFormation)}`
+      }
       return `${unit.name} received its Order: march, and form ${describeFormation(body.arrivalFormation)} on arrival`
     case "form":
       return `${unit.name} received its Order: form ${describeFormation(body.formation)}`

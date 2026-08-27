@@ -36,7 +36,7 @@ import {
   recover,
   shareGone,
 } from "./morale"
-import { advanceCouriers } from "./orders"
+import { advanceCouriers, ARRIVAL_RANGE } from "./orders"
 import {
   describeFormation,
   type ArmyId,
@@ -63,9 +63,6 @@ import { route as findRoute } from "./routing"
 
 /** Seconds per simulation step. */
 export const STEP = 0.1
-
-/** Metres from its destination at which a Unit counts as arrived. */
-const ARRIVAL_RANGE = 8
 
 /** How close to the ordered facing counts as dressed, in radians. */
 const FACING_TOLERANCE = 0.05

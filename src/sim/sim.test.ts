@@ -255,6 +255,26 @@ describe("C1 Order Delivery", () => {
     expect(elapsed).toBeGreaterThan(estimateDelay({ x: 0, y: 0 }, { x: 400, y: 0 }))
   })
 
+  it("reads a Move onto the ground a Unit stands on as coming round, not marching", () => {
+    const battery = battalion({ arm: "artillery", formation: "in-battery", strength: 90 })
+    const battle = emptyBattle(blankField(400, 40), [battery])
+    issueOrder(
+      battle,
+      battery.id,
+      {
+        kind: "move",
+        destination: { ...battery.position },
+        arrivalFacing: -Math.PI / 2,
+        arrivalFormation: "in-battery",
+      },
+      { x: 0, y: 0 },
+    )
+    while (battle.couriers.length > 0) step(battle)
+    const said = battle.dispatches.map((d) => d.text)
+    expect(said.some((t) => t.includes("come round where it stands"))).toBe(true)
+    expect(said.some((t) => t.includes("march"))).toBe(false)
+  })
+
   it("shows every pending Order as a Ghost where it leads", () => {
     const unit = battalion()
     const battle = emptyBattle(blankField(400, 40), [unit])
