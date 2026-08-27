@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { concede, isOver, STEP, step, unitSpeed } from "./battle"
-import { blankField } from "./scenario"
+import { blankField, takeCommand } from "./scenario"
 import { cellIndex } from "./field"
 import {
   baseSpeed,
@@ -1838,5 +1838,46 @@ describe("the Return", () => {
     const [french, austrian] = armyReturns(battle)
     expect(french.keyGround).toEqual(["the bridge"])
     expect(austrian.keyGround).toEqual(["the farm"])
+  })
+})
+
+describe("taking an Army", () => {
+  function bothArmies(): Battle {
+    const battle = emptyBattle(blankField(200, 120), [
+      battalion({ id: "fr-1", army: "french" }),
+      battalion({ id: "au-1", army: "austrian" }),
+    ])
+    battle.arrivals = [
+      {
+        at: 300,
+        unit: battalion({ id: "fr-2", army: "french" }),
+        entry: { x: 0, y: 100 },
+        order: null,
+      },
+    ]
+    const at = (unitId: string) => ({
+      at: 60,
+      unitId,
+      body: {
+        kind: "move" as const,
+        destination: { x: 400, y: 100 },
+        arrivalFacing: 0,
+        arrivalFormation: "line" as const,
+      },
+    })
+    battle.plan = [at("fr-1"), at("au-1"), at("fr-2")]
+    return battle
+  }
+
+  it("drops the Plan for the army the player has taken, and leaves the enemy's", () => {
+    const battle = bothArmies()
+    takeCommand(battle, "french")
+    expect(battle.plan.map((p) => p.unitId)).toEqual(["au-1"])
+  })
+
+  it("drops it for a Unit still on the road, which is already somebody's", () => {
+    const battle = bothArmies()
+    takeCommand(battle, "austrian")
+    expect(battle.plan.map((p) => p.unitId)).toEqual(["fr-1", "fr-2"])
   })
 })

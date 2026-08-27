@@ -18,8 +18,8 @@ import type {
 } from "./types"
 
 /**
- * A Scenario carries a Field, two Rosters, the enemy's Plan, a clock and its Key
- * Ground. A Roster is a standalone thing a Scenario names rather than contains,
+ * A Scenario carries a Field, two Rosters, a Plan for each army, a clock and its
+ * Key Ground. A Roster is a standalone thing a Scenario names rather than contains,
  * so adding a battle is data and never code (F16).
  */
 
@@ -56,6 +56,8 @@ export interface ScenarioArmy {
   name: string
   /** Hex, as the Roster's Units are drawn. */
   colour: string
+  /** One line on what this army's afternoon is, read when it is offered. */
+  brief?: string
   roster: string
   headquarters?: Vec2
   /** The rectangle, in metres, the player may arrange this army inside. */
@@ -185,6 +187,23 @@ export function assemble(scenario: AssembledScenario): Battle {
     seed: file.seed,
     nextId: 1,
   }
+}
+
+/**
+ * Take command of an Army. A Scenario authors a Plan for both of them so either
+ * can be played, and the half belonging to the Army the player has taken is
+ * dropped here: an Army that is commanded cannot also be driven, or the first
+ * Order the player sends would be argued with by its own Scenario.
+ *
+ * The Plan's owner is read off the Unit each Order names rather than declared,
+ * so an author writes one list and never says twice whose a line is. Arrivals
+ * count: a Unit still on the road already belongs to an Army.
+ */
+export function takeCommand(battle: Battle, army: string): void {
+  const mine = new Set<string>()
+  for (const unit of battle.units) if (unit.army === army) mine.add(unit.id)
+  for (const arrival of battle.arrivals) if (arrival.unit.army === army) mine.add(arrival.unit.id)
+  battle.plan = battle.plan.filter((planned) => !mine.has(planned.unitId))
 }
 
 /** A bare Field, for tests and fixtures that do not want a PNG. */
