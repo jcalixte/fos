@@ -272,9 +272,12 @@ describe("C3 Formation Geometry", () => {
     const unit = battalion({ formation: "march-column" })
     const battle = emptyBattle(blankField(400, 40), [unit])
     const hq = { x: 100, y: 140 }
-    // Both said in the same breath, which is what pressing Line and then
-    // dragging a Move is: arrive in line, four hundred metres that way.
+    // Line and then the Move, which is the order the buttons are pressed in:
+    // the Formation says what to arrive in, and the drag says where. The first
+    // rider is well ahead of the second, so the column is genuinely filing off
+    // into line by the time it is told to march.
     issueOrder(battle, unit.id, { kind: "form", formation: "line" }, hq)
+    while (battle.couriers.length > 0) step(battle)
     issueOrder(
       battle,
       unit.id,
@@ -286,17 +289,17 @@ describe("C3 Formation Geometry", () => {
       },
       hq,
     )
-    let waited = 0
-    // Time from the second rider handing his Order over to the first step of
-    // the march. The Unit files off into line, the march files it back, and
-    // what it pays is the second or two it was out of column for.
     while (battle.couriers.length > 0) step(battle)
+    // Time from the Move being handed over to the first step of the march. The
+    // Unit had begun filing off into line, the march files it back, and what it
+    // pays is the seconds it was out of column for and not the whole drill.
     const from = { ...unit.position }
-    while (distance(unit.position, from) < 1 && waited < 60) {
+    let waited = 0
+    while (distance(unit.position, from) < 1 && waited < 120) {
       step(battle)
       waited += STEP
     }
-    expect(waited).toBeLessThan(3)
+    expect(waited).toBeLessThan(drillSeconds("infantry", "line", "line", "march-column") / 4)
     expect(unit.formation).toBe("march-column")
   })
 
