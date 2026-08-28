@@ -276,6 +276,60 @@ describe("a staff in the saddle", () => {
     expect(hq.position.x).toBeLessThan(400)
     expect(hq.position.x).toBeGreaterThan(380)
   })
+
+  it("pulls up under a face too steep to ride, which no Ground says a word about", () => {
+    const field = blankField(300, 300)
+    // A scarp at x = 400m: open country the whole way, and a hundred metres of
+    // rise across one cell. Rivoli's east face, in the small — nothing painted,
+    // and no Unit goes up it.
+    for (let cy = 0; cy < field.height; cy++) {
+      for (let cx = 50; cx < field.width; cx++) field.elevation[cy * field.width + cx] = 100
+    }
+    const battle = fixture([unit()], headquarters({ x: 200, y: 500 }), field)
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 700, y: 500 })
+    run(battle, 500 / HEADQUARTERS_SPEED + 1)
+
+    expect(isRiding(hq)).toBe(false)
+    expect(hq.position.x).toBeLessThan(400)
+    expect(hq.position.x).toBeGreaterThan(380)
+  })
+
+  it("says it fell short rather than reporting the ground it never reached", () => {
+    const field = blankField(300, 300)
+    const water = GROUNDS.indexOf("water")
+    for (let cy = 0; cy < field.height; cy++) {
+      for (const cx of [50, 51]) field.ground[cy * field.width + cx] = water
+    }
+    const battle = fixture([unit()], headquarters({ x: 200, y: 500 }), field)
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 700, y: 500 })
+    run(battle, 500 / HEADQUARTERS_SPEED + 1)
+
+    const settled = battle.dispatches.at(-1)?.text ?? ""
+    expect(settled).toContain("could get no further")
+    // The distance it fell short is the actionable half: the player has to know
+    // how far off the ground he chose the staff is standing.
+    expect(settled).toMatch(/\d+m short of the ground it was sent to/)
+  })
+
+  it("still says plainly that it arrived, where it did", () => {
+    const battle = fixture([unit()], headquarters({ x: 200, y: 500 }))
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 400, y: 500 })
+    run(battle, 200 / HEADQUARTERS_SPEED + 1)
+
+    expect(hq.position.x).toBeCloseTo(400, 0)
+    expect(battle.dispatches.at(-1)?.text).toBe(
+      "The Headquarters is established, and its riders can set off again",
+    )
+  })
 })
 
 describe("the enemy coming at a Headquarters", () => {

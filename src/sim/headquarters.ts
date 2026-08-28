@@ -1,4 +1,4 @@
-import { cellAt, cellIndex, inBounds, passable } from "./field"
+import { cellAt, cellIndex, inBounds, stepCost } from "./field"
 import { beatsPoint } from "./fighting"
 import { isRouting } from "./morale"
 import { issueOrder } from "./orders"
@@ -161,10 +161,28 @@ function ontoTheField(field: Field, point: Vec2): Vec2 {
   }
 }
 
-function standsOnPassableGround(field: Field, point: Vec2): boolean {
-  const { cx, cy } = cellAt(field, point)
-  if (!inBounds(field, cx, cy)) return false
-  return passable(field, cellIndex(field, cx, cy))
+/**
+ * Whether the staff can get from the ground it stands on into `to`. The Units'
+ * own test rather than a second one kept beside it: what stops a battalion
+ * stops a Headquarters, and asking only what is painted underfoot could never
+ * say so. Impassability comes from the Ground *or* from the gradient, and a
+ * gradient needs two cells to be a gradient at all (ADR-0005) — so a test
+ * taking one point can see a river and is blind to a cliff.
+ *
+ * Rivoli is the Field where the difference is the whole of it. Its barriers are
+ * cut by Height and not painted: read through Ground alone, the plateau's east
+ * face is open country, and the staff rides off it.
+ */
+function canRideInto(field: Field, from: Vec2, to: Vec2): boolean {
+  const here = cellAt(field, from)
+  const there = cellAt(field, to)
+  if (!inBounds(field, here.cx, here.cy) || !inBounds(field, there.cx, there.cy)) return false
+  const cost = stepCost(
+    field,
+    cellIndex(field, here.cx, here.cy),
+    cellIndex(field, there.cx, there.cy),
+  )
+  return Number.isFinite(cost)
 }
 
 /**
@@ -303,17 +321,28 @@ function overrun(battle: Battle, headquarters: Headquarters, enemy: Unit): void 
 
 /**
  * Walk the staff toward the ground it was sent to. It rides straight and does
- * not route — no A*, no Crossings — and it will not ford a river: a step onto
- * impassable Ground establishes it where it stands instead, which reads as the
- * staff pulling up at the bank.
+ * not route: no A*, and it will not go round anything. What it cannot ride into
+ * it pulls up at, and is established where it stands — which reads as the staff
+ * halted at the bank, or under a face it has no way up.
+ *
+ * It is not stopped by a Crossing it happens to cross, for the reason a Unit is
+ * not: a bridge is a road. That is still not routing — nothing here goes
+ * looking for one.
  */
 function advanceRide(battle: Battle, headquarters: Headquarters, dt: number): void {
   const to = headquarters.destination
   if (!to) return
   const gap = distance(headquarters.position, to)
   if (gap <= Math.max(SETTLE_RANGE, HEADQUARTERS_SPEED * dt)) {
+    // Ground within one stride is still ground the staff has to be able to ride
+    // into, or a destination dropped in the river would be reached by falling
+    // the last half metre into it.
+    if (!canRideInto(battle.field, headquarters.position, to)) {
+      settle(battle, headquarters, to)
+      return
+    }
     headquarters.position = { ...to }
-    settle(battle, headquarters)
+    settle(battle, headquarters, null)
     return
   }
   const heading = bearing(headquarters.position, to)
@@ -322,8 +351,8 @@ function advanceRide(battle: Battle, headquarters: Headquarters, dt: number): vo
     x: headquarters.position.x + Math.cos(heading) * stride,
     y: headquarters.position.y + Math.sin(heading) * stride,
   }
-  if (!standsOnPassableGround(battle.field, next)) {
-    settle(battle, headquarters)
+  if (!canRideInto(battle.field, headquarters.position, next)) {
+    settle(battle, headquarters, to)
     return
   }
   headquarters.position = next
@@ -335,18 +364,32 @@ function advanceRide(battle: Battle, headquarters: Headquarters, dt: number): vo
  * ended up on — and it pays whatever the table costs *now*, because the wait is
  * at the table and not on the road: a staff that has settled under fire holds
  * every one of them the harrying's twenty seconds.
+ *
+ * `shortOf` is the ground it was sent to and could not reach, or null where it
+ * arrived. The two are one event to the simulation and must never be one to the
+ * player: a staff that pulled up at a bank has spent the whole blackout and is
+ * standing somewhere nobody chose, and a feed that called that *established*
+ * would be telling him he is commanding from ground he is not on. It is the
+ * only way the ride can fail, and it fails silently otherwise — there is
+ * nothing on the Field to see, the Orders start moving again, and the first
+ * sign of it is a Courier setting off from the wrong place.
  */
-function settle(battle: Battle, headquarters: Headquarters): void {
+function settle(battle: Battle, headquarters: Headquarters, shortOf: Vec2 | null): void {
   headquarters.destination = null
   const dictated = headquarters.dictated
   headquarters.dictated = []
+  const short = shortOf === null ? 0 : Math.round(distance(headquarters.position, shortOf))
+  const where =
+    shortOf === null
+      ? "The Headquarters is established"
+      : `The Headquarters could get no further, and is established ${short}m short of the ground it was sent to`
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
     text:
       dictated.length === 0
-        ? "The Headquarters is established, and its riders can set off again"
-        : `The Headquarters is established; the ${dictated.length} Order${dictated.length === 1 ? "" : "s"} dictated on the ride ${dictated.length === 1 ? "is" : "are"} away`,
+        ? `${where}, and its riders can set off again`
+        : `${where}; the ${dictated.length} Order${dictated.length === 1 ? "" : "s"} dictated on the ride ${dictated.length === 1 ? "is" : "are"} away`,
   })
   const hold = courierHold(headquarters)
   for (const entry of dictated) {
