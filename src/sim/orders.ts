@@ -9,7 +9,7 @@ import {
   type Vec2,
 } from "./types"
 import { isRouting } from "./morale"
-import { describeStanding } from "./standing"
+import { describeLatitude } from "./standing"
 import { bearing, distance, normalise, scale, sub } from "./vec"
 
 /**
@@ -90,7 +90,7 @@ function describe(battle: Battle, body: OrderBody, unit: Unit): string {
     case "standing":
       // Read as a brief and not as an act, because that is what it is: nothing
       // the Unit is doing now changes when this arrives.
-      return `${unit.name} received its Order: from here on, ${describeStanding(body)}`
+      return `${unit.name} received its Order: from here on, ${describeLatitude(body.latitude)}`
   }
 }
 
@@ -169,7 +169,7 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
   // is under orders to do now — and a rider arriving with a new brief that
   // stopped a march would make the useful instruction the expensive one.
   if (order.body.kind === "standing") {
-    unit.standing = { latitude: order.body.latitude, holdFire: order.body.holdFire }
+    unit.standing = order.body.latitude
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,

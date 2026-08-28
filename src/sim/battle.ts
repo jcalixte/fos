@@ -427,7 +427,7 @@ function firePlan(battle: Battle): void {
     // A brief the Plan gives is applied where it lands, the same as one a rider
     // brings: it says what the Unit does unbidden and leaves the march alone.
     if (planned.body.kind === "standing") {
-      unit.standing = { latitude: planned.body.latitude, holdFire: planned.body.holdFire }
+      unit.standing = planned.body.latitude
       continue
     }
     unit.post = postOf(unit, planned.body) ?? unit.post

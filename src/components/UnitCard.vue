@@ -30,7 +30,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   form: [formation: FormationName]
   latitude: [latitude: Latitude]
-  holdFire: [held: boolean]
   charge: []
   point: []
   halt: []
@@ -174,9 +173,6 @@ function formTip(option: FormationName): string {
           <span v-else-if="unit.suspendedBy" class="text-warning">
             {{ unit.suspendedBy }}
           </span>
-          <span v-else-if="unit.standing.holdFire" class="text-warning">
-            in {{ label(unit.formation) }}, holding its fire
-          </span>
           <span v-else class="text-base-content/60">
             in {{ label(unit.formation) }}{{ unit.hasOrder ? ", under orders" : "" }}
           </span>
@@ -266,25 +262,11 @@ function formTip(option: FormationName): string {
             <button
               type="button"
               class="btn btn-xs"
-              :class="unit.standing.latitude === option ? 'btn-primary' : 'btn-ghost'"
+              :class="unit.standing === option ? 'btn-primary' : 'btn-ghost'"
               :disabled="deaf"
               @click="emit('latitude', option)"
             >
               {{ rung(option) }}
-            </button>
-          </HelpTip>
-          <!-- Its own button and not a fifth rung: what a Unit does with its
-               feet and what it does with its muskets are different questions,
-               and a battalion may be told to close up and to hold its fire. -->
-          <HelpTip tip="it will not open fire at all, at any range, until this is lifted">
-            <button
-              type="button"
-              class="btn btn-xs"
-              :class="unit.standing.holdFire ? 'btn-warning' : 'btn-ghost'"
-              :disabled="deaf"
-              @click="emit('holdFire', !unit.standing.holdFire)"
-            >
-              hold fire
             </button>
           </HelpTip>
         </div>

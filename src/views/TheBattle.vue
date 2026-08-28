@@ -335,8 +335,7 @@ onBeforeUnmount(() => {
           selected.army !== ui.playerArmy || (ui.phase !== 'battle' && ui.phase !== 'deployment')
         "
         @form="battle.form($event as FormationName)"
-        @latitude="battle.brief({ latitude: $event })"
-        @hold-fire="battle.brief({ holdFire: $event })"
+        @latitude="battle.brief($event)"
         @charge="battle.armCharge()"
         @point="battle.armPoint()"
         @halt="battle.order({ kind: 'halt' })"

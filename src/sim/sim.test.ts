@@ -241,14 +241,63 @@ describe("C3 Formation Geometry", () => {
     expect(drillSeconds("infantry", "conscript", "line", "square")).toBeGreaterThan(30)
   })
 
-  it("charges a change of mind mid-drill from where the Unit was going", () => {
+  it("charges the way back by how far the Unit had got, and no further", () => {
+    const unit = battalion()
+    const off = drillSeconds("infantry", "line", "line", "march-column")
+    const back = drillSeconds("infantry", "line", "march-column", "line")
+    expect(beginChange(unit, "march-column")).toBe(true)
+    // Ten seconds into filing off, so two fifths of the way there.
+    unit.changing!.elapsed = 10
+    expect(beginChange(unit, "line")).toBe(true)
+    const change = unit.changing!
+    expect(change.from).toBe("march-column")
+    expect(change.to).toBe("line")
+    // Two fifths of the way back is what is left to walk, and the pose starts
+    // where the Unit actually stands rather than popping to a column.
+    expect(change.duration - change.elapsed).toBeCloseTo((10 / off) * back, 5)
+  })
+
+  it("charges a third Formation the whole drill from the one it was going to", () => {
     const unit = battalion()
     expect(beginChange(unit, "march-column")).toBe(true)
     unit.changing!.elapsed = 10
-    // Told to be in line after all, having spent ten seconds filing off. It is
-    // not already in line, and getting back there is drill like any other.
-    expect(beginChange(unit, "line")).toBe(true)
-    expect(unit.changing?.duration).toBe(drillSeconds("infantry", "line", "march-column", "line"))
+    // Neither the Formation it stands in nor the one it was filing into, so
+    // there is no road it is already on: the full drill from march column.
+    expect(beginChange(unit, "square")).toBe(true)
+    expect(unit.changing?.elapsed).toBe(0)
+    expect(unit.changing?.duration).toBe(drillSeconds("infantry", "line", "march-column", "square"))
+  })
+
+  it("costs a column all but nothing to be told what to arrive in", () => {
+    const unit = battalion({ formation: "march-column" })
+    const battle = emptyBattle(blankField(400, 40), [unit])
+    const hq = { x: 100, y: 140 }
+    // Both said in the same breath, which is what pressing Line and then
+    // dragging a Move is: arrive in line, four hundred metres that way.
+    issueOrder(battle, unit.id, { kind: "form", formation: "line" }, hq)
+    issueOrder(
+      battle,
+      unit.id,
+      {
+        kind: "move",
+        destination: { x: 500, y: 100 },
+        arrivalFacing: 0,
+        arrivalFormation: "line",
+      },
+      hq,
+    )
+    let waited = 0
+    // Time from the second rider handing his Order over to the first step of
+    // the march. The Unit files off into line, the march files it back, and
+    // what it pays is the second or two it was out of column for.
+    while (battle.couriers.length > 0) step(battle)
+    const from = { ...unit.position }
+    while (distance(unit.position, from) < 1 && waited < 60) {
+      step(battle)
+      waited += STEP
+    }
+    expect(waited).toBeLessThan(3)
+    expect(unit.formation).toBe("march-column")
   })
 
   it("morphs the slot layout across a change rather than popping", () => {
@@ -718,7 +767,7 @@ describe("C2 Initiative — the Standing Order", () => {
   })
 
   it("closes up to bring them under its fire, and stops when the leash runs out", () => {
-    const { unit, battle } = facing(280, { standing: { latitude: "close-up", holdFire: false } })
+    const { unit, battle } = facing(280, { standing: "close-up" })
     for (let i = 0; i < 3000; i++) step(battle)
     expect(unit.suspendedBy).toBeNull()
     expect(unit.position.x).toBeGreaterThan(150)
@@ -729,7 +778,7 @@ describe("C2 Initiative — the Standing Order", () => {
   })
 
   it("closing up stops the moment anything bears, well short of the leash", () => {
-    const { unit, battle } = facing(180, { standing: { latitude: "close-up", holdFire: false } })
+    const { unit, battle } = facing(180, { standing: "close-up" })
     for (let i = 0; i < 3000; i++) step(battle)
     expect(aim(battle, unit)?.target.id).toBe("au")
     expect(distance(unit.position, unit.post)).toBeLessThan(leash("close-up"))
@@ -737,7 +786,7 @@ describe("C2 Initiative — the Standing Order", () => {
 
   it("gives ground rather than be closed with, and no more than its leash", () => {
     const { unit, enemy, battle } = facing(150, {
-      standing: { latitude: "stand-off", holdFire: false },
+      standing: "stand-off",
     })
     for (let i = 0; i < 3000; i++) step(battle)
     // Out past the range it means to keep, and stopped there — it gives ground
@@ -751,7 +800,7 @@ describe("C2 Initiative — the Standing Order", () => {
       arm: "artillery",
       formation: "in-battery",
       strength: 120,
-      standing: { latitude: "stand-off", holdFire: false },
+      standing: "stand-off",
     })
     const stood = { ...unit.position }
     for (let i = 0; i < 3000; i++) step(battle)
@@ -767,7 +816,7 @@ describe("C2 Initiative — the Standing Order", () => {
     for (const latitude of ["hold-ground", "follow-up"] as const) {
       const { unit, battle } = facing(
         200,
-        { standing: { latitude, holdFire: false } },
+        { standing: latitude },
         { routing: { heading: 0, brokeAt: 0 }, morale: 0.05 },
       )
       const stood = { ...unit.position }
@@ -779,19 +828,6 @@ describe("C2 Initiative — the Standing Order", () => {
         expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("follow-up") + 1)
       }
     }
-  })
-
-  it("holds its fire when it is told to, at any range", () => {
-    const { unit, battle } = facing(60, { standing: { latitude: "hold-ground", holdFire: true } })
-    // It has a target and its muskets are loaded. It is the Order that stops it.
-    expect(aim(battle, unit)?.target.id).toBe("au")
-    for (let i = 0; i < 600; i++) step(battle)
-    expect(battle.volleys.filter((v) => v.unitId === unit.id)).toHaveLength(0)
-    expect(unit.reload).toBe(0)
-
-    unit.standing = { latitude: "hold-ground", holdFire: false }
-    step(battle)
-    expect(battle.volleys.some((v) => v.unitId === unit.id)).toBe(true)
   })
 
   it("takes a new brief by Courier, and the brief leaves the march alone", () => {
@@ -814,7 +850,7 @@ describe("C2 Initiative — the Standing Order", () => {
     issueOrder(
       battle,
       unit.id,
-      { kind: "standing", latitude: "close-up", holdFire: true },
+      { kind: "standing", latitude: "close-up" },
       {
         x: 100,
         y: 300,
@@ -822,7 +858,7 @@ describe("C2 Initiative — the Standing Order", () => {
     )
     for (let i = 0; i < 600 && battle.couriers.length > 0; i++) step(battle)
     expect(battle.couriers).toHaveLength(0)
-    expect(unit.standing).toEqual({ latitude: "close-up", holdFire: true })
+    expect(unit.standing).toBe("close-up")
     // Still marching where it was sent. A brief says what a Unit does unbidden,
     // which is a different question from what it is under orders to do now.
     expect(unit.order?.order.body.kind).toBe("move")
@@ -830,7 +866,7 @@ describe("C2 Initiative — the Standing Order", () => {
 
   it("posts a Unit where its Move Order sent it, so the leash is spent from there", () => {
     const { unit, battle } = facing(2000, {
-      standing: { latitude: "close-up", holdFire: false },
+      standing: "close-up",
     })
     issueOrder(
       battle,
@@ -1119,16 +1155,11 @@ describe("C6 Fighting", () => {
     expect(shot("open-order")).toBeLessThan(shot("square"))
   })
 
-  it("tells the screen what it is aiming at, holding its fire or not", () => {
+  it("tells the screen what it is aiming at", () => {
     const { battle, shooter, enemy } = facingOff(60)
     const aimingOf = (id: string) => snapshot(battle).units.find((u) => u.id === id)!.aiming
     expect(aimingOf(shooter.id)).toBe(enemy.id)
-    // Held fire still aims: a battalion laid on a column and not shooting is
-    // the thing worth seeing, so the screen gets the target and draws the rest.
-    shooter.standing = { ...shooter.standing, holdFire: true }
-    expect(aimingOf(shooter.id)).toBe(enemy.id)
     // In march column it has nothing in its sights, because it has no fire.
-    shooter.standing = { ...shooter.standing, holdFire: false }
     shooter.formation = "march-column"
     expect(aimingOf(shooter.id)).toBeNull()
   })
@@ -1631,7 +1662,7 @@ describe("C6 Fighting — the Charge", () => {
 
     it("countercharges on hold ground, which is the brief nobody writes", () => {
       const { mine, battle } = comingOn(CHARGE_RANGE - 20)
-      expect(mine.standing.latitude).toBe("hold-ground")
+      expect(mine.standing).toBe("hold-ground")
       applyInitiative(mine, battle)
       // Preservation is not Latitude: a leash of zero must not mean standing to
       // receive a charge in every battle with no Standing Order written for it.

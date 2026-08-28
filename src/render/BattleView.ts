@@ -678,8 +678,9 @@ export class BattleView {
       }
       // From the centre and not from the Face: the line is under the Unit for
       // the few metres of its own depth, and comes out of the front by itself.
-      const duty = unit.standing.holdFire ? 0.35 : 1
-      this.strokeOpen(g, [unit.position, target.position], duty, mpp * DASH_PX, style)
+      g.moveTo(unit.position.x, unit.position.y)
+      g.lineTo(target.position.x, target.position.y)
+      g.stroke(style)
       g.circle(target.position.x, target.position.y, mpp * 4).stroke(style)
     }
   }

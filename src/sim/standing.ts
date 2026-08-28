@@ -1,8 +1,9 @@
-import type { Latitude, Standing } from "./types"
+import type { Latitude } from "./types"
 
 /**
  * The Standing Order: the brief a Unit carries and consults all afternoon,
- * rather than an Order it carries out once (ADR-0007).
+ * rather than an Order it carries out once (ADR-0007). It is one question —
+ * how far the Unit may act on its own account — so the brief is the rung.
  *
  * Latitude is one rung of an ordered ladder, and every rung above the lowest is
  * spent in metres from the Post — the ground the player last gave the Unit. A
@@ -19,8 +20,8 @@ export const LATITUDES: Latitude[] = ["stand-off", "hold-ground", "close-up", "f
  * put and it shoots what comes into reach, which is exactly what a Unit did
  * before Standing Orders existed.
  */
-export function defaultStanding(): Standing {
-  return { latitude: "hold-ground", holdFire: false }
+export function defaultStanding(): Latitude {
+  return "hold-ground"
 }
 
 /**
@@ -75,10 +76,4 @@ export function explainLatitude(latitude: Latitude): string {
     case "follow-up":
       return `takes up to ${bound}m off its Post from an enemy who has broken, and closes up on one that has not`
   }
-}
-
-/** The whole brief in words, as the Dispatch reads it out on arrival. */
-export function describeStanding(standing: Standing): string {
-  const feet = describeLatitude(standing.latitude)
-  return standing.holdFire ? `${feet}, and hold its fire` : feet
 }

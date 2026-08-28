@@ -323,17 +323,10 @@ export function volleyCasualties(unit: Unit, shot: Aim): number {
  * Formation loads, which is the same whether its feet are moving or not.
  *
  * A Unit reloads whatever it is doing, so a battalion arriving in position with
- * loaded muskets fires the moment it dresses, exactly as it should — including
- * a battalion that has spent the afternoon under orders to hold its fire, which
- * has been standing there loaded the whole time.
+ * loaded muskets fires the moment it dresses, exactly as it should.
  */
 export function resolveFire(battle: Battle, unit: Unit, dt: number, halted: boolean): void {
   unit.reload = Math.max(0, unit.reload - dt)
-  // Told to hold its fire, and it holds it — at fifty metres, at ten, at a
-  // column crossing its front. That is the instruction as the player gave it,
-  // and a range at which the Unit stops obeying would be a rule invented to
-  // distrust him (ADR-0007).
-  if (unit.standing.holdFire) return
   if (!halted && !firesOnTheMove(unit.arm, unit.formation)) return
   if (unit.reload > 0) return
   const shot = aim(battle, unit)

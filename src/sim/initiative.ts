@@ -261,7 +261,7 @@ function nearestEnemy(
  * ordered, because nothing should undo the player's Order on its own account.
  */
 function leashed(unit: Unit, to: Vec2): Vec2 | null {
-  const bound = leash(unit.standing.latitude)
+  const bound = leash(unit.standing)
   const spent = distance(unit.post, unit.position)
   if (spent >= bound) return null
   const reach = distance(unit.post, to)
@@ -277,7 +277,7 @@ function leashed(unit: Unit, to: Vec2): Vec2 | null {
 
 /** True where the Unit's brief lets it take ground rather than only hold it. */
 function mayAdvance(unit: Unit): boolean {
-  return unit.standing.latitude === "close-up" || unit.standing.latitude === "follow-up"
+  return unit.standing === "close-up" || unit.standing === "follow-up"
 }
 
 /**
@@ -424,7 +424,7 @@ export const RULES: InitiativeRule[] = [
     // what makes standing off a decision rather than a free setting.
     name: "gave ground rather than be closed with",
     applies: (unit, battle) => {
-      if (unit.standing.latitude !== "stand-off") return null
+      if (unit.standing !== "stand-off") return null
       if (unit.charging !== null) return null
       // A Formation with no pace gives no ground: guns in battery are standing
       // on their trails and go nowhere at all, so the march this rule returns
@@ -559,7 +559,7 @@ export const RULES: InitiativeRule[] = [
     // is not built.
     name: "followed up as they gave way",
     applies: (unit, battle) => {
-      if (unit.standing.latitude !== "follow-up") return null
+      if (unit.standing !== "follow-up") return null
       if (!unoccupied(unit)) return null
       const enemy = nearestEnemy(unit, battle, ENGAGEMENT_RANGE, isRouting)
       if (!enemy) return null

@@ -32,17 +32,6 @@ export type UnitId = string
  */
 export type Latitude = "stand-off" | "hold-ground" | "close-up" | "follow-up"
 
-/**
- * A Unit's Standing Order: the brief it consults whenever no Order covers the
- * case. Two questions and not one, because the feet and the fire are not rungs
- * of the same ladder — a Unit may be told to close up and to hold its fire.
- */
-export interface Standing {
-  latitude: Latitude
-  /** True while the Unit is not to open fire at all. */
-  holdFire: boolean
-}
-
 /** A Formation change under way. Nothing pops: C3 morphs the slots across it. */
 export interface FormationChange {
   from: FormationName
@@ -74,7 +63,7 @@ export interface Unit {
   /** The Initiative rule currently suspending the Order, by name. */
   suspendedBy: string | null
   /** What the Unit does when no Order covers the case (ADR-0007). */
-  standing: Standing
+  standing: Latitude
   /**
    * The ground the Unit was given: its last Move Order's destination, where it
    * was last halted, or where it was deployed. Latitude is measured from here,
@@ -223,7 +212,6 @@ export interface HaltOrder {
 export interface StandingOrder {
   kind: "standing"
   latitude: Latitude
-  holdFire: boolean
 }
 
 export type OrderBody = MoveOrder | FormOrder | ChargeOrder | HaltOrder | StandingOrder

@@ -589,26 +589,16 @@ export function useBattle() {
    * Deployment because that is the hour a subordinate is briefed in; couriered
    * after, because every other instruction is and a dial that was not would
    * hand back instantaneous army-wide command (ADR-0007).
-   *
-   * Both halves of the brief ride together whichever button was pressed. The
-   * Order carries the whole of it, so a rider who left before the player
-   * changed his mind about the fire cannot arrive and undo the change.
    */
-  function brief(change: { latitude?: Latitude; holdFire?: boolean }): void {
-    const carrying = deployable() ?? commandable()
-    if (!carrying) return
-    const standing = {
-      latitude: change.latitude ?? carrying.standing.latitude,
-      holdFire: change.holdFire ?? carrying.standing.holdFire,
-    }
+  function brief(latitude: Latitude): void {
     if (ui.phase === "deployment") {
       const unit = deployable()
       if (!unit) return
-      unit.standing = standing
+      unit.standing = latitude
       resync()
       return
     }
-    order({ kind: "standing", ...standing })
+    order({ kind: "standing", latitude })
   }
 
   /** The player's own Headquarters, which is where his Orders come from. */

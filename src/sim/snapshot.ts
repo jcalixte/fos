@@ -3,7 +3,7 @@ import { describeFatigue, type FatigueWord } from "./fatigue"
 import { aim } from "./fighting"
 import { describeMorale, type MoraleWord } from "./morale"
 import { ghosts, type Ghost } from "./orders"
-import type { Battle, Contact, FormationName, Standing, Unit, Vec2, Volley } from "./types"
+import type { Battle, Contact, FormationName, Latitude, Unit, Vec2, Volley } from "./types"
 
 /**
  * What the renderer is allowed to see. The simulation runs at 10Hz and the
@@ -26,8 +26,8 @@ export interface UnitSnapshot {
   changeProgress: number
   suspendedBy: string | null
   hasOrder: boolean
-  /** The brief it is carrying: how much Latitude it has, and its fire. */
-  standing: Standing
+  /** The brief it is carrying: how much Latitude it has. */
+  standing: Latitude
   /** True while it is walking somewhere on its own account, not under Orders. */
   shifting: boolean
   /**
@@ -50,10 +50,6 @@ export interface UnitSnapshot {
    * choice and not the renderer's guess at one: a Unit shoots the nearest enemy
    * standing in its beaten ground, which is rarely the one the player has in
    * mind, and there is no reading that off a Footprint and a Face by eye.
-   *
-   * Set whenever the Unit has a target, including one it has been told to hold
-   * its fire on — being laid on a column and not shooting is the case most worth
-   * seeing, so the screen is given it and draws the difference.
    */
   aiming: string | null
   /** True once that Charge has been thrown back and is running back out. */
@@ -107,7 +103,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
         : 0,
       suspendedBy: unit.suspendedBy,
       hasOrder: unit.order !== null,
-      standing: { ...unit.standing },
+      standing: unit.standing,
       shifting: unit.shift !== null,
       morale: describeMorale(unit),
       fatigue: describeFatigue(unit),
