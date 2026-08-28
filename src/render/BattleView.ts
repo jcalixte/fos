@@ -440,6 +440,7 @@ export class BattleView {
     this.collectClashes(current)
     this.drawOverlay(view)
     this.drawFireZones(units, view)
+    this.drawAimLines(units, view)
     this.drawGhosts(current, view)
     this.drawUnits(units, view)
     this.drawEffects(previous, current, alpha, units, view)
@@ -643,6 +644,43 @@ export class BattleView {
         const out = side % 2 === 0 ? zone.depth : zone.width
         this.fillBand(g, unit.position, facing, across, out / 2, zone.range, colour, alpha, line)
       }
+    }
+  }
+
+  /**
+   * What each Unit has in its sights, as a line onto it. The beaten ground says
+   * how far a Unit's fire reaches; this says which of the enemies standing in it
+   * the next Volley will actually find — the nearest, which is often not the one
+   * the player had in mind, and which cannot be read off a Face and a Footprint
+   * by eye once three Units are jostling in front of a battalion.
+   *
+   * Broken where the Unit has been told to hold its fire, because that is the
+   * case worth seeing at a glance: a battalion laid on a column crossing its
+   * front and, on the player's own instruction, not shooting.
+   *
+   * Ridden on the beaten-ground toggle rather than given a switch of its own.
+   * They answer one question between them and separating them would mean a
+   * player could ask where the fire goes while hiding how far it carries.
+   */
+  private drawAimLines(units: UnitSnapshot[], view: ViewState): void {
+    const g = this.fireLayer
+    const mpp = this.metresPerPixel()
+    for (const unit of units) {
+      if (!view.fireZones && unit.id !== view.selected) continue
+      if (!unit.aiming) continue
+      const target = units.find((u) => u.id === unit.aiming)
+      if (!target) continue
+      const selected = unit.id === view.selected
+      const style = {
+        width: mpp * (selected ? 2 : 1.2),
+        color: view.armyColours[unit.army] ?? 0xffffff,
+        alpha: selected ? 0.85 : 0.4,
+      }
+      // From the centre and not from the Face: the line is under the Unit for
+      // the few metres of its own depth, and comes out of the front by itself.
+      const duty = unit.standing.holdFire ? 0.35 : 1
+      this.strokeOpen(g, [unit.position, target.position], duty, mpp * DASH_PX, style)
+      g.circle(target.position.x, target.position.y, mpp * 4).stroke(style)
     }
   }
 

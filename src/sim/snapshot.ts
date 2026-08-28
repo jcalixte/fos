@@ -1,5 +1,6 @@
 import { unitSpeed } from "./battle"
 import { describeFatigue, type FatigueWord } from "./fatigue"
+import { aim } from "./fighting"
 import { describeMorale, type MoraleWord } from "./morale"
 import { ghosts, type Ghost } from "./orders"
 import type { Battle, Contact, FormationName, Standing, Unit, Vec2, Volley } from "./types"
@@ -44,6 +45,17 @@ export interface UnitSnapshot {
   routing: boolean
   /** The Unit it is committed to a Charge on, by id, or null. */
   charging: string | null
+  /**
+   * The Unit its next Volley would fall on, by id, or null. The Volley's own
+   * choice and not the renderer's guess at one: a Unit shoots the nearest enemy
+   * standing in its beaten ground, which is rarely the one the player has in
+   * mind, and there is no reading that off a Footprint and a Face by eye.
+   *
+   * Set whenever the Unit has a target, including one it has been told to hold
+   * its fire on — being laid on a column and not shooting is the case most worth
+   * seeing, so the screen is given it and draws the difference.
+   */
+  aiming: string | null
   /** True once that Charge has been thrown back and is running back out. */
   recoiling: boolean
   /**
@@ -101,6 +113,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       fatigue: describeFatigue(unit),
       routing: unit.routing !== null,
       charging: unit.charging?.targetId ?? null,
+      aiming: aim(battle, unit)?.target.id ?? null,
       recoiling: unit.charging?.recoiling ?? false,
       speed: unitSpeed(battle, unit),
     })),

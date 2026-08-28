@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { concede, isOver, STEP, step, unitSpeed } from "./battle"
 import { blankField, takeCommand } from "./scenario"
+import { snapshot } from "./snapshot"
 import { cellIndex } from "./field"
 import {
   baseSpeed,
@@ -1099,6 +1100,20 @@ describe("C6 Fighting", () => {
     // is the opposite of what a battalion sends its skirmishers out for.
     expect(shot("open-order")).toBeLessThan(line * 0.7)
     expect(shot("open-order")).toBeLessThan(shot("square"))
+  })
+
+  it("tells the screen what it is aiming at, holding its fire or not", () => {
+    const { battle, shooter, enemy } = facingOff(60)
+    const aimingOf = (id: string) => snapshot(battle).units.find((u) => u.id === id)!.aiming
+    expect(aimingOf(shooter.id)).toBe(enemy.id)
+    // Held fire still aims: a battalion laid on a column and not shooting is
+    // the thing worth seeing, so the screen gets the target and draws the rest.
+    shooter.standing = { ...shooter.standing, holdFire: true }
+    expect(aimingOf(shooter.id)).toBe(enemy.id)
+    // In march column it has nothing in its sights, because it has no fire.
+    shooter.standing = { ...shooter.standing, holdFire: false }
+    shooter.formation = "march-column"
+    expect(aimingOf(shooter.id)).toBeNull()
   })
 
   it("holds its fire until it has reloaded", () => {

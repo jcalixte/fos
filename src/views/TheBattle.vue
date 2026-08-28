@@ -141,8 +141,8 @@ onBeforeUnmount(() => {
             :class="ui.fireZones ? 'btn-primary' : 'btn-ghost'"
             :title="
               ui.fireZones
-                ? 'showing beaten ground for every Unit'
-                : 'showing beaten ground for the selected Unit only'
+                ? 'showing beaten ground and what every Unit has in its sights'
+                : 'showing beaten ground and its target for the selected Unit only'
             "
             @click="battle.toggleFireZones()"
           >
