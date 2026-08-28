@@ -34,6 +34,14 @@ export function buildTerrainCanvas(field: Field): HTMLCanvasElement {
   if (!context) throw new Error("no 2d context to draw the Field on")
   const image = context.createImageData(canvas.width, canvas.height)
 
+  // Against the Field's own highest ground, not a constant: the same lift over
+  // ninety metres reads as a hint on rolling ground and as a white plateau on a
+  // Field with two hundred metres of relief on it. What it is for is telling
+  // high ground from low on *this* Field, so this Field is what it is measured
+  // against.
+  let ceiling = 1
+  for (const metres of field.elevation) if (metres > ceiling) ceiling = metres
+
   for (let cy = 0; cy < field.height; cy++) {
     for (let cx = 0; cx < field.width; cx++) {
       const index = cy * field.width + cx
@@ -43,7 +51,7 @@ export function buildTerrainCanvas(field: Field): HTMLCanvasElement {
       const lit = 1 - shade(field, cx, cy) * 0.42
       // Height alone lifts the high ground a little, so a ridge reads as high
       // even where it is flat on top.
-      const lift = 1 + (field.elevation[index] / 90) * 0.16
+      const lift = 1 + (field.elevation[index] / ceiling) * 0.16
       const crossing = field.crossing[index] === 1
       for (let sy = 0; sy < OVERSAMPLE; sy++) {
         for (let sx = 0; sx < OVERSAMPLE; sx++) {
