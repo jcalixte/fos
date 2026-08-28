@@ -10,6 +10,7 @@ import {
   poseFootprint,
 } from "@/sim/formation"
 import { chargeable } from "@/sim/charge"
+import { HARRIED_RANGE } from "@/sim/headquarters"
 import { moraleRung } from "@/sim/morale"
 import type { Arm, Battle, Field, FormationName, Grade, HeldGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
@@ -1198,6 +1199,16 @@ export class BattleView {
       g.moveTo(x, y).lineTo(to.x, to.y).stroke({ width: mpp, color: colour, alpha: 0.45 })
       g.circle(to.x, to.y, r * 1.4).stroke({ width: mpp * 1.5, color: colour, alpha: 0.7 })
     }
+    // The ring an enemy has to cross before every Order starts waiting at the
+    // table. Faint while nothing has crossed it, because it is a distance to
+    // judge against and not a thing to watch. It is only the near half of the
+    // rule — fire harries a staff from as far off as it carries — so the ring
+    // is the walk-up-to-the-tables way in, and the beaten ground says the rest.
+    g.circle(x, y, HARRIED_RANGE).stroke({
+      width: mpp * (hq.harried ? 1.5 : 1),
+      color: colour,
+      alpha: hq.harried ? 0.4 : 0.18,
+    })
     g.poly([x, y - r * 1.6, x + r, y + r, x - r, y + r]).fill({ color: colour, alpha: 0.95 })
     g.circle(x, y, r * 2.2).stroke({ width: mpp, color: colour, alpha: hq.harried ? 0.8 : 0.4 })
     // A second ring, and only while it is harried: one ring changing colour is
