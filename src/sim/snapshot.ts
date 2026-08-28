@@ -2,7 +2,7 @@ import { unitSpeed } from "./battle"
 import { describeFatigue, type FatigueWord } from "./fatigue"
 import { aim } from "./fighting"
 import { describeMorale, type MoraleWord } from "./morale"
-import { ghosts, type Ghost } from "./orders"
+import { briefsInFlight, ghosts, type Ghost } from "./orders"
 import type { Battle, Contact, FormationName, Latitude, Unit, Vec2, Volley } from "./types"
 
 /**
@@ -28,6 +28,13 @@ export interface UnitSnapshot {
   hasOrder: boolean
   /** The brief it is carrying: how much Latitude it has. */
   standing: Latitude
+  /**
+   * The brief on its way to it, where the player has said one and no rider has
+   * handed it over yet — null when nothing is coming. A Standing Order changes
+   * nothing the Unit is doing, so this is the only way the screen can show that
+   * one was taken at all while it is still on the road.
+   */
+  briefedTo: Latitude | null
   /** True while it is walking somewhere on its own account, not under Orders. */
   shifting: boolean
   /**
@@ -83,6 +90,7 @@ export interface BattleSnapshot {
 }
 
 export function snapshot(battle: Battle): BattleSnapshot {
+  const briefs = briefsInFlight(battle)
   return {
     time: battle.time,
     units: battle.units.map((unit) => ({
@@ -104,6 +112,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       suspendedBy: unit.suspendedBy,
       hasOrder: unit.order !== null,
       standing: unit.standing,
+      briefedTo: briefs.get(unit.id) ?? null,
       shifting: unit.shift !== null,
       morale: describeMorale(unit),
       fatigue: describeFatigue(unit),

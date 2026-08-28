@@ -122,6 +122,30 @@ function formTip(option: FormationName): string {
   }
   return `${what}\n\npress to form it, and to arrive in it wherever it is sent next`
 }
+
+/**
+ * Read exactly as the Formation buttons are, and for the same reason: filled is
+ * the brief the Unit is carrying, outlined the brief a rider is carrying to it.
+ * A Standing Order changes nothing on the Field when it is given and nothing on
+ * the Field when it arrives, so without this the player presses a button and
+ * the screen answers him a minute later — or, if the rider never gets there,
+ * never. The dash on the filled rung says the brief he can see is on its way out.
+ */
+function rungClass(option: Latitude): string {
+  const carried = props.unit.standing === option
+  const asked = props.unit.briefedTo === option
+  if (carried && (asked || props.unit.briefedTo === null)) return "btn-primary"
+  if (carried) return "btn-primary btn-dash"
+  if (asked) return "btn-primary btn-outline"
+  return "btn-ghost"
+}
+
+/** What the rung permits, and then what it is doing on the road, if it is. */
+function rungTip(option: Latitude): string {
+  const what = explain(option)
+  if (props.unit.briefedTo !== option || props.unit.standing === option) return what
+  return `${what}\n\nalready asked for — it holds this the moment the Order reaches it`
+}
 </script>
 
 <template>
@@ -258,11 +282,11 @@ function formTip(option: FormationName): string {
 
         <div class="flex items-center gap-2">
           <span class="text-xs tracking-wide text-base-content/50 uppercase">Standing</span>
-          <HelpTip v-for="option in rungs" :key="`rung-${option}`" :tip="explain(option)">
+          <HelpTip v-for="option in rungs" :key="`rung-${option}`" :tip="rungTip(option)">
             <button
               type="button"
               class="btn btn-xs"
-              :class="unit.standing === option ? 'btn-primary' : 'btn-ghost'"
+              :class="rungClass(option)"
               :disabled="deaf"
               @click="emit('latitude', option)"
             >

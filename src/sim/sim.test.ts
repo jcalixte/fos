@@ -864,6 +864,21 @@ describe("C2 Initiative — the Standing Order", () => {
     expect(unit.order?.order.body.kind).toBe("move")
   })
 
+  it("shows a new brief on the road, so the screen can say it was taken", () => {
+    const { unit, battle } = facing(2000)
+    issueOrder(battle, unit.id, { kind: "standing", latitude: "close-up" }, { x: 100, y: 300 })
+    // Nothing about the Unit has changed and nothing will until the rider gets
+    // there, so what the player pressed has to be readable off the brief in
+    // flight or it is readable nowhere at all.
+    const riding = snapshot(battle).units.find((u) => u.id === unit.id)!
+    expect(riding.standing).toBe(defaultStanding())
+    expect(riding.briefedTo).toBe("close-up")
+    for (let i = 0; i < 600 && battle.couriers.length > 0; i++) step(battle)
+    const held = snapshot(battle).units.find((u) => u.id === unit.id)!
+    expect(held.standing).toBe("close-up")
+    expect(held.briefedTo).toBeNull()
+  })
+
   it("posts a Unit where its Move Order sent it, so the leash is spent from there", () => {
     const { unit, battle } = facing(2000, {
       standing: "close-up",

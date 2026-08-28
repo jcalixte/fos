@@ -2,6 +2,7 @@ import {
   describeFormation,
   type Battle,
   type Courier,
+  type Latitude,
   type Order,
   type OrderBody,
   type Unit,
@@ -241,6 +242,32 @@ function ghostOf(battle: Battle, unit: Unit, body: OrderBody): Ghost | null {
     }
   }
   return null
+}
+
+/**
+ * The brief each Unit is about to be under, where the player has said one and
+ * the Unit has not heard it yet. A Standing Order names no ground, so it has no
+ * Ghost to stand on the Field — the button it was pressed on is the only place
+ * the player can be shown that it was taken, and this is what tells the button.
+ *
+ * Last said wins, because last said is last delivered: the riders go at one
+ * speed, so the brief written later hands over later and overwrites the other.
+ * What was dictated in the saddle is later still than anything on the road,
+ * since nothing leaves a riding Headquarters at all (ADR-0008).
+ */
+export function briefsInFlight(battle: Battle): Map<UnitId, Latitude> {
+  const out = new Map<UnitId, Latitude>()
+  const said = [...battle.couriers].sort((a, b) => a.order.issuedAt - b.order.issuedAt)
+  for (const courier of said) {
+    const body = courier.order.body
+    if (body.kind === "standing") out.set(courier.order.unitId, body.latitude)
+  }
+  for (const army of battle.armies) {
+    for (const entry of army.headquarters?.dictated ?? []) {
+      if (entry.body.kind === "standing") out.set(entry.unitId, entry.body.latitude)
+    }
+  }
+  return out
 }
 
 export function ghosts(battle: Battle): Ghost[] {
