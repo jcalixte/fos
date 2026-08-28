@@ -96,3 +96,15 @@ no rule of its own.
 
 **It is now possible to be out of command at the worst possible moment, by choice.** Ordering the
 ride during a crisis is a bad idea, and nothing stops the player. That is the decision.
+
+**Amended: what is said in the saddle is dictated, and goes when the staff is established.** The
+blackout was silence in both directions — nothing left the Headquarters, and nothing could even be
+said. The first half is the rule; the second was only its interface, and a bad one: a press that
+does nothing, and a player who has to sit out the ride and then remember what he wanted. So an
+Order given while the staff is riding is now taken down by an aide and issued from the ground the
+staff settles on, paying whatever the table costs *there* rather than what it cost when he said it.
+The ride is exactly as long and exactly as silent — nothing on the road is a second earlier — and
+what the blackout costs is now staleness rather than muteness: the Order was decided against a
+Field a hundred seconds younger than the one it lands on. One Unit holds one dictated Order, the
+last one said, because they all leave the table in the same instant and two for the same Unit would
+arrive in no fixed order.

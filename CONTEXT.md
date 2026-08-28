@@ -147,9 +147,18 @@ _Avoid_: fog of war, stealth, hidden, invisible
 **Headquarters**:
 The player's own position on the Field. Orders are couriered from it, so it is what makes
 distance cost time; it is also an eye, and it can be shot at. Sited at Deployment and sent to new
-ground by hand after, at a staff's pace — and while it is riding, no Order can leave it at all
+ground by hand after, at a staff's pace — and while it is riding, no Order can leave it at all,
+though what is said then is a **Dictated Order** and goes the moment it is established
 ([ADR-0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)).
 _Avoid_: HQ (in prose), base, command post, general
+
+**Dictated Order**:
+An **Order** the commander gave while his **Headquarters** was riding. It has no **Courier** under
+it and is nowhere on the **Field** — a line in an aide's notebook — and becomes an Order with a
+rider the moment the staff is established, from the ground it settled on and at whatever that table
+costs. One **Unit** holds one: a second replaces the first. The blackout is unchanged by it; what
+it costs is that the Order was decided against a Field older than the one it lands on.
+_Avoid_: queued order, pending order, buffer, backlog, batched
 
 **Harried**:
 The state of a **Headquarters** the enemy is shooting at, or standing within musket shot of: every
@@ -341,8 +350,9 @@ _Avoid_: game speed, time scale, simulation speed
 - An **Order**'s delay is the ride a **Courier** makes from the **Headquarters** to the **Unit**,
   plus whatever the **Headquarters** makes him wait before he sets off
 - A **Headquarters** may be sent to new ground while the battle runs, and no **Courier** leaves it
-  while it is riding; **Harried** costs every **Order** the same wait, and being **Overrun** costs
-  it for good
+  while it is riding — what is ordered then is a **Dictated Order**, and rides once it is
+  established; **Harried** costs every **Order** the same wait, and being **Overrun** costs it for
+  good
 - Every **Order** in flight is a **Courier** visibly on the **Field**, and a **Ghost** where it leads
 - An **Order** given to several **Units** at once sends a **Courier** to each, so they arrive apart
 - An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**, or a
