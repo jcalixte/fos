@@ -45,6 +45,12 @@ const busy = computed(() => props.unit.changingTo !== null)
 const deaf = computed(() => props.unit.routing || props.disabled)
 /** Guns do not charge, and neither does a Unit already committed to one. */
 const mounted = computed(() => canCharge(props.unit.arm) && !props.unit.charging)
+/**
+ * Blown: it will not be let go at anybody until it has its wind back. Offered
+ * and disabled rather than hidden, because the reason is the point — a charge
+ * button that quietly vanished would read as the app losing the Unit.
+ */
+const blown = computed(() => props.unit.fatigue === "blown")
 
 /**
  * Halting, pointing and charging are all Orders, and there are no Orders at
@@ -137,13 +143,20 @@ function formTip(option: FormationName): string {
             <!-- Morale in words. T11 gave up the bar the player could count
                  down on purpose; how a battalion is holding up is the reading. -->
             <span :class="unit.morale === 'steady' ? '' : 'text-warning'">{{ unit.morale }}</span>
+            <!-- Fatigue in words beside Morale, and silent while the Unit is
+                 fresh: the two are spent apart and read apart, and a battalion
+                 with its wind still in it has nothing to say here. -->
+            <template v-if="unit.fatigue !== 'fresh'">
+              ·
+              <span :class="blown ? 'text-error' : 'text-warning'">{{ unit.fatigue }}</span>
+            </template>
           </p>
         </div>
 
         <p class="min-w-52 text-xs">
           <span v-if="unit.routing" class="text-error">routing — out of command</span>
           <span v-else-if="unit.recoiling" class="text-warning">
-            thrown back from {{ chargingName ?? "it" }}, and blown
+            thrown back from {{ chargingName ?? "it" }}, and running clear
           </span>
           <span v-else-if="unit.charging" class="text-error">
             gone at {{ chargingName ?? "the enemy" }}
@@ -220,13 +233,19 @@ function formTip(option: FormationName): string {
           </HelpTip>
           <HelpTip
             v-if="mounted"
-            :tip="arming ? 'now press the Unit to go at' : 'aim a Charge at a Unit'"
+            :tip="
+              blown
+                ? 'blown — it will not go at anybody until it has its wind back'
+                : arming
+                  ? 'now press the Unit to go at'
+                  : 'aim a Charge at a Unit'
+            "
           >
             <button
               type="button"
               class="btn btn-xs"
               :class="arming ? 'btn-error' : 'btn-ghost'"
-              :disabled="deaf"
+              :disabled="deaf || blown"
               @click="emit('charge')"
             >
               {{ arming ? "pick a target" : "charge" }}

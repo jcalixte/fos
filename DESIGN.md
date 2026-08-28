@@ -606,7 +606,7 @@ player already knows what a square is for.
 - **G3** period tactics win  _W:9_
   - **F8** Effects from geometry, not constants — **How**: Frontage, depth and Face derived from Strength, ranks and spacing; a column is butchered by roundshot because it *is* deep, and a square resists cavalry because it *has* no flank → C3, C6
   - **F9** Discrete events on historical clocks — **How**: Volley on a reload clock, Charge as a resolved sequence, Contact decided in seconds → C6, C8
-  - **F10** Morale decides, not Strength — **How**: casualties are one input to Morale; Break, Rout, Rally and a falling Morale Ceiling do the rest → C7
+  - **F10** Morale decides, not Strength — **How**: casualties are one input to Morale and Fatigue is the other, bought by the pace a Unit is asked for rather than by anything done to it (ADR-0010); Break, Rout, Rally and a falling Morale Ceiling do the rest → C7
 - **G4** a battle has shape  _W:8_
   - **F11** End on the clock, Army Break under it — **How**: a Scenario clock, then Key Ground counted and condition where it is even; and a floor at every Unit of an army Broken (ADR-0006) → C7, C8
   - **F20** Arrival — **How**: Roster entries that enter at a named point or Field edge on clock time or trigger → C8, C14, C5
@@ -867,6 +867,7 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
 | T16 | A Latitude ladder leashed to the Post, over Initiative that never advances | a Unit answers what it can see without a ninety-second Courier ride for a hundred metres of ground; the brief scales with the Field where the Courier does not | the rule list now reads differently on different Units, so a Dispatch's cause has two halves; a rung can be set and forgotten, and hold fire will be | [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
 | T18 | Three map reads on a 2.6px bar, over a panel the player has to open | Arm, Grade and Morale are readable without selecting anything, so G2 covers a Unit and not only its Formation; Morale is on the map at all, where before it appeared only once a Unit had already Broken | every channel a Unit has is now spoken for, so a fourth read has nowhere to go but a glyph; all three are learned rather than labelled, and nothing on screen teaches them | — |
 | T17 | A Headquarters that can be harried and ridden over, against one that can be captured | *where do I stand* becomes a decision the player makes all afternoon; ADR-0002's other half — it can be shot at — is finally built, and off the beaten ground C6 already draws | a flat surcharge compresses the distance gradient F1 rests on, worst for the Orders with the shortest way to go; the enemy pays nothing for any of it until its own Orders are couriered | [0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md) |
+| T20 | Fatigue bought by the pace, over a cost per action | one law covers a flank march, a Rout, a gallop and a battery limbering up, so Pursuit costs what running costs without a rule of its own; Formation reaches Fatigue through its speed and never through a table, so F8 survives the easiest place to break it | a Formation that is slow because it is hard to hold together — a line over broken ground — reads as restful; nothing is saved, so it is an afternoon's arithmetic and cannot carry into a campaign | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
 
 ### Tensions being watched (unresolved by design)
@@ -883,6 +884,7 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   earning its place on speed and on being a poor target rather than on carrying positions.
   **Trigger:** a Castiglione where the column is never the right way to attack.
 - **Command friction is the player's alone.** A Headquarters that is harried or ridden over costs the enemy nothing, because the Plan applies its Orders where they land instead of couriering them — so the whole of ADR-0008 is a rule only one army obeys, drawn only for the army that obeys it. **Trigger:** the first enemy commanded through Couriers rather than through an authored Plan, at which point the rule is already written and the enemy Headquarters wants drawing.
+- **Fatigue against a thirty-minute clock.** Bought by the pace, so infantry at 0.8–1.4 m/s tires slowly by design and cavalry at the gallop tires fast. **Trigger:** a Castiglione where no Unit is ever winded, in which case the rule is decoration for two Arms out of three — or one where a battalion is blown before the first Volley, which is an afternoon spent watching men who cannot fight.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
@@ -979,10 +981,15 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   and the Rout is declared a tick later by the Initiative rule that gets to name the reason. So the
   Contact reports the outcome and never delivers it, which keeps every Rout attributable to C7.
 
-- **A Charge had to stop being free somewhere, and Fatigue is not built.** Without a limit a
-  regiment could gallop the length of the Field for nothing. CHARGE_RANGE stands in: only the last
-  hundred and fifty metres are run, so closing the ground first is a Move Order and a Courier ride,
-  and the Charge itself is the last twenty seconds. Fatigue replaces it rather than joins it.
+- **A Charge had to stop being free somewhere, and CHARGE_RANGE was written as standing in for
+  Fatigue.** Only the last hundred and fifty metres are run, so closing the ground first is a Move
+  Order and a Courier ride, and the Charge itself is the last twenty seconds. This entry used to
+  end *Fatigue replaces it rather than joins it*, and that was wrong twice over. The seam is not a
+  tax standing in for Fatigue — it is Fatigue as the period practised it, which is why horse walked
+  up and galloped home; and dread is charged per second of a Charge coming on, so running the whole
+  way would hand the target eighty-six seconds of it against twenty-one and break a fresh battalion
+  by fear before anybody reached it. Fatigue joins it, and prices the rest of the afternoon that the
+  seam never reached (ADR-0010).
 
 - **Army Break was written as a tally and is a moment.** "Enough of an army's Units have Broken"
   reads as a running total, and a total never comes back down: a commander who got two battalions

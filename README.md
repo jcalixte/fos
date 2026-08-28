@@ -79,7 +79,22 @@ captured and the army is never silenced, because an army that cannot be ordered 
 battle the player still has to sit through
 ([ADR-0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)).
 
-Not built yet: Fatigue, Disorder, Pursuit, Concealment, Powder Smoke, sound.
+Fatigue, which is the ground still on a Unit after it has arrived. It is bought by the pace and by
+nothing else — the cube of what a Unit is asking of its men against what its Arm marches at — so a
+flank march, a Rout and a gallop are one piece of arithmetic asked three times, and a Formation
+reaches it only through how fast that Formation walks: a column pays a line three times over the
+same ground, and a square standing still pays nothing. A marsh is paid for in work rather than
+refunded in it. What it costs is a third of the pace, a third of the fire and a quarter of the
+steadiness Grade buys — and above blown it denies a Charge outright, which is the one thing it
+forbids rather than merely making worse: the Order dies at the Unit with a Dispatch saying why, and
+cavalry with nothing left in it stands to receive a charge it would have met coming on. Blown is a
+state with two marks rather than a line to sit astride of — four minutes standing buys the charge
+back, the way a Unit that Broke stays running until it can Rally. Twenty
+minutes standing gets it back, which is most of the clock, so a reserve is now a thing rather than a
+Unit that happens not to have been used
+([ADR-0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)).
+
+Not built yet: Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
 ## Layout
 

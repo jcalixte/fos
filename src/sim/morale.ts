@@ -1,4 +1,5 @@
 import { cellAt, cellIndex, inBounds, passable } from "./field"
+import { fireLeft, nerveLeft } from "./fatigue"
 import { TRAVELLING_FORMATION } from "./formation"
 import type { Arm, Army, ArmyId, Battle, Grade, Unit, Vec2 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
@@ -21,9 +22,13 @@ import { angleDelta, bearing, distance } from "./vec"
  * has nothing left in hand, exactly as a Unit is beaten when its Morale gives
  * out, and neither is ever beaten by being counted down to nothing.
  *
- * Not built yet: Fatigue, Disorder and Pursuit. A Rout stands in for Disorder in
- * the meantime by putting the Unit in its travelling Formation, which is
- * legible and wrong in the Unit's favour.
+ * Fatigue is C7's too and lives beside this in `fatigue.ts`, the way the Charge
+ * lives beside the Volley: it is bought by the pace rather than by anything
+ * done to the Unit, and everything in here that Grade steadies, it unsteadies.
+ *
+ * Not built yet: Disorder and Pursuit. A Rout stands in for Disorder in the
+ * meantime by putting the Unit in its travelling Formation, which is legible
+ * and wrong in the Unit's favour.
  */
 
 /** Morale, and the Ceiling on it, that a Unit starts a battle with. */
@@ -39,6 +44,17 @@ const SHOCK = 5.6
 
 /** How much of that a Grade shrugs off. This is what Grade means under fire. */
 const STEADINESS: Record<Grade, number> = { conscript: 0.75, line: 1, elite: 1.2 }
+
+/**
+ * What a Unit shrugs off, all told: its Grade, less what it has spent its legs
+ * on. Grade is the ladder and Fatigue is the sag in it — an elite battalion
+ * that has been marched off its feet is steadier than a conscript one and less
+ * steady than it was at noon, which is CONTEXT's *sooner if it's tired* and the
+ * whole of it.
+ */
+function steadiness(unit: Unit): number {
+  return STEADINESS[unit.grade] * nerveLeft(unit)
+}
 
 /**
  * What being shot at from the wrong side costs on top. A deliberate rule and
@@ -150,13 +166,15 @@ export function moraleRung(word: MoraleWord): number {
 }
 
 /**
- * How much of its fire a Unit still has. This is the whole route by which Grade
- * reaches lethality: a steady battalion fires as it was drilled to, a shaken one
- * fires high and ragged, and Grade decides which it is — never a multiplier on
- * the Volley itself.
+ * How much of its fire a Unit still has, in its nerve and in its arms. This is
+ * the whole route by which Grade reaches lethality: a steady battalion fires as
+ * it was drilled to, a shaken one fires high and ragged, and Grade decides which
+ * it is — never a multiplier on the Volley itself. Fatigue is folded in at the
+ * same point and for the same reason: a blown battalion is slow with the
+ * cartridge and heavy with the musket, and neither is a fact about the Volley.
  */
 export function fireEffect(unit: Unit): number {
-  return 0.4 + 0.6 * clamp(unit.morale, 0, 1)
+  return (0.4 + 0.6 * clamp(unit.morale, 0, 1)) * fireLeft(unit)
 }
 
 /** How much worse the shock is for coming from off the Face. */
@@ -174,7 +192,7 @@ function flanking(unit: Unit, from: Vec2): number {
 export function shake(unit: Unit, casualties: number, from: Vec2): void {
   if (casualties <= 0) return
   const share = casualties / Math.max(1, unit.strength + casualties)
-  unit.morale -= (share * SHOCK * flanking(unit, from)) / STEADINESS[unit.grade]
+  unit.morale -= (share * SHOCK * flanking(unit, from)) / steadiness(unit)
 }
 
 /**
@@ -186,7 +204,7 @@ export function shake(unit: Unit, casualties: number, from: Vec2): void {
 export function dread(unit: Unit, charger: Unit, exposed: boolean, dt: number): void {
   if (isRouting(unit)) return
   const rate = DREAD[charger.arm] * (exposed ? DREAD_EXPOSED : 1)
-  unit.morale -= (rate * dt) / STEADINESS[unit.grade]
+  unit.morale -= (rate * dt) / steadiness(unit)
 }
 
 /** Morale creeping back toward the Ceiling, hastened by its own Headquarters. */
@@ -378,10 +396,11 @@ function standing(battle: Battle, army: ArmyId): number {
  *
  * It reads what is happening now rather than keeping a tally, so a Unit that
  * Rallies comes back off it and the share can fall as well as rise. That is
- * deliberate, and it is asked in three places: the Return reports it as what
- * the army spent, a clock that ran out with the Key Ground even is settled on
- * it, and at 1 it is the end condition. A commander who gets two battalions
- * back in hand has bought the time he paid for, and it shows in all three.
+ * deliberate, and it is asked in three places: the Return reports it as how far
+ * the army went toward breaking, a clock that ran out with the Key Ground even
+ * is settled on it, and at 1 it is the end condition. A commander who gets two
+ * battalions back in hand has bought the time he paid for, and it shows in all
+ * three.
  */
 export function shareGone(battle: Battle, army: Army): number {
   if (army.weight <= 0) return 0

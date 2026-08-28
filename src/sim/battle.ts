@@ -25,6 +25,7 @@ import {
   resolveContact,
   struckSide,
 } from "./charge"
+import { isBlown, paceLeft, weary } from "./fatigue"
 import { resolveFire } from "./fighting"
 import { advanceHeadquarters } from "./headquarters"
 import { applyInitiative } from "./initiative"
@@ -76,10 +77,32 @@ export function unitSpeed(battle: Battle, unit: Unit): number {
   return paceOf(battle, unit, baseSpeed(unit.arm, unit.formation))
 }
 
-/** What `base` metres a second comes to over the ground under the Unit. */
+/**
+ * What `base` metres a second comes to over the ground under the Unit, and out
+ * of what the Unit has left to walk it with. The one funnel both the march and
+ * the run go through, which is why Fatigue is applied here and nowhere else —
+ * every pace in the simulation is this number, including the one the card reads
+ * and the one a wheel is timed off.
+ */
 function paceOf(battle: Battle, unit: Unit, base: number): number {
+  return (base * paceLeft(unit)) / groundUnder(battle, unit)
+}
+
+/** What the Ground under a Unit's Footprint divides its pace by. */
+function groundUnder(battle: Battle, unit: Unit): number {
   const shape = unitFootprint(unit)
-  return base / groundDivisor(battle.field, unit.position, shape.width, shape.depth, unit.facing)
+  return groundDivisor(battle.field, unit.position, shape.width, shape.depth, unit.facing)
+}
+
+/**
+ * The pace a Unit asked of its men this step, in metres a second: the ground it
+ * gained, with the ground's own cut handed back. A battalion wading a marsh is
+ * putting in a line's work for a third of the distance and pays a line's price
+ * for it, and one that stood still asked nothing at all and gets its wind back.
+ */
+function askedOf(battle: Battle, unit: Unit, covered: number): number {
+  if (covered <= 0) return 0
+  return (covered / STEP) * groundUnder(battle, unit)
 }
 
 /**
@@ -210,6 +233,14 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     endCharge(battle, unit, `${unit.name} has nothing left to charge`)
     return
   }
+  // A blown regiment will not go, and the Order stops here rather than walking
+  // it up to be ridden down. `beginCharge` gives the rule list the same answer;
+  // this is the player's Order getting it, since an Order does not go through
+  // the rule list to be let go.
+  if (!unit.charging && isBlown(unit)) {
+    endCharge(battle, unit, `${unit.name} is blown, and would not go at ${target.name}`)
+    return
+  }
   unit.charging ??= { targetId: target.id, launchedAt: battle.time, recoiling: false }
   const charge = unit.charging
 
@@ -224,7 +255,7 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
 
   if (charge.recoiling) {
     if (gap >= RECOIL_DISTANCE) {
-      endCharge(battle, unit, `${unit.name} is clear of ${target.name}, and blown`)
+      endCharge(battle, unit, `${unit.name} is clear of ${target.name}, and pulling up`)
       return
     }
     runOn(battle, unit, bearing(target.position, unit.position), chargeSpeed(unit.arm), dt, true)
@@ -456,11 +487,15 @@ export function step(battle: Battle): void {
   for (const unit of battle.units) {
     applyInitiative(unit, battle)
     advanceFormationChange(battle, unit, STEP)
+    // Where it stood before anything moved it, which two different questions
+    // are asked of: whether it was halted, and so may fire, and how hard it was
+    // working, and so what it costs. A Rout is asked the second and not the
+    // first — a mob fires at nothing, and it is running.
+    const was = unit.position
     if (isRouting(unit)) {
       // A Rout obeys nothing and fires at nothing. It runs.
       advanceRout(battle, unit, STEP)
     } else {
-      const was = unit.position
       if (unit.suspendedBy === null) advanceOrder(battle, unit, STEP)
       // Suspended, and running anyway: a countercharge holds the Order back and
       // commits the Unit, so the Charge state is what carries it from here.
@@ -473,6 +508,7 @@ export function step(battle: Battle): void {
       // the step — and whether it marched at all is what says if it shot.
       resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)
     }
+    weary(battle, unit, askedOf(battle, unit, distance(was, unit.position)), STEP)
     recover(battle, unit, STEP)
   }
   clearTheGone(battle)

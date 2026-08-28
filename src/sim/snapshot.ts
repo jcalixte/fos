@@ -1,4 +1,5 @@
 import { unitSpeed } from "./battle"
+import { describeFatigue, type FatigueWord } from "./fatigue"
 import { describeMorale, type MoraleWord } from "./morale"
 import { ghosts, type Ghost } from "./orders"
 import type { Battle, Contact, FormationName, Standing, Unit, Vec2, Volley } from "./types"
@@ -33,6 +34,12 @@ export interface UnitSnapshot {
    * purpose, so the screen never sees the number behind this.
    */
   morale: MoraleWord
+  /**
+   * How it is blowing, in words, and read the same way Morale is: the screen
+   * gets the rung and never the figure. `blown` is the state as well as the
+   * word — a Unit reading blown will not be let go at anybody.
+   */
+  fatigue: FatigueWord
   /** True while it is Routing: out of command, and running. */
   routing: boolean
   /** The Unit it is committed to a Charge on, by id, or null. */
@@ -91,6 +98,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       standing: { ...unit.standing },
       shifting: unit.shift !== null,
       morale: describeMorale(unit),
+      fatigue: describeFatigue(unit),
       routing: unit.routing !== null,
       charging: unit.charging?.targetId ?? null,
       recoiling: unit.charging?.recoiling ?? false,

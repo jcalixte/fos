@@ -1,3 +1,4 @@
+import { isBlown } from "./fatigue"
 import { faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
 import { breakUnit, hasBroken, isRouting, shake } from "./morale"
 import type { Arm, Battle, Unit, UnitId, Vec2 } from "./types"
@@ -39,11 +40,14 @@ const CHARGE_SPEED: Record<Arm, number> = { infantry: 2.2, cavalry: 7, artillery
  * Metres from the target at which a Unit goes to the charge; beyond it, a
  * Charge Order is a walk at the Formation's own pace.
  *
- * This seam stands in for Fatigue, which is not built. Without it a regiment
- * would gallop the length of the Field for nothing, and the player's whole
- * problem — get the horse close under a Move Order first, then let them go —
- * would not exist. It is also what the infantry it is aimed at gets as warning:
- * twenty-one seconds of gallop against thirty of drill to make square.
+ * It stood in for Fatigue until Fatigue was built, and it stays now that it is,
+ * because it turned out not to be the tax it was standing in as: regiments
+ * walked up and galloped the last stretch *because* of what a gallop costs, so
+ * the seam is the drill and Fatigue is the reason for it (ADR-0010). What it
+ * still is, and what nothing else would be, is the warning the infantry it is
+ * aimed at gets: twenty-one seconds of gallop against thirty of drill to make
+ * square. Running the whole way would hand the target ninety seconds of dread
+ * instead, and break a fresh battalion by fear before anybody reached it.
  */
 export const CHARGE_RANGE = 150
 
@@ -201,6 +205,11 @@ export function chargersOf(battle: Battle, unit: Unit): Unit[] {
  */
 export function beginCharge(battle: Battle, unit: Unit, targetId: UnitId): boolean {
   if (unit.charging) return false
+  // A blown regiment will not go, whoever asks. The rule list reaches this for
+  // the countercharge, so horse with nothing left in it stands to receive —
+  // which is horse ridden over, and the price of having been let go twice
+  // already.
+  if (isBlown(unit)) return false
   unit.charging = { targetId, launchedAt: battle.time, recoiling: false }
   unit.route = []
   return true

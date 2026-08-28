@@ -1,4 +1,5 @@
 import { makeField } from "./field"
+import { FRESH } from "./fatigue"
 import { FULL_MORALE, unitWeight } from "./morale"
 import { defaultStanding } from "./standing"
 import type {
@@ -108,6 +109,8 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     reload: 0,
     morale: FULL_MORALE,
     moraleCeiling: FULL_MORALE,
+    fatigue: FRESH,
+    blown: false,
     routing: null,
     charging: null,
   }

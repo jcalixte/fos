@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest"
 import { admits, STEP, step } from "./battle"
 import { cellAt, cellIndex } from "./field"
+import { FRESH } from "./fatigue"
 import { GROUNDS } from "./ground"
 import { unitWeight } from "./morale"
 import { issueOrder } from "./orders"
@@ -47,6 +48,8 @@ function battalion(): Unit {
     reload: 0,
     morale: 1,
     moraleCeiling: 1,
+    fatigue: FRESH,
+    blown: false,
     routing: null,
     charging: null,
   }

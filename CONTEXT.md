@@ -47,7 +47,13 @@ Morale gives out, not when its Strength runs down.
 _Avoid_: hit points, health, spirit, courage
 
 **Fatigue**:
-Accumulated exhaustion. It slows a Unit, blunts its fire and denies it a charge.
+Accumulated exhaustion. It slows a Unit, blunts its fire, unsteadies it so it goes sooner than a
+fresh one would, and above **blown** denies it a **Charge** outright — and a blown **Unit** stays
+blown until it has rested well under the mark it crossed, the way one that **Broke** stays running
+until it can **Rally**. It is bought by the pace a
+Unit is asked for and by nothing else, so a **Formation** reaches it only through how fast that
+Formation walks ([ADR-0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)). Read in words —
+fresh, winded, blown — the way **Morale** is.
 _Avoid_: stamina, energy, tiredness
 
 **Disorder**:
@@ -374,6 +380,12 @@ _Avoid_: game speed, time scale, simulation speed
   for both armies
 - A **Unit** carries a **Strength**, a **Morale** and a **Fatigue**, and is either Ordered or in **Disorder**
 - Casualties reduce both **Strength** and **Morale**; **Morale** is what decides the Unit's fate
+- **Fatigue** is bought by the pace and never by the Order, so a flank march, a **Rout** and a
+  **Charge**'s run-in are the same arithmetic — and standing still is the only thing that gives it
+  back, at a rate no **Headquarters** hastens, because a commander steadies men and does not rest
+  their legs
+- A blown **Unit** will not be let go at anybody: the **Charge** is the one thing **Fatigue**
+  forbids outright rather than by degrees
 - A **Unit** whose **Morale** gives out will **Break** into a **Rout**, and may later **Rally**
 - A Routing **Unit** sheds **Strength** as it runs, and **Rallies** with a lower **Morale Ceiling**
 - **Pursuit** denies a **Rally** outright, and costs the pursuer **Disorder**, **Fatigue** and position

@@ -97,6 +97,21 @@ export interface Unit {
   morale: number
   /** The highest Morale it can recover to. Every Rally lowers it. */
   moraleCeiling: number
+  /**
+   * Accumulated exhaustion, 0 fresh to 1 blown. Counted apart from Morale
+   * because it is spent apart: it is bought by the pace a Unit is asked for and
+   * not by anything that has been done to it, so a battalion that marched all
+   * afternoon and was never shot at is full of one and empty of the other.
+   */
+  fatigue: number
+  /**
+   * True while the Unit is blown: it will not be let go at anybody, and it does
+   * not stop being blown the moment its Fatigue creeps back under the mark it
+   * crossed. A state and not a threshold, for the reason a Rout is one — the way
+   * out is a higher bar than the way in, or a regiment rests half a minute and
+   * charges again.
+   */
+  blown: boolean
   /** Set once the Unit has Broken. A Routing Unit is deaf to Orders. */
   routing: Rout | null
   /** The Charge it is committed to, once an Order has let it go. */
