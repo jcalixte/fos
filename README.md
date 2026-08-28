@@ -14,6 +14,7 @@ pnpm fmt           # oxfmt   (pnpm fmt:check to verify only)
 pnpm build         # type-check and build to static assets
 node scripts/make-bridge-fixture.mjs     # repaint the bridge fixture's Field
 node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what stands on it
+node scripts/make-rivoli-field.mjs       # repaint Rivoli's, and audit that nothing is walled in
 ```
 
 Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify.
@@ -97,6 +98,19 @@ minutes standing gets it back, which is most of the clock, so a reserve is now a
 Unit that happens not to have been used
 ([ADR-0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)).
 
+Rivoli, which is the second of the two battles the design is measured against and the harder one
+(DESIGN §0). Castiglione is the everyday case; this is the ceiling — the Field at its size limit,
+two hundred and twenty metres between the river and the top of the heights, ground that is
+impassable because of its gradient and not because of what is painted on it, a Crossing that is a
+gorge rather than a bridge, and eight Arrivals, two of which walk on behind the enemy rather than
+behind their own line. Alvinczi comes down off Monte Baldo in
+columns that torrent gullies keep from seeing one another until they are on the plateau,
+Quasdanovich comes up the Adige road under the cliffs and has to file a battalion at a time up the
+defile past the chapel of San Marco, and Lusignan is already round the back. It is also the first Field
+on which a Unit can be authored into a place it can never walk out of, so the painter proves that
+none is: every Unit, every destination in the Plan and both pieces of Key Ground are reachable
+from where the men who have to get to them start.
+
 Not built yet: Disorder, Pursuit, Concealment, Powder Smoke, sound.
 
 ## Layout
@@ -107,7 +121,7 @@ Not built yet: Disorder, Pursuit, Concealment, Powder Smoke, sound.
 | `src/render/` | PixiJS drawing, and the only place interpolation happens |
 | `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle |
 | `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |
-| `scripts/` | the fixture Field painter |
+| `scripts/` | the Field painters, each of which audits the Scenario standing on its ground |
 
 <!-- docs:start -->
 ## Documentation
