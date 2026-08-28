@@ -1,0 +1,148 @@
+{
+  "id": "french-rivoli",
+  "name": "Armée d'Italie, la position de Rivoli",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-14e-legere",
+      "name": "14e Légère",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "open-order",
+      "position": { "x": 900, "y": 640 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-85e",
+      "name": "85e de Ligne (Joubert)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "line",
+      "position": { "x": 760, "y": 720 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-33e",
+      "name": "33e de Ligne (Joubert)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "position": { "x": 1000, "y": 720 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-18e",
+      "name": "18e de Ligne, la Brave (Masséna)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 700,
+      "formation": "line",
+      "position": { "x": 1180, "y": 780 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-32e",
+      "name": "32e de Ligne (Masséna)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "line",
+      "position": { "x": 1330, "y": 730 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-batterie",
+      "name": "3e Cie, 2e Rgt d'Artillerie à Pied",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "in-battery",
+      "position": { "x": 1060, "y": 800 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-75e",
+      "name": "2e/75e de Ligne",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 780,
+      "formation": "line",
+      "position": { "x": 980, "y": 830 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-1er-hussards",
+      "name": "1er Hussards",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 260,
+      "formation": "line",
+      "position": { "x": 900, "y": 980 },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-39e",
+      "name": "39e de Ligne (tête de colonne Rey)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "march-column",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 900,
+        "entry": { "x": 1150, "y": 1192 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 1120, "y": 920 },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-69e",
+      "name": "69e de Ligne (Rey)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "march-column",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 1020,
+        "entry": { "x": 900, "y": 1192 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 880, "y": 960 },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-24e-chasseurs",
+      "name": "24e Chasseurs à Cheval",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 240,
+      "formation": "march-column",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 1320,
+        "entry": { "x": 620, "y": 1192 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 700, "y": 1020 },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

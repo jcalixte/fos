@@ -1,0 +1,186 @@
+{
+  "id": "austrian-rivoli",
+  "name": "Armee Alvinczi, Angriff auf Rivoli",
+  "grades": {
+    "conscript": "Rekrut",
+    "line": "Linie",
+    "elite": "Grenadier"
+  },
+  "entries": [
+    {
+      "id": "au-ir27",
+      "name": "1. Bataillon IR 27 Strassoldo (Köblös)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 780,
+      "formation": "line",
+      "position": { "x": 300, "y": 260 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-jaeger",
+      "name": "Tiroler Jäger-Bataillon",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 420,
+      "formation": "open-order",
+      "position": { "x": 460, "y": 150 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir48",
+      "name": "2. Bataillon IR 48 Schmidfeld (Ocskay)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "line",
+      "position": { "x": 800, "y": 240 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir44",
+      "name": "1. Bataillon IR 44 Belgiojoso (Ocskay)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "line",
+      "position": { "x": 1020, "y": 260 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-batterie-4",
+      "name": "Positionsbatterie Nr. 4",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 120,
+      "formation": "in-battery",
+      "position": { "x": 900, "y": 320 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-grenz",
+      "name": "2. Banal-Grenz-Regiment (Liptay)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 520,
+      "formation": "open-order",
+      "position": { "x": 1420, "y": 160 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir52-1",
+      "name": "1. Bataillon IR 52 Erzherzog Anton (Liptay)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 750,
+      "formation": "line",
+      "position": { "x": 1560, "y": 280 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir52-2",
+      "name": "2. Bataillon IR 52 Erzherzog Anton (Liptay)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "position": { "x": 1330, "y": 280 },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir10",
+      "name": "1. Bataillon IR 10 Jordis (Quasdanovich)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "march-column",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 180,
+        "entry": { "x": 1808, "y": 8 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 1240, "y": 720 },
+          "arrivalFacing": 3.14159,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    },
+    {
+      "id": "au-batterie-1",
+      "name": "Kavalleriebatterie Nr. 1 (Quasdanovich)",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "limbered",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 320,
+        "entry": { "x": 1808, "y": 8 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 1380, "y": 660 },
+          "arrivalFacing": 3.14159,
+          "arrivalFormation": "in-battery"
+        }
+      }
+    },
+    {
+      "id": "au-dragoner",
+      "name": "Dragoner-Regiment Erzherzog Johann",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 280,
+      "formation": "march-column",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 460,
+        "entry": { "x": 1808, "y": 8 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 1300, "y": 780 },
+          "arrivalFacing": 3.14159,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "au-ir45",
+      "name": "1. Bataillon IR 45 Lattermann (Lusignan)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "march-column",
+      "facing": 0,
+      "arrival": {
+        "at": 780,
+        "entry": { "x": 8, "y": 1040 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 560, "y": 980 },
+          "arrivalFacing": 0,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "au-gren-weidenfeld",
+      "name": "Grenadier-Bataillon Weidenfeld (Lusignan)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "march-column",
+      "facing": 0,
+      "arrival": {
+        "at": 900,
+        "entry": { "x": 8, "y": 1140 },
+        "order": {
+          "kind": "move",
+          "destination": { "x": 600, "y": 1080 },
+          "arrivalFacing": 0,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}
