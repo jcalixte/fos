@@ -26,9 +26,11 @@ import { angleDelta, bearing, distance } from "./vec"
  * lives beside the Volley: it is bought by the pace rather than by anything
  * done to the Unit, and everything in here that Grade steadies, it unsteadies.
  *
- * Not built yet: Disorder and Pursuit. A Rout stands in for Disorder in the
- * meantime by putting the Unit in its travelling Formation, which is legible
- * and wrong in the Unit's favour.
+ * Not built yet: Disorder. A Rout stands in for it in the meantime by putting
+ * the Unit in its travelling Formation, which is legible and wrong in the
+ * Unit's favour. It is also the one price of a Pursuit that goes uncharged: C6
+ * takes the pursuer's wind and his position and cannot take his ranks, so a
+ * regiment that has spent a minute among a mob comes back tidier than it should.
  */
 
 /** Morale, and the Ceiling on it, that a Unit starts a battle with. */
@@ -98,8 +100,12 @@ const RALLY_CLEARANCE = 300
 /** What a Rally takes off the Morale Ceiling, so a Unit that Broke Breaks sooner. */
 const CEILING_LOSS = 0.25
 
-/** Metres per second a Routing Unit runs. Faster than any Formation marches. */
-const ROUT_SPEED = 2.6
+/**
+ * Metres per second a Routing Unit runs. Faster than any Formation marches,
+ * and the number that decides who may Pursue: C6 reads it against what an Arm
+ * makes at the charge, so foot cannot catch what it has just broken.
+ */
+export const ROUT_SPEED = 2.6
 
 /** The share of its remaining Strength a Routing Unit sheds each second. */
 const SHEDDING = 0.001
@@ -225,7 +231,14 @@ function nearestEnemy(battle: Battle, unit: Unit): number {
   return best
 }
 
-/** True when a Routing Unit is clear enough, and steady enough, to Rally. */
+/**
+ * True when a Routing Unit is clear enough, and steady enough, to Rally.
+ *
+ * A Pursuit denies it with no clause of its own. A pursuer takes more nerve off
+ * a mob in a second than standing anywhere gives back in ten, so a Unit that
+ * has been ridden down is under the floor for the rest of the afternoon, and
+ * one that got away is only ever a long walk from the mark.
+ */
 export function canRally(battle: Battle, unit: Unit): boolean {
   if (!isRouting(unit)) return false
   if (unit.morale < RALLY_FLOOR) return false

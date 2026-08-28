@@ -743,10 +743,12 @@ export function useBattle() {
     if (ui.arming) {
       // The one press that means something else, and only because the player
       // asked for it two gestures ago. Anywhere but a Unit a Charge may be
-      // aimed at calls it off — which includes a Routing enemy, since C6 would
-      // pull the chargers up the moment the Order arrived.
+      // aimed at calls it off — which includes a Routing enemy where the Unit
+      // doing the aiming is foot, since C6 would pull it up the moment the
+      // Order arrived. The same question the outline answered, asked of the
+      // same function, so the press cannot buy what the screen did not offer.
       setArming(false)
-      if (hit && chargeable(hit, ui.playerArmy)) {
+      if (hit && chargeable(hit, ui.playerArmy, commandable()?.arm ?? null)) {
         order({ kind: "charge", targetId: hit.id })
         // The selection stays on the Unit that was let go, not on what it was
         // let go at: what the player wants to watch now is their own regiment.

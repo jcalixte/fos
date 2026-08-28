@@ -126,6 +126,16 @@ export interface Charge {
   launchedAt: number
   /** Set once the Face held: the chargers are running back out of it. */
   recoiling: boolean
+  /**
+   * Set once what it was let go at is a mob: the run has become a Pursuit, and
+   * there is no Face left to strike and nothing left to be thrown back from.
+   *
+   * Kept on the Charge rather than read off the target's Rout, because a
+   * Contact that breaks a Unit leaves it broken and not yet running — Morale is
+   * decided in the rule list, a tick later — and the horse must not go in a
+   * second time while the mob catches up with what has happened to it.
+   */
+  pursuing: boolean
 }
 
 /**

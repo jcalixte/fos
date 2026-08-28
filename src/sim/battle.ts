@@ -16,6 +16,7 @@ import {
   unitFootprint,
 } from "./formation"
 import {
+  canPursue,
   CHARGE_RANGE,
   chargeSpeed,
   CONTACT_RANGE,
@@ -23,6 +24,7 @@ import {
   gapTo,
   RECOIL_DISTANCE,
   resolveContact,
+  rideDown,
   struckSide,
 } from "./charge"
 import { isBlown, paceLeft, weary } from "./fatigue"
@@ -226,6 +228,11 @@ function runOn(
  * (see `Charge` in C1) and there are now two ways into it: one the player gave,
  * and a countercharge the rule list gave. Both run on the same geometry from
  * here on, which is the point of the state being the thing that carries it.
+ *
+ * And it is three things once the target has broken, the third being a Pursuit.
+ * The seam and the Contact are both about a Face, and a mob has none: what is
+ * left is a regiment keeping up with men who are running, for as long as it
+ * takes them to leave the Field or the player to send for it.
  */
 function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number): void {
   const target = battle.units.find((u) => u.id === targetId)
@@ -241,24 +248,53 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     endCharge(battle, unit, `${unit.name} is blown, and would not go at ${target.name}`)
     return
   }
-  unit.charging ??= { targetId: target.id, launchedAt: battle.time, recoiling: false }
-  const charge = unit.charging
-
-  // Nobody rides down a mob here: Pursuit is not built, so the chargers pull up
-  // and watch it go. Generous to the Unit that ran, and knowingly so.
-  if (isRouting(target)) {
-    endCharge(battle, unit, `${unit.name} pulled up; ${target.name} was already running`)
-    return
+  unit.charging ??= {
+    targetId: target.id,
+    launchedAt: battle.time,
+    recoiling: false,
+    pursuing: false,
   }
+  const charge = unit.charging
 
   const gap = gapTo(unit, target)
 
+  // Above the Pursuit, because a regiment that has been thrown back is going
+  // the other way: what its target does after that is no longer its business.
   if (charge.recoiling) {
     if (gap >= RECOIL_DISTANCE) {
       endCharge(battle, unit, `${unit.name} is clear of ${target.name}, and pulling up`)
       return
     }
     runOn(battle, unit, bearing(target.position, unit.position), chargeSpeed(unit.arm), dt, true)
+    return
+  }
+
+  // What it was let go at is a mob. Horse rides it down; foot pulls up, because
+  // a mob at the run is faster than a battalion at the charge and the Order
+  // would otherwise buy an afternoon of walking after it.
+  if (isRouting(target) && !charge.pursuing) {
+    if (!canPursue(unit.arm)) {
+      endCharge(battle, unit, `${unit.name} pulled up; ${target.name} was already running`)
+      return
+    }
+    charge.pursuing = true
+    battle.dispatches.push({
+      at: battle.time,
+      unitId: unit.id,
+      text: `${unit.name} is riding ${target.name} down`,
+    })
+  }
+
+  if (charge.pursuing) {
+    // Among them, and never through them: the pace is capped at the gap, so the
+    // gallop is what it costs to come up with the mob and the ride after that
+    // is at whatever pace the mob is running. Fatigue reads the ground covered
+    // and nothing else (ADR-0010), so a Pursuit is bought in the run-in and
+    // paid for in the walk home — which is the one of its three costs that
+    // nothing in the simulation has to remember to charge.
+    if (gap <= CONTACT_RANGE) rideDown(unit, target, dt)
+    const closing = Math.min(chargeSpeed(unit.arm), Math.max(0, gap) / dt)
+    runOn(battle, unit, bearing(unit.position, target.position), closing, dt, true)
     return
   }
 

@@ -297,7 +297,7 @@ describe("what Fatigue costs", () => {
       position: { x: 200, y: 500 },
       facing: Math.PI,
     })
-    theirs.charging = { targetId: mine.id, launchedAt: 0, recoiling: false }
+    theirs.charging = { targetId: mine.id, launchedAt: 0, recoiling: false, pursuing: false }
     const battle = fixture([mine, theirs])
 
     step(battle)

@@ -1579,7 +1579,7 @@ describe("C6 Fighting — the Charge", () => {
     const enemy = targetOf(target)
     const cavalry = regiment(horse)
     place(cavalry, enemy, 1)
-    cavalry.charging = { targetId: enemy.id, launchedAt: 0, recoiling: false }
+    cavalry.charging = { targetId: enemy.id, launchedAt: 0, recoiling: false, pursuing: false }
     const battle = emptyBattle(blankField(250, 250), [cavalry, enemy])
     resolveContact(battle, cavalry, enemy)
     return { battle, cavalry, enemy, contact: battle.contacts[0] }
@@ -1600,7 +1600,7 @@ describe("C6 Fighting — the Charge", () => {
       mine.post = { ...mine.position }
       const theirs = regiment({ id: "au-hus", army: "austrian", name: "Hussar Nr. 4" })
       place(theirs, mine, gap)
-      theirs.charging = { targetId: mine.id, launchedAt: 0, recoiling: false }
+      theirs.charging = { targetId: mine.id, launchedAt: 0, recoiling: false, pursuing: false }
       theirs.order = {
         order: {
           id: "o1",
@@ -1639,7 +1639,7 @@ describe("C6 Fighting — the Charge", () => {
       foot.post = { ...foot.position }
       const theirs = regiment({ id: "au-hus", army: "austrian" })
       place(theirs, foot, 100)
-      theirs.charging = { targetId: foot.id, launchedAt: 0, recoiling: false }
+      theirs.charging = { targetId: foot.id, launchedAt: 0, recoiling: false, pursuing: false }
       const battle = emptyBattle(blankField(250, 250), [foot, theirs])
       applyInitiative(foot, battle)
       expect(foot.charging).toBeNull()
@@ -1739,7 +1739,7 @@ describe("C6 Fighting — the Charge", () => {
     // Met head-on: both are at the gallop, so both pay a running Unit's price.
     const met = struck({
       ...opposing,
-      charging: { targetId: "ca", launchedAt: 0, recoiling: false },
+      charging: { targetId: "ca", launchedAt: 0, recoiling: false, pursuing: false },
     })
     expect(met.contact.casualties).toBeCloseTo(still.contact.casualties * 2)
     // What the chargers deal is untouched by it either way: impetus is read off
@@ -1752,7 +1752,7 @@ describe("C6 Fighting — the Charge", () => {
     const still = struck(opposing)
     const thrownBack = struck({
       ...opposing,
-      charging: { targetId: "ca", launchedAt: 0, recoiling: true },
+      charging: { targetId: "ca", launchedAt: 0, recoiling: true, pursuing: false },
     })
     expect(thrownBack.contact.casualties).toBeCloseTo(still.contact.casualties)
   })
@@ -1877,23 +1877,101 @@ describe("C6 Fighting — the Charge", () => {
     expect(gapTo(cavalry, enemy)).toBeGreaterThanOrEqual(RECOIL_DISTANCE)
   })
 
-  it("pulls up rather than pursuing, because Pursuit is not built", () => {
-    const { cavalry, enemy, battle } = chargeAt(80)
-    enemy.routing = { heading: 0, brokeAt: 0 }
-    step(battle)
-    expect(cavalry.order).toBeNull()
-    expect(cavalry.charging).toBeNull()
-    expect(battle.dispatches.some((d) => d.text.includes("pulled up"))).toBe(true)
-  })
-
   it("does not offer a Unit it would only pull up in front of", () => {
     // What the screen outlines while a Charge is being aimed, and what the
-    // press will spend a Courier on. It has to agree with the pull-up above, or
-    // the player buys ninety seconds of ride and gets a regiment standing still.
+    // press will spend a Courier on. It has to agree with what C6 does with the
+    // Order, or the player buys ninety seconds of ride and gets a regiment
+    // standing still — so a mob is offered to horse and to nothing else.
     const formed = { army: "austrian", routing: false }
-    expect(chargeable(formed, "french")).toBe(true)
-    expect(chargeable({ ...formed, routing: true }, "french")).toBe(false)
-    expect(chargeable({ ...formed, army: "french" }, "french")).toBe(false)
+    expect(chargeable(formed, "french", "cavalry")).toBe(true)
+    expect(chargeable(formed, "french", "infantry")).toBe(true)
+    expect(chargeable({ ...formed, routing: true }, "french", "cavalry")).toBe(true)
+    expect(chargeable({ ...formed, routing: true }, "french", "infantry")).toBe(false)
+    expect(chargeable({ ...formed, routing: true }, "french", null)).toBe(false)
+    expect(chargeable({ ...formed, army: "french" }, "french", "cavalry")).toBe(false)
+  })
+
+  describe("the Pursuit", () => {
+    /** Horse already among a mob, committed to it, on a Field with room to run. */
+    function ridingDown() {
+      const mob = targetOf({ formation: "march-column", morale: 0 })
+      mob.routing = { heading: 0, brokeAt: 0 }
+      const cavalry = regiment()
+      place(cavalry, mob, 1)
+      cavalry.charging = { targetId: mob.id, launchedAt: 0, recoiling: false, pursuing: true }
+      cavalry.order = {
+        order: {
+          id: "o1",
+          unitId: cavalry.id,
+          body: { kind: "charge", targetId: mob.id },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      return { cavalry, mob, battle: emptyBattle(blankField(400, 400), [cavalry, mob]) }
+    }
+
+    it("rides on after the battalion it broke, rather than pulling up", () => {
+      const { cavalry, enemy, battle } = untilItStrikes(140)
+      expect(isRouting(enemy)).toBe(true)
+      expect(cavalry.charging?.pursuing).toBe(true)
+      expect(cavalry.order).not.toBeNull()
+      expect(battle.dispatches.some((d) => d.text.includes("rode on after it"))).toBe(true)
+    })
+
+    it("pulls foot up, a mob at the run being faster than a battalion at the charge", () => {
+      const mob = targetOf({ formation: "march-column" })
+      mob.routing = { heading: 0, brokeAt: 0 }
+      const foot = battalion({ id: "fr", army: "french", formation: "attack-column" })
+      place(foot, mob, 80)
+      foot.order = {
+        order: {
+          id: "o1",
+          unitId: foot.id,
+          body: { kind: "charge", targetId: mob.id },
+          issuedAt: 0,
+        },
+        arrivedAt: 0,
+      }
+      const battle = emptyBattle(blankField(250, 250), [foot, mob])
+      step(battle)
+      expect(foot.charging).toBeNull()
+      expect(foot.order).toBeNull()
+      expect(battle.dispatches.some((d) => d.text.includes("pulled up"))).toBe(true)
+    })
+
+    it("takes a third of what is left off the mob every minute, and raises no Contact", () => {
+      const { mob, battle } = ridingDown()
+      const mustered = mob.strength
+      while (battle.time < 60) step(battle)
+      // Two thirds of it left, less the men a Rout sheds on its own account.
+      expect(mob.strength / mustered).toBeCloseTo(0.63, 1)
+      // Contact is two blocks touching and is over in seconds. This is neither.
+      expect(battle.contacts).toHaveLength(0)
+    })
+
+    it("denies the mob its Rally, and goes on denying it after the horse has gone", () => {
+      const { cavalry, mob, battle } = ridingDown()
+      while (battle.time < 60) step(battle)
+      expect(mob.morale).toBeLessThan(-1)
+      // Called off, and five minutes of running clear afterwards. A Unit that
+      // merely broke would be back under command inside that; this one is not
+      // coming back at all, which is what finishing a Unit means here.
+      battle.units = battle.units.filter((u) => u !== cavalry)
+      while (battle.time < 360) step(battle)
+      expect(canRally(battle, mob)).toBe(false)
+      expect(isRouting(mob)).toBe(true)
+    })
+
+    it("goes where the mob goes, and leaves the regiment out there", () => {
+      const { cavalry, mob, battle } = ridingDown()
+      const from = { ...cavalry.position }
+      while (battle.time < 120) step(battle)
+      // Two minutes at the mob's own pace, all of it away from where the
+      // regiment was standing: the third cost, and nothing charges it.
+      expect(distance(cavalry.position, from)).toBeGreaterThan(250)
+      expect(gapTo(cavalry, mob)).toBeLessThan(3)
+    })
   })
 
   it("costs a Unit with nothing turned toward the charge three times the nerve", () => {

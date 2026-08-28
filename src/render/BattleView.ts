@@ -1094,6 +1094,10 @@ export class BattleView {
    * Every Charge under way, as a taut line onto what it is aimed at. The Unit is
    * visibly running, but which of several enemies it was let go at is a fact
    * about the Order and not about the running, so it has to be drawn.
+   *
+   * A Pursuit is drawn the same and in the same colour. The line is short by
+   * then — the horse is on the mob's heels — and what the player needs off it
+   * is which mob his regiment has gone away with.
    */
   private drawCharges(units: UnitSnapshot[]): void {
     const g = this.effects
@@ -1111,16 +1115,18 @@ export class BattleView {
 
   /**
    * Every enemy a Charge may be aimed at, outlined while one is looking for a
-   * target. A Routing enemy is not one of them and gets no outline: the offer
-   * has to be exactly what C6 will accept, or the player spends a Courier ride
-   * and watches the regiment stand still.
+   * target. Which those are depends on what is doing the aiming: a Routing
+   * enemy is outlined for horse, which can ride it down, and not for foot,
+   * which cannot catch it. The offer has to be exactly what C6 will accept, or
+   * the player spends a Courier ride and watches the regiment stand still.
    */
   private drawArming(units: UnitSnapshot[], view: ViewState): void {
     if (!view.arming) return
     const g = this.effects
     const mpp = this.metresPerPixel()
+    const by = units.find((u) => u.id === view.selected)?.arm ?? null
     for (const unit of units) {
-      if (!chargeable(unit, view.playerArmy)) continue
+      if (!chargeable(unit, view.playerArmy, by)) continue
       const shape = poseFootprint(unit)
       const grown = { width: shape.width + 12 * mpp, depth: shape.depth + 12 * mpp }
       this.strokeFootprint(g, unit.position, unit.facing, grown, 0xe0663c, 0.85, mpp * 2)

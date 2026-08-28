@@ -1,6 +1,6 @@
 import { isBlown } from "./fatigue"
 import { faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
-import { breakUnit, hasBroken, isRouting, shake } from "./morale"
+import { breakUnit, hasBroken, isRouting, ROUT_SPEED, shake } from "./morale"
 import type { Arm, Battle, Unit, UnitId, Vec2 } from "./types"
 import { angleDelta, axes, bearing, distance } from "./vec"
 
@@ -24,8 +24,12 @@ import { angleDelta, axes, bearing, distance } from "./vec"
  * (F10). Which is why Contact is over in seconds and is never a state a Unit
  * sits in.
  *
- * Not built yet: Pursuit. A Charge whose target Breaks pulls up and lets it go,
- * which is generous to the Unit that ran.
+ * A Charge whose target Breaks does not pull up. It rides on, and what it is
+ * doing then is a Pursuit: no Face to strike, no Contact to resolve, and no
+ * second decision to make — a regiment among a mob, taking a third of what is
+ * left off it every minute. The player bought it with the Order that let the
+ * horse go, which is the only moment he gets to decide it: calling them back is
+ * a Courier ride, and no Courier has ever been in time for one of those.
  */
 
 const QUARTER_TURN = Math.PI / 2
@@ -97,23 +101,38 @@ function impetus(unit: Unit): number {
 }
 
 /**
- * Whether a Charge may be aimed at this Unit at all. A Routing one may not: the
- * chargers pull up the instant the Order arrives, because Pursuit is not built,
- * so offering it spends a Courier ride and leaves the regiment standing still
- * with nothing but a Dispatch to show for it.
+ * Whether a Charge may be aimed at this Unit at all, and by what. A Routing one
+ * may be — that is a Pursuit — but only by an Arm that can catch it, or the
+ * Order spends a Courier ride and buys a battalion walking after a mob it will
+ * never come up with.
  *
- * The rule lives next to the pull-up rather than in the screen, so what the
- * player is offered and what the simulation will accept cannot drift — and so
- * that building Pursuit moves both at once.
+ * The rule lives next to what C6 does with the answer rather than in the
+ * screen, so what the player is offered and what the simulation will accept
+ * cannot drift.
  *
  * Typed on the two fields the answer turns on, because what the screen holds is
  * a Snapshot and C6 has no business importing the renderer's view of a Unit.
+ * `by` is null where there is nothing selected to charge with, and then a mob
+ * is nobody's target.
  */
 export function chargeable(
   target: { army: string; routing: boolean },
   playerArmy: string,
+  by: Arm | null,
 ): boolean {
-  return target.army !== playerArmy && !target.routing
+  if (target.army === playerArmy) return false
+  return !target.routing || (by !== null && canPursue(by))
+}
+
+/**
+ * Whether this Arm can ride a mob down at all. Read off the two paces rather
+ * than named per Arm: a Rout runs at 2.6 metres a second and foot goes at the
+ * charge at 2.2, so infantry cannot catch what it has just broken and horse
+ * can. F8 in the one place a table of three Arms would have been the obvious
+ * way to write it.
+ */
+export function canPursue(arm: Arm): boolean {
+  return chargeSpeed(arm) > ROUT_SPEED
 }
 
 /** Artillery does not charge. It is being dragged about by horses as it is. */
@@ -210,7 +229,7 @@ export function beginCharge(battle: Battle, unit: Unit, targetId: UnitId): boole
   // which is horse ridden over, and the price of having been let go twice
   // already.
   if (isBlown(unit)) return false
-  unit.charging = { targetId, launchedAt: battle.time, recoiling: false }
+  unit.charging = { targetId, launchedAt: battle.time, recoiling: false, pursuing: false }
   unit.route = []
   return true
 }
@@ -226,6 +245,37 @@ export function endCharge(battle: Battle, unit: Unit, text: string): void {
   if (unit.order?.order.body.kind === "charge") unit.order = null
   unit.route = []
   battle.dispatches.push({ at: battle.time, unitId: unit.id, text })
+}
+
+/**
+ * The share of what a mob has left that a pursuer takes off it every second he
+ * is among them: a third of it a minute. It is the whole of what makes a
+ * Pursuit finish a Unit rather than merely follow one — a battalion that broke
+ * and got clear comes back at a lower Ceiling, and one that was ridden for two
+ * minutes has a quarter of its men and no afternoon left.
+ *
+ * The one number Pursuit costs the design, and it is a global scalar rather
+ * than anything per Arm or per Formation: a mob has no Formation, and the two
+ * Arms that could be doing this are already told apart by which of them can
+ * catch a mob at all.
+ */
+const RIDDEN_DOWN = 1 / 150
+
+/**
+ * One step of riding a mob down. Not a Contact and it raises no Contact: a
+ * Contact is two blocks touching and is over in seconds, and this is a regiment
+ * loose among men who have stopped being a block at all. It lasts as long as
+ * the horse stays with them.
+ *
+ * It takes men, and through them it takes nerve from behind — which is where
+ * the Rally goes. Nothing here denies one in so many words: the sabre simply
+ * puts Morale down a great deal faster than standing anywhere puts it back, so
+ * a Unit that has been ridden down is under the floor for the rest of the day.
+ */
+export function rideDown(unit: Unit, target: Unit, dt: number): void {
+  const taken = target.strength * RIDDEN_DOWN * dt
+  target.strength = Math.max(0, target.strength - taken)
+  shake(target, taken, unit.position)
 }
 
 /**
@@ -278,6 +328,18 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
     const how = undone
       ? `${unit.name} struck ${target.name} off its Face, and it came apart`
       : `${unit.name} went in on ${target.name}'s ${describeSide(side)}, and broke it`
+    // The horse rides on. What it was let go at is a mob now and the same Order
+    // carries it: pulling up here would be the player deciding after the event
+    // what he committed to before it, and the Order he committed to said go.
+    if (canPursue(unit.arm)) {
+      charge.pursuing = true
+      battle.dispatches.push({
+        at: battle.time,
+        unitId: unit.id,
+        text: `${how}, and rode on after it`,
+      })
+      return
+    }
     endCharge(battle, unit, how)
     return
   }
