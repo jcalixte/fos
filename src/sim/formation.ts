@@ -611,6 +611,28 @@ export function beginChange(unit: Unit, to: FormationName): boolean {
   if (!allows(unit.arm, to)) return false
   const current = unit.changing?.to ?? unit.formation
   if (current === to) return false
+  // Turned back to the Formation it was coming out of: the same change run
+  // backwards from wherever it had got to, and not a fresh drill. A battalion
+  // three seconds into filing off is three seconds from being a column again,
+  // and it is standing in something that is neither Formation — so the pose
+  // walks back the way it came instead of popping to a shape the men are not in.
+  //
+  // What this buys the player is the arrival Formation. Naming one costs a Form
+  // Order, the march files the Unit back into column, and the full drill for
+  // that meant half a minute of standing still bought by a change the Unit
+  // never made. Now the bill is what it actually did, which for two Orders said
+  // in the same breath is a second or two.
+  //
+  // Priced at the return drill and scaled by how far it got, not at the seconds
+  // it spent: the two drills are not the same length, and coming out of column
+  // is the dearer of them. So changing its mind is never cheaper than the
+  // ground it covered, which is still the right way round to be wrong.
+  if (unit.changing && unit.changing.from === to) {
+    const progress = Math.min(1, unit.changing.elapsed / unit.changing.duration)
+    const duration = drillSeconds(unit.arm, unit.grade, unit.changing.to, to)
+    unit.changing = { from: unit.changing.to, to, elapsed: duration * (1 - progress), duration }
+    return true
+  }
   unit.changing = {
     from: unit.formation,
     to,
@@ -621,9 +643,10 @@ export function beginChange(unit: Unit, to: FormationName): boolean {
     // drill was free and instant, and two rules that disagreed could trade a
     // battalion back and forth every tick for the whole battle.
     //
-    // Known simplification: the full drill, whether it had been filing off for
-    // a second or for half a minute. So changing its mind is dear, which is the
-    // right way round to be wrong.
+    // Known simplification: the full drill for a third Formation, whatever the
+    // Unit had already spent going to the second one. Only the way back is
+    // priced by how far it got, because only the way back is a road the Unit is
+    // already standing on.
     duration: drillSeconds(unit.arm, unit.grade, current, to),
   }
   return true

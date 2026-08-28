@@ -12,6 +12,7 @@ import {
   TRAVELLING_FORMATION,
 } from "./formation"
 import { breakUnit, canRally, hasBroken, isRouting, rally } from "./morale"
+import { ARRIVAL_RANGE } from "./orders"
 import { leash } from "./standing"
 import type { Battle, FormationName, Unit, UnitId, Vec2 } from "./types"
 import { bearing, distance, normalise, scale, sub } from "./vec"
@@ -102,27 +103,40 @@ const ENGAGEMENT_RANGE = 300
  */
 const CROSSING_HORIZON = ENGAGEMENT_RANGE
 
-/** Route left, in metres, following the waypoints rather than the crow. */
-function routeRemaining(unit: Unit): number {
-  if (unit.route.length === 0) return 0
-  let total = distance(unit.position, unit.route[0])
-  for (let i = 1; i < unit.route.length; i++) {
-    total += distance(unit.route[i - 1], unit.route[i])
-  }
-  return total
-}
-
 /**
  * The ground the Unit still has to walk, as points to walk it by. The Route
  * when it has one, and the Order's destination when it has not: Initiative runs
  * before the march each tick, so a Unit that stepped onto its last waypoint on
  * the previous tick is carrying an empty Route and would otherwise be blind for
  * that tick to the Crossing it is standing on.
+ *
+ * A Unit re-forming carries an empty Route for as long as the drill lasts — it
+ * has halted, so nothing is walking it and nothing is laying it out. That is the
+ * case the arrival Formation runs into: a rider tells a column to form line, a
+ * second rider tells it to march, and reading the Route alone left the travelling
+ * rules blind to the march until the drill they should have called off had run.
  */
 function pathAhead(unit: Unit): Vec2[] {
   if (unit.route.length > 0) return unit.route
   const body = unit.order?.order.body
-  return body?.kind === "move" ? [body.destination] : []
+  if (body?.kind !== "move") return []
+  // Standing on it. The Order stays live while the Unit dresses and takes up
+  // the Formation it was told to arrive in, so without this a battery would
+  // read its own destination as ground to cover and stay on its limbers for
+  // the rest of the battle rather than coming into battery on the spot.
+  if (distance(unit.position, body.destination) <= ARRIVAL_RANGE) return []
+  return [body.destination]
+}
+
+/** Ground left, in metres, following the waypoints rather than the crow. */
+function routeRemaining(unit: Unit): number {
+  const path = pathAhead(unit)
+  if (path.length === 0) return 0
+  let total = distance(unit.position, path[0])
+  for (let i = 1; i < path.length; i++) {
+    total += distance(path[i - 1], path[i])
+  }
+  return total
 }
 
 /**
