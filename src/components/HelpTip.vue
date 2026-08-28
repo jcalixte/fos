@@ -24,8 +24,21 @@ const placed = ref(false)
 /** Margin kept between the tooltip and the edge of the window. */
 const MARGIN = 8
 
+/**
+ * Which hover the tooltip on screen belongs to, counted up by every show and
+ * every hide alike. The second pass measures and places what the first pass
+ * rendered, and it must not place it if the pointer has moved on since.
+ *
+ * A number and not the anchor object it used to compare. `at` is a `ref`, so it
+ * hands back a reactive proxy of whatever was put in it rather than the object
+ * itself: the identity check could never hold, every show returned at it, and
+ * the tooltip spent its whole life rendered at `opacity-0`.
+ */
+let hover = 0
+
 async function show(event: Event): Promise<void> {
   const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+  const mine = ++hover
   const anchor = { left: box.left + box.width / 2, top: box.top - MARGIN }
   at.value = anchor
   placed.value = false
@@ -33,7 +46,7 @@ async function show(event: Event): Promise<void> {
   // The pointer can have swept off the button and taken the tooltip with it
   // while this was waiting for the first pass to render — a run along the row
   // does exactly that, several times a second.
-  if (at.value !== anchor) return
+  if (mine !== hover) return
   const half = (tip.value?.offsetWidth ?? 0) / 2
   // Clamped rather than flipped: these sit in a row along the foot of the
   // window, so one running off the side is the only way it can be lost.
@@ -45,6 +58,7 @@ async function show(event: Event): Promise<void> {
 }
 
 function hide(): void {
+  hover++
   at.value = null
 }
 </script>
