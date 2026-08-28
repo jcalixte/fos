@@ -119,4 +119,7 @@ Not built yet: Disorder, Pursuit, Concealment, Powder Smoke, sound.
   - [0005 — Terrain is authored as images](./docs/adr/0005-terrain-is-authored-as-images.md)
   - [0006 — A battle ends on the clock](./docs/adr/0006-a-battle-ends-on-the-clock.md)
   - [0007 — A Standing Order sets a Unit's Latitude](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)
+  - [0008 — The Headquarters rides, and can be harried off its ground](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)
+  - [0009 — The URL names a battle, and nothing inside one](./docs/adr/0009-the-url-names-a-battle.md)
+  - [0010 — Fatigue is bought by the pace](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)
 <!-- docs:end -->
