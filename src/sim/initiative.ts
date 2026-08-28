@@ -485,6 +485,14 @@ export const RULES: InitiativeRule[] = [
     applies: (unit, battle) => {
       if (pinned(unit)) return null
       if (canFire(unit.arm, intendedFormation(unit))) return null
+      // Already standing in the only thing it has to deploy into. Cavalry is
+      // the whole of this case: it fires from nothing, so the guard above never
+      // lets it past, and a regiment in line with the enemy in reach would
+      // otherwise suspend its Order to form the line it is already in — and go
+      // on suspending it, because a rule that is already holding the Order is
+      // asked no further questions. Horse ordered within three hundred metres
+      // of anybody stood still for the rest of the afternoon.
+      if (intendedFormation(unit) === deployInto(unit)) return null
       if (!enemyNear(unit, battle)) return null
       // Nowhere on the near side of a gap the deploying Formation will not fit
       // through — CROSSING_HORIZON, so the bridge is visible as far out as the

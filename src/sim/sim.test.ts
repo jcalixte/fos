@@ -572,6 +572,48 @@ describe("C2 Initiative", () => {
     expect(unit.formation).toBe("square")
   })
 
+  it("does not hold cavalry back for a deployment it has already made", () => {
+    // Horse fires from no Formation at all, so the rule that deploys a Unit
+    // caught travelling is never satisfied by one: it asks whether the Unit can
+    // fire in what it is standing in, and for cavalry the answer is no in line,
+    // in column and everywhere else. A rule already holding an Order is asked
+    // no further questions, so a regiment ordered anywhere with the enemy
+    // inside three hundred metres stood where it was for the rest of the
+    // afternoon, waiting to form the line it was already in.
+    const horse = battalion({
+      id: "c1",
+      arm: "cavalry",
+      strength: 260,
+      formation: "march-column",
+    })
+    const austrian = battalion({ id: "a1", army: "austrian", position: { x: 300, y: 250 } })
+    const battle = emptyBattle(blankField(200, 40), [horse, austrian])
+    horse.order = {
+      order: {
+        id: "o1",
+        unitId: horse.id,
+        body: {
+          kind: "move",
+          destination: { x: 100, y: 280 },
+          arrivalFacing: 0,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    step(battle)
+    // It does deploy, once: that much is the rule doing its job.
+    expect(horse.suspendedBy).toBe("deployed, the enemy too close to stay on the march")
+    while (horse.changing !== null) step(battle)
+    const from = { ...horse.position }
+    // And then it goes where it was sent, rather than standing in the line it
+    // has just made waiting to make it.
+    for (let i = 0; i < 200; i++) step(battle)
+    expect(horse.suspendedBy).not.toBe("deployed, the enemy too close to stay on the march")
+    expect(distance(horse.position, from)).toBeGreaterThan(5)
+  })
+
   it("says why, in the words of the rule that fired", () => {
     const unit = battalion()
     const battle = emptyBattle(blankField(200, 40), [unit])
