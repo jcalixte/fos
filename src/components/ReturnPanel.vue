@@ -15,16 +15,16 @@ const props = defineProps<{
 
 /**
  * The column the day turned on, marked so the table answers "why did they win"
- * on its own. Army Break and condition are both read off the share an army
- * spent, which is the same figure asked at two different moments — at the whole
- * of it, and well short of the whole when the clock runs out level. Breaking
- * off marks nothing: no figure here decided it, the commander did.
+ * on its own. Army Break and condition are both read off how far an army went
+ * toward breaking, which is the same figure asked at two different moments — at
+ * the whole of it, and well short of the whole when the clock runs out level.
+ * Breaking off marks nothing: no figure here decided it, the commander did.
  */
 const deciding = computed(() =>
   props.decidedBy === "key-ground"
     ? "ground"
     : props.decidedBy === "condition" || props.decidedBy === "army-break"
-      ? "spent"
+      ? "break"
       : null,
 )
 
@@ -58,8 +58,11 @@ function men(count: number): string {
  * shown as a share because that is how the end condition reads it: at 100% an
  * army has nothing in hand and quits, and short of that it is what settles a
  * clock that ran out with the Key Ground even.
+ *
+ * It sits next to the men lost and is not a second count of them: a Unit
+ * reaches this column by running or by leaving, never by being shot.
  */
-function spent(share: number): string {
+function towardBreak(share: number): string {
   return `${Math.round(share * 100)}%`
 }
 
@@ -74,7 +77,7 @@ const ordered = computed(() =>
   ),
 )
 
-function mark(column: "ground" | "spent"): string {
+function mark(column: "ground" | "break"): string {
   return deciding.value === column ? "text-base-content" : ""
 }
 </script>
@@ -93,7 +96,7 @@ function mark(column: "ground" | "spent"): string {
           <th class="pb-1 text-right font-medium">Running</th>
           <th class="pb-1 text-right font-medium">Gone</th>
           <th class="pb-1 text-right font-medium">Lost</th>
-          <th class="pb-1 text-right font-medium" :class="mark('spent')">Spent</th>
+          <th class="pb-1 text-right font-medium" :class="mark('break')">Toward break</th>
         </tr>
       </thead>
       <tbody>
@@ -120,8 +123,8 @@ function mark(column: "ground" | "spent"): string {
             {{ men(row.mustered - row.strength) }}
             <span class="text-xs text-base-content/40">/ {{ men(row.mustered) }}</span>
           </td>
-          <td class="py-2 text-right tabular-nums" :class="mark('spent')">
-            {{ spent(row.spent) }}
+          <td class="py-2 text-right tabular-nums" :class="mark('break')">
+            {{ towardBreak(row.towardBreak) }}
           </td>
         </tr>
       </tbody>
@@ -133,8 +136,9 @@ function mark(column: "ground" | "spent"): string {
 
     <p class="mt-3 text-xs leading-relaxed text-base-content/45">
       Pieces of Key Ground held, Units in hand, Units running and Units gone off the Field; men lost
-      of the men mustered; and the share of itself each army spent, weighted by Grade — all of it is
-      where an army quits the Field. The column the day turned on is the bright one.
+      of the men mustered; and how far each army went toward Army Break, weighted by Grade and
+      counting nerve rather than men — all of it is where an army quits the Field. The column the
+      day turned on is the bright one.
     </p>
     <p class="mt-3 text-xs text-base-content/40">
       Take it again from the menu to march it from the same seed.

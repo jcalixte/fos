@@ -2127,7 +2127,7 @@ describe("the Return", () => {
     expect(row.running).toBe(1)
     expect(row.mustered).toBe(2800)
     expect(row.mustered - row.strength).toBe(200)
-    expect(row.spent).toBeCloseTo(0.25, 5)
+    expect(row.towardBreak).toBeCloseTo(0.25, 5)
     expect(row.gone).toBe(0)
   })
 
@@ -2141,7 +2141,7 @@ describe("the Return", () => {
     expect(row.inHand).toBe(3)
     expect(row.running).toBe(0)
     expect(row.gone).toBe(1)
-    expect(row.spent).toBeCloseTo(0.25, 5)
+    expect(row.towardBreak).toBeCloseTo(0.25, 5)
   })
 
   it("counts a Unit still on the road as mustered and not as in hand", () => {
@@ -2160,7 +2160,7 @@ describe("the Return", () => {
     expect(row.inHand).toBe(2)
     // Two of three on the Field and the third on the road, so nothing is gone.
     expect(row.gone).toBe(0)
-    expect(row.spent).toBeCloseTo(0, 5)
+    expect(row.towardBreak).toBeCloseTo(0, 5)
   })
 
   it("names the Key Ground under the army that ended on it", () => {

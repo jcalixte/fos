@@ -38,8 +38,12 @@ export interface ArmyReturn {
    * condition uses. The one number that answers whether there is still an army
    * here — and the reason it is a share and not a count is that an army leaning
    * on its elites loses more by losing them.
+   *
+   * It is not casualties. A Unit joins it by running or by leaving and never by
+   * being shot, so a battalion ground to half strength and still in line is
+   * nothing here, and it is `strength` against `mustered` that reports the men.
    */
-  spent: number
+  towardBreak: number
   /** Pieces of Key Ground it ended holding, by name. */
   keyGround: string[]
 }
@@ -80,7 +84,7 @@ export function armyReturns(battle: Battle): ArmyReturn[] {
       gone: Math.max(0, army.units - inHand - running - onTheRoad),
       strength: strengthOf(battle, army.id),
       mustered: army.strength,
-      spent: shareGone(battle, army),
+      towardBreak: shareGone(battle, army),
       keyGround: battle.keyGround.filter((g) => g.holder === army.id).map((g) => g.name),
     }
   })
