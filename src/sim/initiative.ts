@@ -577,8 +577,13 @@ export const RULES: InitiativeRule[] = [
     // It is a follow-up and not a Pursuit: a mob runs at two and a half metres
     // a second and a battalion walks at one, so nothing here rides anybody down
     // — the Unit takes the ground the enemy left and keeps him under fire while
-    // he is on it. Pursuit proper denies a Rally and costs the pursuer, and it
-    // is not built.
+    // he is on it.
+    //
+    // Pursuit is built, and no rung of the ladder buys it. It is an advance
+    // after a beaten enemy and Initiative preserves rather than advances, so it
+    // costs a Courier ride like every other act of intent — and horse that
+    // pursued on its own account would be the period's most famous mistake made
+    // by the rule list instead of by the commander.
     name: "followed up as they gave way",
     applies: (unit, battle) => {
       if (unit.standing !== "follow-up") return null

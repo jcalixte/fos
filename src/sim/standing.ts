@@ -39,7 +39,9 @@ export function defaultStanding(): Latitude {
  * fire, not enough to reach the enemy's line from a position behind your own.
  * `follow-up` is three hundred, which is the ground an enemy who has given way
  * covers before he is out of reach, and no further: this is a follow-up and
- * not a Pursuit, which is not built and would be a different thing if it were.
+ * not a Pursuit. A Pursuit is a Charge the player gives at a mob and it takes
+ * the regiment wherever the mob goes, which is exactly the thing a leash is
+ * here to forbid, so no brief buys one.
  */
 export function leash(latitude: Latitude): number {
   switch (latitude) {

@@ -45,7 +45,11 @@ Formation's own pace and runs only the last hundred and fifty metres, and where 
 by which Face it struck: off a Face there is no fight, and a battalion in march column or halfway
 into square has none. Contact takes very few men and is over inside one step, because it is nerve
 that gives out. A square throws horse back on a quarter of a line's Frontage, which is the whole of
-what square is for and needs no rule of its own.
+what square is for and needs no rule of its own. What horse does to the battalion it broke is ride
+on after it, which is a Pursuit: the mob is finished rather than let go — a third of what is left
+of it every minute, and no Rally for what is left after that — and the regiment is winded and half
+a kilometre into the enemy's rear with a Courier ride between it and its next Order. Foot pulls up
+instead, a mob at the run being faster than a battalion at the charge.
 
 How a battle ends, which is the clock. It runs its full length the way a turn-based game runs its
 last turn, and then the Key Ground is counted: an army holds a piece by having the last
@@ -111,7 +115,7 @@ on which a Unit can be authored into a place it can never walk out of, so the pa
 none is: every Unit, every destination in the Plan and both pieces of Key Ground are reachable
 from where the men who have to get to them start.
 
-Not built yet: Disorder, Pursuit, Concealment, Powder Smoke, sound.
+Not built yet: Disorder, Concealment, Powder Smoke, sound.
 
 ## Layout
 

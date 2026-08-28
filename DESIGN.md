@@ -885,6 +885,12 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   **Trigger:** a Castiglione where the column is never the right way to attack.
 - **Command friction is the player's alone.** A Headquarters that is harried or ridden over costs the enemy nothing, because the Plan applies its Orders where they land instead of couriering them — so the whole of ADR-0008 is a rule only one army obeys, drawn only for the army that obeys it. **Trigger:** the first enemy commanded through Couriers rather than through an authored Plan, at which point the rule is already written and the enemy Headquarters wants drawing.
 - **Fatigue against a thirty-minute clock.** Bought by the pace, so infantry at 0.8–1.4 m/s tires slowly by design and cavalry at the gallop tires fast. **Trigger:** a Castiglione where no Unit is ever winded, in which case the rule is decoration for two Arms out of three — or one where a battalion is blown before the first Volley, which is an afternoon spent watching men who cannot fight.
+- **A Pursuit costs two of its three prices.** CONTEXT says it leaves the pursuer in Disorder,
+  heavy with Fatigue and far out of position. Fatigue and position are charged and neither needed a
+  rule — the run-in is priced by ADR-0010 and the walk home by the mob having run to its own rear —
+  but Disorder is not built anywhere, so a regiment that has spent two minutes loose among a mob
+  re-forms as tidily as one that never moved. **Trigger:** Pursuit reading as free on the fixture,
+  or the second place Disorder is wanted (a Rout crossing a formed Unit), whichever comes first.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
@@ -1027,7 +1033,18 @@ a defence, so what a defended crossing costs it is a thing to watch rather than 
   the one shape of bug ADR-0002 cannot absolve, since the delay is the game and spending it on
   nothing is not. Resolved by stating what may be aimed at *next to the pull-up* rather than in the
   screen: no outline on a Routing Unit and no Order sent, so the offer is exactly what the
-  simulation will accept, and building Pursuit moves both at once.
+  simulation will accept, and building Pursuit moves both at once. *Pursuit is now built, and both
+  moved together: a mob is outlined for horse and refused to foot, which is the same rule read
+  against the Arm that has to catch it.*
+
+- **Pursuit denying a Rally was written as a rule and needed none.** CONTEXT says a Pursuit
+  denies a Rally outright, which reads as a clause somewhere in C7 — a flag on the Unit, or a
+  question `canRally` has to ask C6. It is neither. A pursuer takes about a twentieth of a point of
+  Morale off the mob every second it is among them and standing anywhere gives back a six-hundredth,
+  so a Unit ridden for a minute is three points under a floor at a quarter, and the afternoon is not
+  long enough to climb it. The denial is the arithmetic the design already had, and the only thing
+  that had to be written down was where to look for it — a note on `canRally`, which is where a
+  reader will go asking.
 
 - **"Fire and movement do not mix" was a rule about the Order, and it denied Open Order the one
   thing it exists for.** A Unit fires only where it covered no ground in the step, which is right

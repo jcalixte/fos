@@ -82,7 +82,9 @@ _Avoid_: max morale, morale cap
 
 **Pursuit**:
 Chasing a Routing Unit to finish it rather than letting it get away. It leaves the pursuer in
-Disorder, heavy with Fatigue and far out of position.
+Disorder, heavy with Fatigue and far out of position. It is not an Order of its own: it is what a
+**Charge** becomes when what it was aimed at is a mob, which is why only an **Arm** that outruns a
+**Rout** can make one, and why the moment the player decides it is the moment he lets the horse go.
 _Avoid_: chase, follow up, mop up
 
 ### The ground
