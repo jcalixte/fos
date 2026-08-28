@@ -2,7 +2,7 @@
 import { computed } from "vue"
 import HelpTip from "@/components/HelpTip.vue"
 import { canCharge } from "@/sim/charge"
-import { baseSpeed, drillSeconds, formationsFor, frontage } from "@/sim/formation"
+import { baseSpeed, drillSeconds, explainFormation, formationsFor, frontage } from "@/sim/formation"
 import { describeLatitude, explainLatitude, LATITUDES } from "@/sim/standing"
 import { describeFormation, type FormationName, type Grade, type Latitude } from "@/sim/types"
 import type { UnitSnapshot } from "@/sim/snapshot"
@@ -109,12 +109,19 @@ function formClass(option: FormationName): string {
   return "btn-ghost"
 }
 
+/**
+ * What the Formation is, and then what pressing the button does with it. Two
+ * lines and not one sentence: the first is the same however the Unit is
+ * standing, and a player learning what a square costs should not have to find
+ * it again inside a different clause each time.
+ */
 function formTip(option: FormationName): string {
-  if (props.deploying) return `stand in ${label(option)}`
+  const what = explainFormation(props.unit.arm, option)
+  if (props.deploying) return `${what}\n\npress to stand in it`
   if (props.orderedFormation === option && props.unit.formation !== option) {
-    return `already asked for — a Move given now arrives in ${label(option)}`
+    return `${what}\n\nalready asked for — a Move given now arrives in it`
   }
-  return `form ${label(option)}, and arrive in it wherever it is sent next`
+  return `${what}\n\npress to form it, and to arrive in it wherever it is sent next`
 }
 </script>
 

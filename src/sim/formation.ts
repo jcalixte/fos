@@ -135,6 +135,43 @@ function spec(arm: Arm, formation: FormationName): FormationSpec {
   return s
 }
 
+/**
+ * What a Formation is, in the words the button says it in on hover — the
+ * counterpart of `explainLatitude` on the Standing Order's side, and held to
+ * the same discipline: every number is read off the spec rather than written
+ * into the prose, so tuning a dial cannot leave the definition lying about what
+ * the Unit will do.
+ *
+ * What each one says is what the geometry above actually buys, since that is
+ * the whole of C3: a column is few muskets and much depth because it *is* deep,
+ * and a square turns horse away because it *has* four Faces.
+ */
+export function explainFormation(arm: Arm, formation: FormationName): string {
+  const s = spec(arm, formation)
+  const pace = Math.round(s.speed * 60)
+  const ranks = "ranks" in s.spread ? s.spread.ranks : 0
+  const files = "files" in s.spread ? s.spread.files : 0
+  switch (formation) {
+    case "line":
+      // Cavalry has no reach to quote: it carries its fight to the enemy.
+      return arm === "cavalry"
+        ? `${ranks} ranks knee to knee at ${pace}m a minute in the open — the shape it goes at anybody in`
+        : `${ranks} ranks and the widest front it can make, so the most muskets bearing: ${s.range}m of reach at ${pace}m a minute in the open, and bare flanks`
+    case "attack-column":
+      return `${ranks} ranks on a narrow front at ${pace}m a minute in the open — few muskets bearing, and round shot ploughs the whole depth of it, but it goes in without coming apart`
+    case "march-column":
+      return `${files} abreast for the road at ${pace}m a minute in the open — its fastest pace, and no Face to fight with at all`
+    case "square":
+      return `four Faces and therefore no flank, which is what turns horse away — but ${pace}m a minute in the open is barely moving, and guns ask for nothing better`
+    case "open-order":
+      return `a screen at ${s.spacing}m intervals: ${s.range}m of reach, fired on the move, and most shot sent at it finds the ground between the men — but it holds no ground itself`
+    case "in-battery":
+      return `guns off their limbers and reaching ${s.range}m — and going nowhere at all until they are hitched up again`
+    case "limbered":
+      return `hitched to the teams at ${pace}m a minute in the open, and not a gun of it can fire`
+  }
+}
+
 /** Bodies to arrange: men for infantry and cavalry, guns for artillery. */
 function bodies(arm: Arm, strength: number): number {
   return arm === "artillery"

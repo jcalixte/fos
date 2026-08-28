@@ -65,7 +65,7 @@ function hide(): void {
       :id="id"
       ref="tip"
       role="tooltip"
-      class="pointer-events-none fixed z-50 max-w-80 -translate-x-1/2 -translate-y-full rounded-sm bg-neutral px-2 py-1 text-xs leading-snug text-neutral-content shadow-lg"
+      class="pointer-events-none fixed z-50 max-w-80 -translate-x-1/2 -translate-y-full rounded-sm bg-neutral px-2 py-1 text-xs leading-snug whitespace-pre-line text-neutral-content shadow-lg"
       :class="placed ? 'opacity-100' : 'opacity-0'"
       :style="{ left: `${at.left}px`, top: `${at.top}px` }"
     >
