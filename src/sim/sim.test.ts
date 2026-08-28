@@ -746,6 +746,23 @@ describe("C2 Initiative — the Standing Order", () => {
     expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("stand-off"))
   })
 
+  it("gives no ground with guns in battery, which stand on their trails", () => {
+    const { unit, battle } = facing(150, {
+      arm: "artillery",
+      formation: "in-battery",
+      strength: 120,
+      standing: { latitude: "stand-off", holdFire: false },
+    })
+    const stood = { ...unit.position }
+    for (let i = 0; i < 3000; i++) step(battle)
+    // The rule sits above the one that limbers up, so a battery it answered for
+    // was a battery held under an Order it could never walk — suspended, and
+    // firing the worse for it.
+    expect(unit.suspendedBy).not.toBe("gave ground rather than be closed with")
+    expect(distance(unit.position, stood)).toBe(0)
+    expect(battle.volleys.length + unit.reload).toBeGreaterThan(0)
+  })
+
   it("follows up as they give way, and only a Unit told it may", () => {
     for (const latitude of ["hold-ground", "follow-up"] as const) {
       const { unit, battle } = facing(

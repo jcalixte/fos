@@ -414,6 +414,15 @@ export const RULES: InitiativeRule[] = [
     applies: (unit, battle) => {
       if (unit.standing.latitude !== "stand-off") return null
       if (unit.charging !== null) return null
+      // A Formation with no pace gives no ground: guns in battery are standing
+      // on their trails and go nowhere at all, so the march this rule returns
+      // would be one they could never walk and the Order above it would stay
+      // suspended for as long as anything was in front of them. What a battery
+      // does about an enemy coming on is limber up, and there is a rule for
+      // that below. Guarded here rather than there because this rule sits
+      // above the limbering one and would otherwise answer first with an act
+      // the Unit cannot perform.
+      if (baseSpeed(unit.arm, intendedFormation(unit)) <= 0) return null
       // A mob is nothing to give ground to, and something that has recoiled is
       // going the other way already.
       const enemy = nearestEnemy(unit, battle, STANDOFF_RANGE, (other) => !isRouting(other))
