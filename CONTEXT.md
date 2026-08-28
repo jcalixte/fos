@@ -121,6 +121,15 @@ The rectangle of Field a Unit's Formation covers. Terrain applies to a Unit by a
 cells under its Footprint — a Unit is never partly in two places, it is "60% in wood".
 _Avoid_: hitbox, bounds, collider, area
 
+**Density**:
+How much of the ground under a Formation is actually body rather than air, read off the
+intervals a Unit stands at. It is what a shot crossing the Formation fails to find: men in
+line at two-foot intervals are a wall, and a screen in Open Order at over five feet is
+mostly the gap between them. Derived from the Formation's spacing, never authored, and it
+is the reason dispersal is not priced as Depth — a screen stands better under guns than a
+line, and a column stands worst of all.
+_Avoid_: packing, spread, cover, evasion, armour
+
 ### Seeing
 
 **Powder Smoke**:

@@ -88,6 +88,17 @@ const CAVALRY: Record<string, FormationSpec> = {
 /** Gunners per gun. Artillery's Frontage is set by its guns, not by its men. */
 const GUNNERS_PER_GUN = 15
 
+/**
+ * Metres of ground one body stands in, across and front to rear alike. A man is
+ * about two feet across in the ranks; a horse and rider a yard; a gun with its
+ * crew round the trail rather more.
+ *
+ * A fact about what is standing there and not about the Formation it stands in,
+ * which is why it is per Arm and authored once (F8) — the same discipline
+ * PENETRATION is held to on the weapon's side.
+ */
+const BODY_METRES: Record<Arm, number> = { infantry: 0.6, cavalry: 1, artillery: 2.5 }
+
 const ARTILLERY: Record<string, FormationSpec> = {
   "in-battery": {
     // Zero, not slow. The guns are off their limbers and standing on their
@@ -169,6 +180,30 @@ export function depth(arm: Arm, formation: FormationName, strength: number): num
   const g = grid(arm, formation, strength)
   if (formation === "square") return frontage(arm, formation, strength)
   return Math.max(s.rankDepth, g.ranks * s.rankDepth)
+}
+
+/**
+ * The share of the bodies in a shot's way that it actually finds — one figure
+ * for a shot running through the ranks, one for a shot running down them.
+ *
+ * A shot crossing the ranks travels in the lane of one file, so what decides
+ * whether that lane holds anybody is the file spacing: a line at 0.6m intervals
+ * is a wall, and a ball inside its Frontage is in somebody's lane. Open Order at
+ * 1.6m is mostly air, and the ball has a bit better than one chance in three of
+ * being in a lane at all. A shot running down a rank is the same argument turned
+ * sideways, so it reads rank depth instead.
+ *
+ * This is the other half of what C3's geometry buys. Depth is what round shot
+ * ploughs and the Volley has always charged a column for it; this is what a shot
+ * does *not* find in open ground. Without it, dispersal was priced as depth —
+ * a screen took two and a half times what the line it screened took, and stood
+ * worse under guns than a square, which is the opposite of what the Formation
+ * is for.
+ */
+export function density(arm: Arm, formation: FormationName): Grid {
+  const s = spec(arm, formation)
+  const body = BODY_METRES[arm]
+  return { files: Math.min(1, body / s.rankDepth), ranks: Math.min(1, body / s.spacing) }
 }
 
 export interface Footprint {

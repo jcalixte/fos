@@ -44,7 +44,7 @@ import { armyReturns } from "./return"
 import { applyInitiative } from "./initiative"
 import { defaultStanding, leash } from "./standing"
 import { clearLine, route } from "./routing"
-import type { Battle, Field, Grade, Unit } from "./types"
+import type { Battle, Field, FormationName, Grade, Unit } from "./types"
 import { distance } from "./vec"
 
 function battalion(overrides: Partial<Unit> = {}): Unit {
@@ -1077,6 +1077,28 @@ describe("C6 Fighting", () => {
     // And it reaches as far as the range says, not as far as the swarm is wide.
     const beyond = facingOff(200, {}, { formation: "open-order" })
     expect(aim(beyond.battle, beyond.shooter)).toBeNull()
+  })
+
+  it("ploughs a column and lets a screen through: depth and dispersal are not the same", () => {
+    // One eight-gun battery at four hundred metres, against the same seven
+    // hundred men stood three ways. Round shot finds what is deep and behind
+    // what it has already hit — and finds much less of a screen at 1.6m
+    // intervals, which is mostly the ground between men.
+    const shot = (formation: FormationName) => {
+      const { battle, shooter } = facingOff(
+        400,
+        { formation },
+        { arm: "artillery", formation: "in-battery", strength: 120 },
+      )
+      return volleyCasualties(shooter, aim(battle, shooter)!)
+    }
+    const line = shot("line")
+    expect(shot("attack-column")).toBeGreaterThan(line * 3)
+    // And under guns a screen is the safest place on the Field, square included:
+    // charging its Density made it the second worst, worse than a square, which
+    // is the opposite of what a battalion sends its skirmishers out for.
+    expect(shot("open-order")).toBeLessThan(line * 0.7)
+    expect(shot("open-order")).toBeLessThan(shot("square"))
   })
 
   it("holds its fire until it has reloaded", () => {

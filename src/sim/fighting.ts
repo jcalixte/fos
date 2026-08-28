@@ -1,5 +1,6 @@
 import {
   allRoundStandoff,
+  density,
   fireZone,
   firesOnTheMove,
   footprint,
@@ -247,14 +248,25 @@ export function aim(battle: Battle, unit: Unit): Aim | null {
  * the ball down two hundred files and taking it head-on runs it through three
  * ranks — the difference the period cared most about, and it is geometry.
  *
+ * Counted at the Density the Formation stands at, so what a shot meets is the
+ * bodies in its way less the ground between them: a ball crossing a line is in
+ * somebody's lane the whole way, and one crossing a screen at 1.6m intervals
+ * mostly is not. Depth and dispersal are then priced apart, which is the whole
+ * reason a battalion sends its skirmishers out rather than closing them up.
+ *
  * A square is counted as the one Face the shot enters and not as both sides of
  * the hollow, so it is a little safer here than it was in life.
  */
 export function bodiesInPath(target: Unit, direction: number): number {
   const g = grid(target.arm, target.formation, target.strength)
+  const d = density(target.arm, target.formation)
   const shot = axes(direction).along
   const { along, across } = axes(target.facing)
-  return Math.max(1, g.ranks * Math.abs(dot(shot, along)) + g.files * Math.abs(dot(shot, across)))
+  return Math.max(
+    1,
+    g.ranks * d.ranks * Math.abs(dot(shot, along)) +
+      g.files * d.files * Math.abs(dot(shot, across)),
+  )
 }
 
 /**
