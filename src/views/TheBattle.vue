@@ -44,13 +44,18 @@ function take(armyId: string): void {
 /**
  * The Headquarters in one line, or nothing while it is standing clear. Riding
  * outranks harried: a staff in the saddle is not sending riders at all, so what
- * the wait at the table would have cost is beside the point.
+ * the wait at the table would have cost is beside the point. What it says while
+ * riding has to carry both halves — nothing is leaving, and what he says now is
+ * being written down — or the player reads the dictation as a delivery.
  */
 const headquartersNote = computed(() => {
   if (ui.phase !== "battle") return null
   const hq = ui.headquarters
   if (hq.riding) {
-    return { text: "The Headquarters is riding — no Order can leave it", tone: "text-error" }
+    const held = hq.dictated
+      ? ` (${hq.dictated} dictated, waiting)`
+      : " — what you order now is dictated"
+    return { text: `The Headquarters is riding${held}`, tone: "text-error" }
   }
   if (hq.harried) {
     return { text: "The Headquarters is harried — Orders are slow to leave", tone: "text-warning" }
@@ -109,9 +114,10 @@ onBeforeUnmount(() => {
           {{ ui.ordersInFlight }} order{{ ui.ordersInFlight === 1 ? "" : "s" }} in flight
         </p>
 
-        <!-- What the Headquarters is costing right now. A press that sends no
-             rider has to be explained by something already on screen, and this
-             is it: riding is silence, harried is a wait at the table. -->
+        <!-- What the Headquarters is costing right now. A press whose rider
+             does not set off has to be explained by something already on
+             screen, and this is it: riding holds what is said until the staff
+             is established, harried is a wait at the table. -->
         <p v-if="headquartersNote" class="text-xs" :class="headquartersNote.tone">
           {{ headquartersNote.text }}
         </p>

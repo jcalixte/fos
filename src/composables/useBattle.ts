@@ -102,11 +102,11 @@ export interface BattleUi {
   /** What decided it, carried through so the Return can point at the figure. */
   decidedBy: Outcome["by"] | null
   /**
-   * The player's own Headquarters, as the screen has to read it: nothing can be
-   * ordered while it is riding, and everything is later while it is harried
-   * (ADR-0008).
+   * The player's own Headquarters, as the screen has to read it: nothing leaves
+   * it while it is riding — what is ordered then is dictated and counted here —
+   * and everything is later while it is harried (ADR-0008).
    */
-  headquarters: { riding: boolean; harried: boolean; surcharge: number }
+  headquarters: { riding: boolean; harried: boolean; surcharge: number; dictated: number }
 }
 
 /** A Battle Ui as it stands with no Scenario on the Field. */
@@ -136,7 +136,7 @@ function blankUi(): BattleUi {
     conceding: false,
     keyGround: [],
     decidedBy: null,
-    headquarters: { riding: false, harried: false, surcharge: 0 },
+    headquarters: { riding: false, harried: false, surcharge: 0, dictated: 0 },
   }
 }
 
@@ -352,6 +352,7 @@ export function useBattle() {
       ui.headquarters.riding = isRiding(hq)
       ui.headquarters.harried = hq.harried
       ui.headquarters.surcharge = hq.surcharge
+      ui.headquarters.dictated = hq.dictated.length
     }
     if (ui.dispatches.length !== r.battle.dispatches.length) {
       ui.dispatches = [...r.battle.dispatches]
@@ -641,9 +642,10 @@ export function useBattle() {
     if (!commandable()) return false
     const hq = headquarters()
     if (!hq) return false
-    // Nothing to say if there is nobody to carry it: a staff in the saddle
-    // sends no riders, and the Field and the panel both say so while it is.
-    if (!sendOrder(r.battle, hq, ui.selected, body)) return false
+    // A rider takes it, or the staff is in the saddle and it is dictated for
+    // when there is a table again. Either way it was said and is remembered —
+    // the Field and the panel both show which of the two he got.
+    sendOrder(r.battle, hq, ui.selected, body)
     if (body.kind === "move") remember(ui.selected, body.arrivalFormation)
     if (body.kind === "form") remember(ui.selected, body.formation)
     ui.dispatches = [...r.battle.dispatches]

@@ -16,7 +16,7 @@ import {
   sendOrder,
 } from "./headquarters"
 import { unitWeight } from "./morale"
-import { COURIER_SPEED, estimateDelay } from "./orders"
+import { COURIER_SPEED, estimateDelay, ghosts } from "./orders"
 import { blankField, entryToUnit } from "./scenario"
 import type { Battle, Field, Headquarters, Unit, Vec2 } from "./types"
 import { distance } from "./vec"
@@ -48,7 +48,14 @@ function unit(overrides: Partial<Unit> = {}): Unit {
 }
 
 function headquarters(at: Vec2, army = "french"): Headquarters {
-  return { army, position: { ...at }, destination: null, surcharge: 0, harried: false }
+  return {
+    army,
+    position: { ...at },
+    destination: null,
+    dictated: [],
+    surcharge: 0,
+    harried: false,
+  }
 }
 
 function fixture(units: Unit[], hq: Headquarters, field?: Field): Battle {
@@ -165,14 +172,77 @@ describe("a staff in the saddle", () => {
 
     rideTo(battle, hq, { x: 300, y: 500 })
     expect(isRiding(hq)).toBe(true)
-    expect(sendOrder(battle, hq, target.id, { kind: "halt" })).toBeNull()
+    expect(canSendCourier(hq)).toBe(false)
+    sendOrder(battle, hq, target.id, { kind: "halt" })
     expect(battle.couriers).toHaveLength(0)
 
     // 200m at a staff's pace, and then it is a Headquarters again.
     run(battle, 200 / HEADQUARTERS_SPEED + 1)
     expect(isRiding(hq)).toBe(false)
     expect(hq.position.x).toBeCloseTo(300, 0)
-    expect(sendOrder(battle, hq, target.id, { kind: "halt" })).not.toBeNull()
+    sendOrder(battle, hq, target.id, { kind: "halt" })
+    expect(battle.couriers).toHaveLength(2)
+  })
+
+  it("takes down what is said in the saddle, and sends it the moment it settles", () => {
+    const target = unit({ position: { x: 900, y: 500 } })
+    const battle = fixture([target], headquarters({ x: 100, y: 500 }))
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 300, y: 500 })
+    sendOrder(battle, hq, target.id, {
+      kind: "move",
+      destination: { x: 700, y: 200 },
+      arrivalFacing: 0,
+      arrivalFormation: "line",
+    })
+    // Nothing is on the road, and nothing has been thrown away either.
+    expect(battle.couriers).toHaveLength(0)
+    expect(hq.dictated).toHaveLength(1)
+    // It is a thing the player can see, the same as any Order in flight: the
+    // Ghost stands on the ground he named, with no rider out yet.
+    const ghost = ghosts(battle).find((g) => g.unitId === target.id)
+    expect(ghost?.position).toEqual({ x: 700, y: 200 })
+
+    run(battle, 200 / HEADQUARTERS_SPEED + 1)
+    expect(hq.dictated).toHaveLength(0)
+    expect(battle.couriers).toHaveLength(1)
+    // From the ground the staff ended up on, not the ground it dictated from.
+    expect(battle.couriers[0].origin.x).toBeCloseTo(300, 0)
+  })
+
+  it("holds one dictated Order per Unit, the last one said", () => {
+    const target = unit({ position: { x: 900, y: 500 } })
+    const other = unit({ id: "u2", name: "3e Ligne", position: { x: 800, y: 500 } })
+    const battle = fixture([target, other], headquarters({ x: 100, y: 500 }))
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 300, y: 500 })
+    sendOrder(battle, hq, target.id, { kind: "halt" })
+    sendOrder(battle, hq, other.id, { kind: "halt" })
+    sendOrder(battle, hq, target.id, { kind: "form", formation: "square" })
+
+    expect(hq.dictated).toHaveLength(2)
+    const held = hq.dictated.find((d) => d.unitId === target.id)
+    expect(held?.body).toEqual({ kind: "form", formation: "square" })
+  })
+
+  it("charges the dictated Orders whatever the table costs when they leave it", () => {
+    const target = unit({ position: { x: 900, y: 500 } })
+    const battle = fixture([target], headquarters({ x: 100, y: 500 }))
+    const hq = battle.armies[0].headquarters
+    if (!hq) throw new Error("fixture has no Headquarters")
+
+    rideTo(battle, hq, { x: 300, y: 500 })
+    sendOrder(battle, hq, target.id, { kind: "halt" })
+    // Nothing at the table when it was said; the enemy is up to the ground it
+    // settles on. The wait is at the table, so this is the table it pays for.
+    hq.surcharge = OVERRUN_SURCHARGE
+    run(battle, 200 / HEADQUARTERS_SPEED + 1)
+
+    expect(battle.couriers[0].hold).toBeCloseTo(OVERRUN_SURCHARGE, 0)
   })
 
   it("shortens the ride it has bought, because a Courier leaves from where it stands", () => {

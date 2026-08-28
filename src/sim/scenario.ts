@@ -143,6 +143,7 @@ export function assemble(scenario: AssembledScenario): Battle {
         army: a.id,
         position: { ...a.headquarters },
         destination: null,
+        dictated: [],
         surcharge: 0,
         harried: false,
       },

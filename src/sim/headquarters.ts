@@ -2,7 +2,7 @@ import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { beatsPoint } from "./fighting"
 import { isRouting } from "./morale"
 import { issueOrder } from "./orders"
-import type { Battle, Field, Headquarters, Order, OrderBody, Unit, UnitId, Vec2 } from "./types"
+import type { Battle, Field, Headquarters, OrderBody, Unit, UnitId, Vec2 } from "./types"
 import { bearing, distance } from "./vec"
 
 /**
@@ -16,7 +16,10 @@ import { bearing, distance } from "./vec"
  * Three states, and the whole of them is how far the nearest enemy Unit is plus
  * whether there is ground the staff is still trying to reach. Standing, it
  * sends riders on the ride alone. Harried, every Order waits at the table
- * first. Riding, nothing leaves it at all.
+ * first. Riding, nothing leaves it at all — what the commander says in the
+ * saddle is dictated to an aide and written out when there is a table to write
+ * it at, so the blackout is the same length it ever was and the player is not
+ * pressing buttons that do nothing.
  */
 
 /**
@@ -98,19 +101,54 @@ export function canSendCourier(headquarters: Headquarters): boolean {
 }
 
 /**
- * Send an Order from a Headquarters, or nothing where none can leave it. The
- * rule about a staff in the saddle lives here rather than in the screen: what
- * the player presses is a button, and whether there is anybody to carry the
- * Order is the simulation's to say.
+ * Say an Order at a Headquarters. A rider takes it where there is one to take
+ * it, and where the staff is in the saddle it is dictated instead and goes the
+ * moment the staff is established. The rule lives here rather than in the
+ * screen: what the player presses is a button, and what becomes of what he said
+ * is the simulation's to say.
  */
 export function sendOrder(
   battle: Battle,
   headquarters: Headquarters,
   unitId: UnitId,
   body: OrderBody,
-): Order | null {
-  if (!canSendCourier(headquarters)) return null
-  return issueOrder(battle, unitId, body, headquarters.position, courierHold(headquarters))
+): void {
+  if (!canSendCourier(headquarters)) {
+    dictate(battle, headquarters, unitId, body)
+    return
+  }
+  issueOrder(battle, unitId, body, headquarters.position, courierHold(headquarters))
+}
+
+/** What the Dispatch feed should call a Unit. */
+function named(battle: Battle, unitId: UnitId): string {
+  return battle.units.find((u) => u.id === unitId)?.name ?? "a Unit that is no longer there"
+}
+
+/**
+ * Write an Order into the aide's notebook. One Unit holds one dictated Order:
+ * a second for the same Unit puts out the first rather than joining it, because
+ * both would leave the table in the same instant and there would be no saying
+ * which of them the Unit obeyed.
+ */
+function dictate(
+  battle: Battle,
+  headquarters: Headquarters,
+  unitId: UnitId,
+  body: OrderBody,
+): void {
+  const held = headquarters.dictated.findIndex((d) => d.unitId === unitId)
+  const entry = { unitId, body, dictatedAt: battle.time }
+  if (held >= 0) headquarters.dictated[held] = entry
+  else headquarters.dictated.push(entry)
+  battle.dispatches.push({
+    at: battle.time,
+    unitId,
+    text:
+      held >= 0
+        ? `The Order for ${named(battle, unitId)} is dictated again in the saddle, over the one already written`
+        : `An Order for ${named(battle, unitId)} is dictated in the saddle; it goes when the staff is established`,
+  })
 }
 
 /** Hold the point inside the Field, clear of the very edge. */
@@ -131,14 +169,15 @@ function standsOnPassableGround(field: Field, point: Vec2): boolean {
 
 /**
  * Send the staff to new ground. The player's own decision, and the expensive
- * one: from here until it is established, no Order can leave.
+ * one: from here until it is established, no Order can leave — he may go on
+ * dictating, and none of it moves.
  */
 export function rideTo(battle: Battle, headquarters: Headquarters, to: Vec2): void {
   headquarters.destination = ontoTheField(battle.field, to)
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
-    text: "The Headquarters is riding for new ground; no Order can leave it until it is established",
+    text: "The Headquarters is riding for new ground; nothing said from here on leaves it until it is established",
   })
 }
 
@@ -290,11 +329,27 @@ function advanceRide(battle: Battle, headquarters: Headquarters, dt: number): vo
   headquarters.position = next
 }
 
+/**
+ * The staff is at a table again. What was dictated on the ride is written out
+ * and goes now, in the order it was said and from the ground the staff has
+ * ended up on — and it pays whatever the table costs *now*, because the wait is
+ * at the table and not on the road: a staff that has settled under fire holds
+ * every one of them the harrying's twenty seconds.
+ */
 function settle(battle: Battle, headquarters: Headquarters): void {
   headquarters.destination = null
+  const dictated = headquarters.dictated
+  headquarters.dictated = []
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
-    text: "The Headquarters is established, and Orders can be written again",
+    text:
+      dictated.length === 0
+        ? "The Headquarters is established, and its riders can set off again"
+        : `The Headquarters is established; the ${dictated.length} Order${dictated.length === 1 ? "" : "s"} dictated on the ride ${dictated.length === 1 ? "is" : "are"} away`,
   })
+  const hold = courierHold(headquarters)
+  for (const entry of dictated) {
+    issueOrder(battle, entry.unitId, entry.body, headquarters.position, hold)
+  }
 }

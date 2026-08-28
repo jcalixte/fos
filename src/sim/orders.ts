@@ -210,39 +210,54 @@ export interface Ghost {
   formation: Unit["formation"]
 }
 
+/** Where one Order would put its Unit, or nothing where it names no ground. */
+function ghostOf(battle: Battle, unit: Unit, body: OrderBody): Ghost | null {
+  if (body.kind === "move") {
+    return {
+      unitId: unit.id,
+      position: body.destination,
+      facing: body.arrivalFacing,
+      formation: body.arrivalFormation,
+    }
+  }
+  if (body.kind === "form") {
+    return {
+      unitId: unit.id,
+      position: unit.position,
+      facing: unit.facing,
+      formation: body.formation,
+    }
+  }
+  if (body.kind === "charge") {
+    // On the Unit it names, which is moving — so the mark follows it, and the
+    // player watches the rider chase a target that has gone somewhere else.
+    const target = battle.units.find((u) => u.id === body.targetId)
+    if (!target) return null
+    return {
+      unitId: unit.id,
+      position: target.position,
+      facing: bearing(target.position, unit.position),
+      formation: unit.formation,
+    }
+  }
+  return null
+}
+
 export function ghosts(battle: Battle): Ghost[] {
   const out: Ghost[] = []
-  for (const courier of battle.couriers) {
-    const unit = battle.units.find((u) => u.id === courier.order.unitId)
-    if (!unit) continue
-    const body = courier.order.body
-    if (body.kind === "move") {
-      out.push({
-        unitId: unit.id,
-        position: body.destination,
-        facing: body.arrivalFacing,
-        formation: body.arrivalFormation,
-      })
-    } else if (body.kind === "form") {
-      out.push({
-        unitId: unit.id,
-        position: unit.position,
-        facing: unit.facing,
-        formation: body.formation,
-      })
-    } else if (body.kind === "charge") {
-      // On the Unit it names, which is moving — so the mark follows it, and the
-      // player watches the rider chase a target that has gone somewhere else.
-      const target = battle.units.find((u) => u.id === body.targetId)
-      if (target) {
-        out.push({
-          unitId: unit.id,
-          position: target.position,
-          facing: bearing(target.position, unit.position),
-          formation: unit.formation,
-        })
-      }
-    }
+  const mark = (unitId: UnitId, body: OrderBody): void => {
+    const unit = battle.units.find((u) => u.id === unitId)
+    if (!unit) return
+    const ghost = ghostOf(battle, unit, body)
+    if (ghost) out.push(ghost)
+  }
+  for (const courier of battle.couriers) mark(courier.order.unitId, courier.order.body)
+  // What was dictated in the saddle has no rider on the Field yet, and is a
+  // thing the player has committed to all the same (ADR-0008). Marking it is
+  // the same promise the Courier's own Ghost makes: an Order is watched from
+  // the moment it is given, never a hidden timer.
+  for (const army of battle.armies) {
+    for (const entry of army.headquarters?.dictated ?? []) mark(entry.unitId, entry.body)
   }
   // A Unit still working a move Order has not arrived: `order` is only cleared
   // once it is on the spot, faced and formed. So this outlives the Courier and

@@ -261,6 +261,18 @@ export interface Courier {
   hold: number
 }
 
+/**
+ * An Order the commander dictated from the saddle. It has no rider under it and
+ * is nowhere on the Field: it is a line in an aide's notebook, and it becomes an
+ * Order with a Courier the moment the staff is established (ADR-0008).
+ */
+export interface DictatedOrder {
+  unitId: UnitId
+  body: OrderBody
+  /** Battle time it was dictated, which is not the time it will be issued. */
+  dictatedAt: number
+}
+
 /** The player's own position on the Field: courier origin, eye, and a target. */
 export interface Headquarters {
   army: ArmyId
@@ -271,6 +283,15 @@ export interface Headquarters {
    * the Orders came from, and the commander is in the saddle (ADR-0008).
    */
   destination: Vec2 | null
+  /**
+   * What was dictated in the saddle, in the order it was given, waiting for a
+   * table to be written out at. The ride is as silent as it ever was — nothing
+   * here is on the road — but the commander is not struck dumb by it, and one
+   * Unit holds one dictated Order: a second replaces the first, because they
+   * would otherwise leave in the same instant and arrive in no particular
+   * order.
+   */
+  dictated: DictatedOrder[]
   /**
    * Seconds every Order waits before its rider sets off, whatever the ride
    * after it. Zero at Deployment, and each Overrun adds to it for good — the
