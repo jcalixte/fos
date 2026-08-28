@@ -211,6 +211,18 @@ function chargedByCavalry(unit: Unit, battle: Battle): boolean {
  * it could see would never observe anything; well outside the hundred and fifty
  * of a Charge's run-in, because inside that a battalion is not standing off, it
  * is being caught.
+ *
+ * Flat, and not read off the Formation's own reach, which is worth saying
+ * because it looks like it should be. Two hundred is outside every reach in the
+ * game but a gun's, so a screen standing off appears to be giving ground from
+ * an enemy it could have been shooting at. It is not: the enemy is closing
+ * while the screen backs, the pair spend the whole approach inside the screen's
+ * hundred and fifty, and once the leash is spent the screen stands and fires
+ * like anything else. Holding them at the edge of its own musketry instead
+ * makes it start later, be caught sooner, and fire *less* — eleven Volleys for
+ * a hundred and thirty-five men against ten for a hundred and eighteen. The
+ * trigger is when to begin walking, not when to begin shooting, and those are
+ * not the same distance.
  */
 const STANDOFF_RANGE = 200
 
