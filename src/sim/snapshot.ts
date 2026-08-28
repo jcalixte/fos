@@ -62,6 +62,11 @@ export interface UnitSnapshot {
   /** True once that Charge has been thrown back and is running back out. */
   recoiling: boolean
   /**
+   * True once that Charge has become a Pursuit: what it is aimed at is a mob,
+   * and the regiment is riding it down rather than going in on anything.
+   */
+  pursuing: boolean
+  /**
    * Metres per second over the ground it is standing on, in the Formation it is
    * standing in. Drawn from the simulation rather than recomputed, because the
    * renderer has no business knowing what the marsh does to a battalion.
@@ -120,6 +125,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       charging: unit.charging?.targetId ?? null,
       aiming: aim(battle, unit)?.target.id ?? null,
       recoiling: unit.charging?.recoiling ?? false,
+      pursuing: unit.charging?.pursuing ?? false,
       speed: unitSpeed(battle, unit),
     })),
     couriers: battle.couriers.map((courier) => ({

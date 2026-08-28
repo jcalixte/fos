@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue"
 import HelpTip from "@/components/HelpTip.vue"
-import { canCharge } from "@/sim/charge"
+import { canCharge, canPursue } from "@/sim/charge"
 import { baseSpeed, drillSeconds, explainFormation, formationsFor, frontage } from "@/sim/formation"
 import { describeLatitude, explainLatitude, LATITUDES } from "@/sim/standing"
 import { describeFormation, type FormationName, type Grade, type Latitude } from "@/sim/types"
@@ -44,6 +44,12 @@ const busy = computed(() => props.unit.changingTo !== null)
 const deaf = computed(() => props.unit.routing || props.disabled)
 /** Guns do not charge, and neither does a Unit already committed to one. */
 const mounted = computed(() => canCharge(props.unit.arm) && !props.unit.charging)
+/**
+ * Whether this Unit can ride a mob down. Said on the button rather than left to
+ * be discovered, because a Routing enemy outlines for horse and not for foot
+ * and there is nothing on the Field to explain the difference.
+ */
+const rides = computed(() => canPursue(props.unit.arm))
 /**
  * Blown: it will not be let go at anybody until it has its wind back. Offered
  * and disabled rather than hidden, because the reason is the point — a charge
@@ -188,6 +194,9 @@ function rungTip(option: Latitude): string {
           <span v-else-if="unit.recoiling" class="text-warning">
             thrown back from {{ chargingName ?? "it" }}, and running clear
           </span>
+          <span v-else-if="unit.pursuing" class="text-error">
+            riding down {{ chargingName ?? "a mob" }}, and going where it goes
+          </span>
           <span v-else-if="unit.charging" class="text-error">
             gone at {{ chargingName ?? "the enemy" }}
           </span>
@@ -264,7 +273,9 @@ function rungTip(option: Latitude): string {
               blown
                 ? 'blown — it will not go at anybody until it has its wind back'
                 : arming
-                  ? 'now press the Unit to go at'
+                  ? rides
+                    ? 'now press the Unit to go at — a mob among them, which is a Pursuit'
+                    : 'now press the Unit to go at'
                   : 'aim a Charge at a Unit'
             "
           >
