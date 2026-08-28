@@ -199,9 +199,9 @@ _Avoid_: AI, autonomy, behaviour, reflex
 
 **Standing Order**:
 The brief a Unit carries and consults all afternoon, rather than an Order it carries out once: how
-much Latitude it has, and whether it is to hold its fire. Given free at Deployment, because that
-is the hour a subordinate is briefed in, and couriered like anything else after. Arriving, it
-changes what the Unit does unbidden and never what it is doing under orders.
+much Latitude it has. Given free at Deployment, because that is the hour a subordinate is briefed
+in, and couriered like anything else after. Arriving, it changes what the Unit does unbidden and
+never what it is doing under orders.
 _Avoid_: stance, posture, mode, rules of engagement, doctrine
 
 **Latitude**:
@@ -463,8 +463,8 @@ _Avoid_: game speed, time scale, simulation speed
   player is looking.
 - the ladder is neutral in the model, not French. "Vieille Garde" is a French *label* for the
   guard rung, not the rung itself — otherwise the Coldstream Guards end up carrying it.
-- "discipline makes them deadlier" is true but indirect. **Grade** buys rate of fire, the nerve
-  to hold fire to short range, and steadiness under fire — never a flat damage bonus.
+- "discipline makes them deadlier" is true but indirect. **Grade** buys rate of fire and
+  steadiness under fire — never a flat damage bonus.
 - a battalion historically detached a skirmish company rather than dispersing whole. Modelling
   that would split a Unit in two and break "one Unit, one Formation", so **Open Order** applies
   to the whole battalion. Known simplification, deliberately taken.

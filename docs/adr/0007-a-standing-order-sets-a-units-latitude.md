@@ -78,3 +78,23 @@ distrust the player.
 
 **Every Unit deploys at hold ground, fire at will**, which is exactly what a Unit did before this
 existed. Scenarios authored before it play identically until somebody moves the dial.
+
+**Amended: hold fire is removed, and a Standing Order is the Latitude.** The flag was inert and
+could only cost the player. Firing charges the firer nothing — no ammunition, no Fatigue, no
+Morale, no smoke, and nothing is concealed, so a Volley at long range is free and there is no
+husbandry to practise. A load is not banked, either: `reload` is a phase and not a magazine, so
+holding fire buys one guarantee — loaded at the instant of release — against every Volley given up
+on the way in, and the falloff leaves a long shot worth a third of a close one rather than nothing.
+The timing that would justify it was unbuyable in any case: making the release a Courier ride, as
+this ADR did, means asking for it ninety seconds before the enemy is at fifty metres. *Fire and
+feet are two questions* stands as reasoning; it was the wrong reason to keep a question the
+simulation could not answer.
+
+Two things went with it. A Unit briefed *close up, hold fire* walked a hundred metres to bring an
+enemy under fire it would never deliver, because the rule never asked. And a battery told to hold
+its fire still harried an enemy Headquarters, because that is read off the beaten ground and not
+off the firing — which is now honest again.
+
+It comes back the day fire costs something to give, and it will be a better instruction then,
+because there will be a reason to obey it. Until then it is not built, in the way Pursuit is not
+built.
