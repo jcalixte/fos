@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, useTemplateRef } from "vue"
 import { useRoute, useRouter } from "vue-router"
+import DeploymentPanel from "@/components/DeploymentPanel.vue"
 import DispatchPanel from "@/components/DispatchPanel.vue"
 import ReturnPanel from "@/components/ReturnPanel.vue"
 import TopBar from "@/components/TopBar.vue"
@@ -58,7 +59,7 @@ const headquartersNote = computed(() => {
       ? `${hq.dictated} Order${hq.dictated === 1 ? " is" : "s are"} written down, waiting on the staff`
       : "what you order now is written down instead"
     return {
-      text: `The Headquarters is riding — nobody is at a table, so no rider leaves; ${held}`,
+      text: `The Headquarters is riding; ${held}`,
       tone: "text-error",
     }
   }
@@ -283,23 +284,6 @@ onBeforeUnmount(() => {
         </div>
 
         <div
-          v-else-if="ui.phase === 'deployment'"
-          class="pointer-events-none absolute inset-x-0 top-0 flex justify-center p-4"
-        >
-          <p
-            class="max-w-2xl rounded-box bg-base-300/85 px-4 py-3 text-center text-xs leading-relaxed text-base-content/80 backdrop-blur"
-          >
-            <span class="font-semibold text-base-content">Deployment.</span>
-            Drag your Units inside the marked zone, and drag the Headquarters to where you mean to
-            stand — every Order you give will be ridden from there. You can send it to new ground
-            once the clock runs, but no rider leaves it while it is on the move — there is no table
-            to write at, so what you order then is taken down and rides when it is established.
-            Select a Unit to form it up, and drag from open ground to point it: before the clock
-            runs, both are free.
-          </p>
-        </div>
-
-        <div
           v-else-if="ui.phase === 'over'"
           class="absolute inset-0 grid place-items-center overflow-auto bg-base-300/80 p-6 backdrop-blur-sm"
         >
@@ -314,8 +298,12 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
+      <!-- One column, whichever of the two has something in it. Nothing is
+           reported before the clock runs, so Deployment says what to do with
+           the Field in the space the feed is not using yet. -->
+      <DeploymentPanel v-if="ui.phase === 'deployment'" class="w-80 shrink-0 max-lg:hidden" />
       <DispatchPanel
-        v-if="ui.phase !== 'loading' && !ui.error"
+        v-else-if="ui.phase !== 'loading' && !ui.error"
         class="w-80 shrink-0 max-lg:hidden"
         :dispatches="ui.dispatches"
         :selected="ui.selected"
