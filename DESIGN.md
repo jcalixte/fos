@@ -1245,6 +1245,41 @@ the open diagonal is the cost.
   0.08), which was true before this at 0.14 against 0.11 and is not what square is for anyway: a
   square has no flank, and a column struck off its Face still comes apart.
 
+- **A square beat less of the ground round it than a line did, which is the exact inverse of what
+  square is for.** A Face beats a slab — `across` metres wide, standing off its own edge, `range`
+  deep — and that is right for a Unit with one of them and an artefact for a Unit with four,
+  because four rectangles cannot tile a circle. What they left was not thin corners but blind
+  ones. Measured on a square of 700, which is a 36m box: 118m dead ahead, 52m at twenty degrees,
+  36m at thirty, and **nothing whatever at forty-five**. At 60m it beat 39% of the bearings around
+  it against a line's 49% — the one Formation whose whole purpose is having no blind side coming
+  off worse all round than the Formation that is all flank. It was exploitable in exactly the
+  situation square exists for: horse closing on the diagonal was unengaged until 25m, so the
+  correct way to charge a square was obliquely, for a reason that was never about squares.
+
+  The tempting fix is `faces: 0`, and it would have destroyed the Formation twice over. The
+  Faceless path hands out `overlap: 1` unconditionally, so a square would have fired every musket
+  it had in every direction at once; and `struckSide` returns null for a Unit with no Face, so
+  *any* Charge would have struck it off its Face and broken it outright. Square would have become
+  the worst thing on the Field rather than the answer to horse.
+
+  So the ground a Unit beats is read off the Face **count** and not off a Face: one Face is a
+  slab, and anything with four beats the ground all round it exactly as a screen does — its own
+  Footprint blown out by the range on every side. The Faces are still there and still doing the
+  two jobs they were doing, which is the whole reason this is not the Faceless case: they decide
+  which Face is firing along the bearing, and `overlap` still measures how much of it bears, now
+  across the line of fire rather than across the Face. Nothing about how *much* a square shoots
+  moves — one Face's muskets, and only as many of them as have the target across their front.
+  What moves is that there is no longer a direction it cannot point them.
+
+  Derived and not authored: the rule is `faces === 4` and would read the same for anything else
+  that ever has four. Measured after: 118–125m on every bearing and 100% of them at 60m, with a
+  line's 49% and an attack column's 13% untouched. The renderer draws the same lozenge it draws
+  for a screen, because a beaten ground drawn where the fire is not is the one kind of lie F5
+  cannot afford — its comment used to say the corners *stayed bare, as they were in life*, and
+  that was the thing being argued with. The budget run is byte-identical, which is again the whole
+  of what it proves: no square is ever formed in the silent runs, so they show no collateral
+  damage and cannot show the change working.
+
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which
   traverses and then fires, and generous for a line mid-wheel. And a square at 0.25 m/s clears the

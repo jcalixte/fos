@@ -422,6 +422,9 @@ _Avoid_: game speed, time scale, simulation speed
   route by which **Grade** reaches lethality, rather than any direct multiplier
 - **Contact** ends when one **Unit** **Breaks** — it is never a state a **Unit** sits in
 - A **Charge** resolves against the **Face** it strikes; off a **Face** there is no fight
+- A **Formation** with four **Faces** has no direction it is not fighting in, so it beats the
+  ground all round it and not four slabs with corners between them. What the **Faces** decide is
+  which one is firing and how much of it bears, never where the fire may point at all
 - The ranks standing behind a **Unit**'s fight hold it together when something arrives at it:
   depth is worth nothing against a **Volley** and something against a **Charge**, both coming on
   and landing. A **Formation** with no **Face** has none of it, whatever its depth
