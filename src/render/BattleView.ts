@@ -1,4 +1,12 @@
-import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
+import {
+  Application,
+  CanvasSource,
+  Container,
+  Graphics,
+  Sprite,
+  Texture,
+  type ColorSource,
+} from "pixi.js"
 import {
   bodyCount,
   faces,
@@ -15,7 +23,15 @@ import { moraleRung } from "@/sim/morale"
 import type { Arm, Battle, Field, FormationName, Grade, HeldGround, Vec2 } from "@/sim/types"
 import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
 import { angleDelta } from "@/sim/vec"
+import { buildStaffMapCanvas, STAFF_MAP_DEFAULTS, type StaffMapOptions } from "./staffmap"
 import { buildContourCanvas, buildTerrainCanvas } from "./terrain"
+
+/**
+ * Which of the two Field renderers is drawn. A parameter and not a constant so
+ * the plate can put them side by side: the only way to judge either is to look
+ * at the same ground twice.
+ */
+export type FieldStyle = "staff" | "shaded"
 
 /**
  * C10 Unit Renderer and C11 Effects.
@@ -195,7 +211,19 @@ export interface ViewState {
    * that is true.
    */
   arming: boolean
+  /**
+   * What a harried Headquarters is drawn in. Optional, and defaulting to the
+   * mob's own orange, because that is the colour everything going wrong is
+   * already drawn in — but the orange was chosen against grass at 1.13 and read
+   * on *hue* rather than on value, and the staff map's ground is warm. On it
+   * the alarm sits at 1.16 and the mark all but disappears at the moment it
+   * most needs seeing. A knob on the plate rather than a decision taken here.
+   */
+  alarm?: number
 }
+
+/** The mob's orange. The alarm until something is measured to beat it. */
+export const ALARM = 0xd8632f
 
 /** Mix a colour toward white, so Figures read against their own Unit's base. */
 function lighten(colour: number, amount: number): number {
@@ -319,6 +347,7 @@ export class BattleView {
   private effects = new Graphics()
   private visuals = new Map<string, UnitVisual>()
   private textures: Record<Arm, Texture> | null = null
+  private terrain: Sprite[] = []
   private field: Field | null = null
   private host: HTMLElement | null = null
   private observer: ResizeObserver | null = null
@@ -358,16 +387,42 @@ export class BattleView {
   }
 
   /** Draw the Field once. Terrain never changes during a battle. */
-  setField(field: Field): void {
+  setField(
+    field: Field,
+    style: FieldStyle = "staff",
+    options: StaffMapOptions = STAFF_MAP_DEFAULTS,
+  ): void {
     this.field = field
-    const terrain = new Sprite(Texture.from(buildTerrainCanvas(field)))
-    terrain.width = field.width * field.cellSize
-    terrain.height = field.height * field.cellSize
-    const contours = new Sprite(Texture.from(buildContourCanvas(field)))
-    contours.width = terrain.width
-    contours.height = terrain.height
-    this.world.addChildAt(contours, 0)
-    this.world.addChildAt(terrain, 0)
+    // Destroyed and not merely removed. A Field set over another one left the
+    // old terrain's texture alive on the GPU, and the new one came back sampled
+    // over a fraction of its own sprite.
+    for (const sprite of this.terrain) sprite.destroy({ texture: true, textureSource: true })
+    this.terrain = []
+    const metresX = field.width * field.cellSize
+    const metresY = field.height * field.cellSize
+    // Scaled from the canvas it was drawn on rather than through Sprite's own
+    // width setter. The two renderers draw at different resolutions, and the
+    // setter reads the texture's size at the moment it is assigned — which was
+    // enough to leave the second Field ever set on a BattleView at 1:1 texture
+    // pixels. Stating the scale cannot be early.
+    const lay = (canvas: HTMLCanvasElement, at: number) => {
+      // Built rather than fetched through `Texture.from`, which goes through a
+      // cache: setting a second Field on the same view came back holding the
+      // first one's dimensions, so the new canvas was sampled over a fraction
+      // of the sprite and the rest came out empty. One Field per view never
+      // showed it; the plate, which sets several, showed it at once.
+      const sprite = new Sprite(new Texture({ source: new CanvasSource({ resource: canvas }) }))
+      sprite.scale.set(metresX / canvas.width, metresY / canvas.height)
+      this.world.addChildAt(sprite, at)
+      this.terrain.push(sprite)
+      return sprite
+    }
+    lay(style === "staff" ? buildStaffMapCanvas(field, options) : buildTerrainCanvas(field), 0)
+    if (style === "shaded") {
+      // Hachures carry the relief on the staff map, so contours would be a
+      // second answer to a question already answered.
+      lay(buildContourCanvas(field), 1)
+    }
     this.layout()
   }
 
@@ -1217,7 +1272,7 @@ export class BattleView {
       // Only his own army's, because only his own Headquarters is drawn — and
       // only his own dictates anything.
       const dictated = units.filter((u) => u.dictated && u.army === view.playerArmy)
-      this.drawHeadquarters(g, view.headquarters, mpp, dictated)
+      this.drawHeadquarters(g, view.headquarters, mpp, dictated, view.alarm ?? ALARM)
     }
 
     if (view.drag) {
@@ -1251,10 +1306,11 @@ export class BattleView {
     hq: HeadquartersView,
     mpp: number,
     dictated: UnitSnapshot[],
+    alarm: number,
   ): void {
     const { x, y } = hq.position
     const r = 7 * mpp
-    const colour = hq.harried ? 0xd8632f : 0xf5e6a8
+    const colour = hq.harried ? alarm : 0xf5e6a8
     if (hq.destination) {
       const to = hq.destination
       g.moveTo(x, y).lineTo(to.x, to.y).stroke({ width: mpp, color: colour, alpha: 0.45 })
