@@ -1,6 +1,7 @@
 {
   "languages": {
     "TypeScript": {
+      "language_servers": ["vtsls", "!deno", "!typescript-language-server", "!eslint"],
       "format_on_save": "on",
       "formatter": {
         "external": {
@@ -10,6 +11,7 @@
       }
     },
     "JavaScript": {
+      "language_servers": ["vtsls", "!deno", "!typescript-language-server", "!eslint"],
       "format_on_save": "on",
       "formatter": {
         "external": {
@@ -18,7 +20,11 @@
         }
       }
     },
+    "TSX": {
+      "language_servers": ["vtsls", "!deno", "!typescript-language-server", "!eslint"]
+    },
     "Vue.js": {
+      "language_servers": ["vue-language-server", "vtsls", "tailwindcss-language-server", "!eslint"],
       "format_on_save": "on",
       "formatter": {
         "external": {
