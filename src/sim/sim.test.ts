@@ -11,9 +11,12 @@ import {
   figureSlots,
   fireZone,
   firesOnTheMove,
+  formationsFor,
   frontage,
+  gapToPoint,
   mobRadius,
   poseOf,
+  reachOnBearing,
   slots,
   spanAlong,
   unitFootprint,
@@ -47,7 +50,7 @@ import { armyReturns } from "./return"
 import { applyInitiative } from "./initiative"
 import { defaultStanding, leash } from "./standing"
 import { clearLine, route } from "./routing"
-import type { Battle, Field, FormationName, Grade, Unit } from "./types"
+import type { Arm, Battle, Field, FormationName, Grade, Unit, Vec2 } from "./types"
 import { distance, rotate } from "./vec"
 
 function battalion(overrides: Partial<Unit> = {}): Unit {
@@ -1266,6 +1269,42 @@ describe("C6 Fighting", () => {
     expect(aim(beyond.battle, beyond.shooter)).toBeNull()
   })
 
+  /** The quarter turn between a Unit's local slot layout and the Field. */
+  const QUARTER = Math.PI / 2
+
+  /** Every Formation that fires with no Face to fire it over. */
+  function facelessFirers(): { arm: Arm; formation: FormationName }[] {
+    const out: { arm: Arm; formation: FormationName }[] = []
+    for (const arm of ["infantry", "cavalry", "artillery"] as const) {
+      for (const formation of formationsFor(arm)) {
+        const zone = fireZone(arm, formation, 700)
+        if (zone && zone.faces === 0) out.push({ arm, formation })
+      }
+    }
+    return out
+  }
+
+  /**
+   * The furthest any point on a Footprint's edge is from the nearest man inside
+   * it — half a file's spacing at best, and more where the rear rank of a
+   * Strength that does not divide evenly comes up a file short. Measured off the
+   * layout rather than written down, so tuning a Formation's spacing moves it.
+   */
+  function insideEdge(men: Vec2[], shape: { width: number; depth: number }): number {
+    let worst = 0
+    for (let t = 0; t < 1; t += 0.005) {
+      for (const corner of [1, -1]) {
+        for (const edge of [
+          { x: (t - 0.5) * shape.width, y: (corner * shape.depth) / 2 },
+          { x: (corner * shape.width) / 2, y: (t - 0.5) * shape.depth },
+        ]) {
+          worst = Math.max(worst, Math.min(...men.map((m) => distance(m, edge))))
+        }
+      }
+    }
+    return worst
+  }
+
   it("beats no ground its own men are not standing within reach of", () => {
     // The peanut. A Faceless Unit's own body was measured by the shadow it cast
     // across the bearing rather than by where its men were, so a screen 150m
@@ -1274,28 +1313,60 @@ describe("C6 Fighting", () => {
     // pinched to a notch dead ahead where the two lobes met. The property that
     // fixes it, and the one worth holding: every point a Unit beats has one of
     // its own men inside the range of it.
-    const unit = battalion({ formation: "open-order", position: { x: 0, y: 0 }, facing: 0 })
-    const range = fireZone("infantry", "open-order", unit.strength)!.range
-    // Slots are laid out with the Face along local -y, which is the quarter
-    // turn the renderer gives the Unit's container.
-    const men = slots("infantry", "open-order", unit.strength).map((s) =>
-      rotate(s, unit.facing + Math.PI / 2),
-    )
-    for (let degrees = 0; degrees < 360; degrees += 5) {
-      const bearing = (degrees * Math.PI) / 180
-      let far = 0
-      for (let r = 1; r <= 400; r += 1) {
-        if (beatsPoint(unit, { x: Math.cos(bearing) * r, y: Math.sin(bearing) * r })) far = r
+    //
+    // Asked of every Faceless Formation there is and at two Strengths, with the
+    // slack read off the Formation's own layout, so the guard follows the tuning
+    // instead of having to be renumbered behind it.
+    for (const { arm, formation } of facelessFirers()) {
+      for (const strength of [200, 700]) {
+        const unit = battalion({ arm, formation, strength, position: { x: 0, y: 0 }, facing: 0 })
+        const zone = fireZone(arm, formation, strength)!
+        // Slots are laid out with the Face along local -y, which is the quarter
+        // turn the renderer gives the Unit's container.
+        const men = slots(arm, formation, strength).map((s) => rotate(s, unit.facing + QUARTER))
+        const slack = insideEdge(slots(arm, formation, strength), zone)
+        for (let degrees = 0; degrees < 360; degrees += 5) {
+          const bearing = (degrees * Math.PI) / 180
+          let far = 0
+          for (let r = 1; r <= Math.ceil(zone.range + zone.width + zone.depth); r += 1) {
+            if (beatsPoint(unit, { x: Math.cos(bearing) * r, y: Math.sin(bearing) * r })) far = r
+          }
+          const edge = { x: Math.cos(bearing) * far, y: Math.sin(bearing) * far }
+          const nearest = Math.min(...men.map((m) => distance(m, edge)))
+          const where = `${arm} ${formation} at ${strength}, ${degrees}°`
+          expect(nearest, where).toBeLessThanOrEqual(zone.range + slack)
+          // And the far edge is the far edge — a Formation falling short of its
+          // own reach would pass the line above by standing still. One metre of
+          // give for the metre the walk above steps in.
+          expect(nearest, where).toBeGreaterThan(zone.range - 1)
+        }
       }
-      const edge = { x: Math.cos(bearing) * far, y: Math.sin(bearing) * far }
-      const nearest = Math.min(...men.map((m) => Math.hypot(m.x - edge.x, m.y - edge.y)))
-      // The slack is the men and not the measure: the outermost stand half a
-      // file's spacing inside the Footprint's own edge, and the rear rank of a
-      // Strength that does not divide evenly is a file short.
-      expect(nearest).toBeLessThan(range + 3)
-      // And the far edge is the far edge — a Formation that fell short of its
-      // own reach would pass the line above by standing still.
-      expect(nearest).toBeGreaterThan(range - 2)
+    }
+  })
+
+  it("draws the beaten ground on the shape it fires on", () => {
+    // Two solutions of one shape: the sim asks how far a point is from the
+    // Footprint, the renderer asks how far the Footprint reaches on a bearing.
+    // Nothing forces them to agree except this, and a beaten ground drawn where
+    // the fire is not is the one kind of lie F5 cannot afford.
+    for (const { arm, formation } of facelessFirers()) {
+      for (const strength of [200, 700]) {
+        const zone = fireZone(arm, formation, strength)!
+        const shape = { width: zone.width, depth: zone.depth }
+        for (const facing of [0, 0.7, -2.4]) {
+          for (let degrees = 0; degrees < 360; degrees += 5) {
+            const bearing = (degrees * Math.PI) / 180
+            const reach = reachOnBearing(zone, facing, bearing)
+            const at = (r: number) => ({ x: Math.cos(bearing) * r, y: Math.sin(bearing) * r })
+            const where = `${arm} ${formation} at ${strength}, facing ${facing}, ${degrees}°`
+            const origin = { x: 0, y: 0 }
+            expect(gapToPoint(shape, origin, facing, at(reach)), where).toBeCloseTo(zone.range, 6)
+            expect(gapToPoint(shape, origin, facing, at(reach + 1)), where).toBeGreaterThan(
+              zone.range,
+            )
+          }
+        }
+      }
     }
   })
 
