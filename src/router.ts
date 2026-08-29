@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router"
 import { loadCatalogue } from "@/scenario/catalogue"
 import TheBattle from "@/views/TheBattle.vue"
 import TheMenu from "@/views/TheMenu.vue"
+import ThePlate from "@/views/ThePlate.vue"
 
 /**
  * The two things a cold URL can honestly name: the battles on offer, and one
@@ -19,6 +20,13 @@ import TheMenu from "@/views/TheMenu.vue"
  */
 const routes: RouteRecordRaw[] = [
   { path: "/", name: "battles", component: TheMenu },
+  /**
+   * The renderer's plate. A URL keeps its promise here for the same reason the
+   * battle list's does: what it names is a drawing of fixed data, so it comes
+   * back exactly as it went. Nothing links to it — it is for whoever is working
+   * on C9, C10 or C11 and needs to see all of it at once.
+   */
+  { path: "/plate", name: "plate", component: ThePlate },
   {
     path: "/battles/:battle",
     name: "battle",
