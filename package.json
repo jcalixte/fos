@@ -12,6 +12,7 @@
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check",
     "test": "vitest run",
+    "measure": "vitest run --config vitest.measure.config.ts",
     "test:watch": "vitest"
   },
   "dependencies": {
