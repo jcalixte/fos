@@ -143,4 +143,5 @@ Not built yet: Disorder, Concealment, Powder Smoke, sound.
   - [0008 — The Headquarters rides, and can be harried off its ground](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)
   - [0009 — The URL names a battle, and nothing inside one](./docs/adr/0009-the-url-names-a-battle.md)
   - [0010 — Fatigue is bought by the pace](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)
+  - [0011 — Morale comes back out of the fight](./docs/adr/0011-morale-comes-back-out-of-the-fight.md)
 <!-- docs:end -->
