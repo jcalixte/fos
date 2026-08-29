@@ -10,6 +10,9 @@ export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) } },
   test: {
     include: ["scripts/**/*.measure.ts"],
+    // The report *is* the product here, so it goes straight to stdout instead
+    // of being held back and shown only when something fails.
+    disableConsoleIntercept: true,
     testTimeout: 300_000,
     hookTimeout: 300_000,
   },
