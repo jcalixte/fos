@@ -19,7 +19,7 @@ import {
   unitFootprint,
 } from "./formation"
 import { GROUND_COST, GROUNDS, movementCost } from "./ground"
-import { aim, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
+import { aim, beatsPoint, reloadSeconds, resolveFire, volleyCasualties } from "./fighting"
 import {
   canCharge,
   chargeable,
@@ -1264,6 +1264,64 @@ describe("C6 Fighting", () => {
     // by its 187m Frontage would have credited it with.
     const beyond = facingOff(150, {}, { formation: "open-order" })
     expect(aim(beyond.battle, beyond.shooter)).toBeNull()
+  })
+
+  it("leaves a square no corner to be charged home on", () => {
+    // How far the Unit's fire carries on a bearing, walked out metre by metre
+    // against a bare point — the same measure a Headquarters is harried by.
+    const reach = (formation: FormationName, degrees: number) => {
+      const unit = battalion({ formation, position: { x: 0, y: 0 }, facing: 0 })
+      const bearing = (degrees * Math.PI) / 180
+      let far = 0
+      for (let r = 1; r <= 200; r += 1) {
+        if (beatsPoint(unit, { x: Math.cos(bearing) * r, y: Math.sin(bearing) * r })) far = r
+      }
+      return far
+    }
+    // Four Faces and therefore no bearing it is not fighting on. The corner used
+    // to be not thin but blind — 118m dead ahead and nothing whatever at 45°,
+    // so horse was charged home on the diagonal for no reason about squares.
+    expect(reach("square", 45)).toBeGreaterThan(reach("square", 0) * 0.8)
+    for (const degrees of [0, 20, 45, 70, 90, 135, 180]) {
+      expect(reach("square", degrees)).toBeGreaterThan(80)
+    }
+    // And a Face is still a Face: a line beats the ground in front of it and
+    // none to either side, which is the whole of what a flank is.
+    expect(reach("line", 0)).toBeGreaterThan(80)
+    expect(reach("line", 90)).toBe(0)
+    expect(reach("line", 180)).toBe(0)
+  })
+
+  it("beats more of the bearings round it than a line does, being what square is for", () => {
+    const share = (formation: FormationName, metres: number) => {
+      const unit = battalion({ formation, position: { x: 0, y: 0 }, facing: 0 })
+      let beaten = 0
+      for (let degrees = 0; degrees < 360; degrees += 1) {
+        const bearing = (degrees * Math.PI) / 180
+        const at = { x: Math.cos(bearing) * metres, y: Math.sin(bearing) * metres }
+        if (beatsPoint(unit, at)) beaten += 1
+      }
+      return beaten / 360
+    }
+    // It beat 39% of them against a line's 49% before this, which is the one
+    // Formation whose whole purpose is having no blind side coming off worse
+    // all round than the Formation that is all flank.
+    expect(share("square", 60)).toBe(1)
+    expect(share("square", 60)).toBeGreaterThan(share("line", 60))
+  })
+
+  it("still fires with one Face's muskets, and only those that bear", () => {
+    // Nothing about how much a square shoots moves. A Face 36m wide firing at
+    // something that presents less than that across the line of fire fires with
+    // the share of it that bears, exactly as a line does.
+    const wide = facingOff(60, { formation: "line" }, { formation: "square" })
+    const narrow = facingOff(60, { formation: "attack-column" }, { formation: "square" })
+    expect(aim(wide.battle, wide.shooter)!.overlap).toBe(1)
+    expect(aim(narrow.battle, narrow.shooter)!.overlap).toBe(1)
+    // A square is 36m across, so it takes something narrower than that to lose
+    // fire — and then it loses it in proportion.
+    const thin = facingOff(60, { formation: "line", strength: 40 }, { formation: "square" })
+    expect(aim(thin.battle, thin.shooter)!.overlap).toBeLessThan(0.5)
   })
 
   it("ploughs a column and lets a screen through: depth and dispersal are not the same", () => {

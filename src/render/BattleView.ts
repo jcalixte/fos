@@ -618,11 +618,13 @@ export class BattleView {
       const colour = view.armyColours[unit.army] ?? 0xffffff
       const alpha = unit.id === view.selected ? 0.16 : 0.07
       const line = this.metresPerPixel()
-      if (zone.faces === 0) {
-        // No Face: skirmishers shoot every way at once, so the beaten ground is
-        // the screen's own Footprint blown out by the range on every side — a
-        // long lozenge and not a circle. Sampled off the same standoff the sim
-        // reads, so what is drawn is where the fire reaches and not near it.
+      if (zone.faces !== 1) {
+        // Every way at once, and for the same two reasons the sim has: a screen
+        // has no Face to point, and a square has four and therefore no way it is
+        // not pointing. Either way the beaten ground is the Unit's own Footprint
+        // blown out by the range on every side — a lozenge and not a circle.
+        // Sampled off the same standoff the sim reads, so what is drawn is where
+        // the fire reaches and not near it.
         const ring: number[] = []
         for (let i = 0; i < ALL_ROUND_STEPS; i++) {
           const bearing = (i / ALL_ROUND_STEPS) * Math.PI * 2
@@ -635,15 +637,19 @@ export class BattleView {
           .stroke({ width: line * 1.5, color: colour, alpha: alpha * 3 })
         continue
       }
-      // A band per Face, each as wide as the Unit and standing off its edge.
-      // Square gets four and its corners stay bare, as they were in life.
-      const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
-      for (const side of sides) {
-        const facing = unit.facing + (side * Math.PI) / 2
-        const across = side % 2 === 0 ? zone.width : zone.depth
-        const out = side % 2 === 0 ? zone.depth : zone.width
-        this.fillBand(g, unit.position, facing, across, out / 2, zone.range, colour, alpha, line)
-      }
+      // One Face, one band: as wide as the Unit, standing off its edge, and
+      // bare to either side of it, which is what having flanks looks like.
+      this.fillBand(
+        g,
+        unit.position,
+        unit.facing,
+        zone.width,
+        zone.depth / 2,
+        zone.range,
+        colour,
+        alpha,
+        line,
+      )
     }
   }
 

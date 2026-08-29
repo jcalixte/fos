@@ -10,7 +10,7 @@ import {
 } from "./formation"
 import { fireEffect, isRouting, shake } from "./morale"
 import type { Arm, Battle, Grade, Unit, Vec2 } from "./types"
-import { axes, dot } from "./vec"
+import { angleDelta, axes, dot } from "./vec"
 
 /**
  * C6 Fighting — the Volley.
@@ -135,9 +135,16 @@ function band(zone: FireZone, side: number): { across: number; standoff: number 
   return { across, standoff }
 }
 
-function bearsOnSide(unit: Unit, zone: FireZone, side: number, target: Unit): Aim | null {
+/**
+ * The one-Face case: a slab `across` metres wide standing off the Face, `range`
+ * deep. Wider than it is deep and square-ended, because a battalion levels its
+ * muskets where the rank points — and bare to either side of that, because that
+ * is what a flank is.
+ */
+function bearsOnFace(unit: Unit, zone: FireZone, target: Unit): Aim | null {
+  const side = 0
   const { across, standoff } = band(zone, side)
-  const face = axes(unit.facing + side * QUARTER_TURN)
+  const face = axes(unit.facing)
   const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
   const shape = footprint(target.arm, target.formation, target.strength)
   const depthwise = spanAlong(shape, target.facing, face.along)
@@ -160,24 +167,77 @@ function bearsOnSide(unit: Unit, zone: FireZone, side: number, target: Unit): Ai
 }
 
 /**
- * The whole-circle case: skirmishers have no Face and shoot every way at once.
+ * Metres of ground between a Unit and a target along the line joining them, with
+ * both bodies measured along that line rather than by their longest side — so
+ * the gap a shot crosses is the ground actually between the two of them, and
+ * fire thins with the range instead of carrying flat to the edge of a Frontage.
  *
- * Both bodies are measured along the line of fire and not by their longest side,
- * exactly as a Face measures them — so the gap a shot crosses is the ground
- * actually between the two of them, and a screen's fire thins with the range
- * instead of carrying flat to the edge of its own Frontage.
+ * The measure every Faceless and every all-round case reads, so a screen and a
+ * square are asking the same question and getting it answered the same way.
  */
-function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
-  const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
-  const bearing = Math.atan2(offset.y, offset.x)
-  const line = axes(bearing).along
+function gapAlongBearing(unit: Unit, zone: FireZone, target: Unit, bearing: number): number {
   const shape = footprint(target.arm, target.formation, target.strength)
-  const near =
+  const line = axes(bearing).along
+  const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
+  return (
     Math.hypot(offset.x, offset.y) -
     spanAlong(shape, target.facing, line) / 2 -
     allRoundStandoff(zone, unit.facing, bearing)
+  )
+}
+
+/**
+ * The whole-circle case: skirmishers have no Face and shoot every way at once.
+ */
+function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
+  const bearing = Math.atan2(
+    target.position.y - unit.position.y,
+    target.position.x - unit.position.x,
+  )
+  const near = gapAlongBearing(unit, zone, target, bearing)
   if (near > zone.range) return null
   return { target, side: 0, gap: Math.max(0, near), overlap: 1 }
+}
+
+/**
+ * Four Faces, and therefore no direction the Unit is not fighting in.
+ *
+ * A Face beats a slab: `across` metres wide, standing off its own edge, `range`
+ * deep. That is right for a Unit with one of them — a line has bare flanks and
+ * the slab is what having them looks like — and it is an artefact for a Unit
+ * with four, because four rectangles cannot tile a circle. What they leave is
+ * corners, and the corners were not thin but blind: a square of 700 reached
+ * 118m dead ahead, 52m at twenty degrees, and *nothing at all* at forty-five.
+ * At 60m it beat 39% of the bearings around it against a line's 49% — the one
+ * Formation whose whole purpose is having no blind side had less all-round
+ * reach than the Formation that is all flank. Horse could be charged home on a
+ * diagonal for no reason that was ever about squares.
+ *
+ * So a Unit with four Faces beats the ground round it the way a Faceless one
+ * does, and the Faces decide which of them is firing and how much of it bears
+ * rather than where the fire may point at all. Nothing about how much a square
+ * shoots moves: it is still one Face's muskets, and still only as many of them
+ * as have the target across their front.
+ *
+ * Derived and not authored — the rule is `faces === 4` and reads the same for
+ * anything else that ever has four. A Unit with one Face keeps its slab.
+ */
+function bearsAllSides(unit: Unit, zone: FireZone, target: Unit): Aim | null {
+  const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
+  const bearing = Math.atan2(offset.y, offset.x)
+  const near = gapAlongBearing(unit, zone, target, bearing)
+  if (near > zone.range) return null
+
+  // The Face the shot goes out over: the one the target is nearest to square on.
+  const side = Math.round(angleDelta(unit.facing, bearing) / QUARTER_TURN) & 3
+  const { across } = band(zone, side)
+  // Frontage against Frontage still, but measured across the line of fire
+  // rather than across the Face. A Face 36m wide firing at something presenting
+  // 12m of itself fires with a third of its muskets, and it does not matter
+  // which way round the square that target is standing.
+  const shape = footprint(target.arm, target.formation, target.strength)
+  const widthwise = spanAlong(shape, target.facing, axes(bearing).across)
+  return { target, side, gap: Math.max(0, near), overlap: Math.min(1, widthwise / across) }
 }
 
 /**
@@ -197,22 +257,23 @@ export function beatsPoint(unit: Unit, point: Vec2): boolean {
   const zone = fireZone(unit.arm, unit.formation, unit.strength)
   if (!zone) return false
   const offset = { x: point.x - unit.position.x, y: point.y - unit.position.y }
-  if (zone.faces === 0) {
+  // Every way at once, for a Unit with no Face and for one with four alike. A
+  // point has no width for a Face to bear on, so all that is left of the
+  // question is how far the fire carries that way — and a Unit with four Faces
+  // has no way it does not carry.
+  if (zone.faces !== 1) {
     const heading = Math.atan2(offset.y, offset.x)
     const near = Math.hypot(offset.x, offset.y) - allRoundStandoff(zone, unit.facing, heading)
     return near <= zone.range
   }
-  const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
-  return sides.some((side) => {
-    const { across, standoff } = band(zone, side)
-    const face = axes(unit.facing + side * QUARTER_TURN)
-    const along = dot(offset, face.along)
-    // A point nearer than the standoff is inside the Unit's own Footprint, not
-    // in the ground it beats. Nothing is lost by it: anything that close to a
-    // Headquarters is past harrying it and into overrunning it.
-    if (along < standoff || along > standoff + zone.range) return false
-    return Math.abs(dot(offset, face.across)) <= across / 2
-  })
+  const { across, standoff } = band(zone, 0)
+  const face = axes(unit.facing)
+  const along = dot(offset, face.along)
+  // A point nearer than the standoff is inside the Unit's own Footprint, not
+  // in the ground it beats. Nothing is lost by it: anything that close to a
+  // Headquarters is past harrying it and into overrunning it.
+  if (along < standoff || along > standoff + zone.range) return false
+  return Math.abs(dot(offset, face.across)) <= across / 2
 }
 
 /**
@@ -227,19 +288,15 @@ export function aim(battle: Battle, unit: Unit): Aim | null {
   if (isRouting(unit)) return null
   const zone = fireZone(unit.arm, unit.formation, unit.strength)
   if (!zone) return null
-  const sides = zone.faces === 4 ? [0, 1, 2, 3] : [0]
+  // One question per Face count, and each one asked once. Four Faces is not four
+  // slabs to try in turn any more — there is a single bearing to the target and
+  // the Faces only decide which of them is firing along it.
+  const bears = zone.faces === 0 ? bearsAllRound : zone.faces === 4 ? bearsAllSides : bearsOnFace
   let best: Aim | null = null
   for (const other of battle.units) {
     if (other.army === unit.army) continue
     if (other.strength <= 0) continue
-    const found =
-      zone.faces === 0
-        ? bearsAllRound(unit, zone, other)
-        : sides.reduce<Aim | null>((carried, side) => {
-            const shot = bearsOnSide(unit, zone, side, other)
-            if (!shot) return carried
-            return !carried || shot.gap < carried.gap ? shot : carried
-          }, null)
+    const found = bears(unit, zone, other)
     if (found && (!best || found.gap < best.gap)) best = found
   }
   return best

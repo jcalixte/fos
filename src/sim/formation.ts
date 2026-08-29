@@ -335,11 +335,14 @@ export function backing(arm: Arm, formation: FormationName, strength: number): n
  * Frontage and the Formation's range, never authored.
  *
  * A battalion in line is 144m across and reaches about 100m, so its beaten
- * ground is wider than it is deep — a slab, not a cone. Square puts one of
- * those on each side and leaves the corners bare. Skirmishers in Open Order
- * have no Face to speak of and shoot every way at once, so theirs is a circle.
- * A Unit on the march has no zone at all, which is the whole argument against
- * being caught in column.
+ * ground is wider than it is deep — a slab, not a cone — and bare to either
+ * side of it, which is what a flank is. Skirmishers in Open Order have no Face
+ * to speak of and shoot every way at once, so theirs is the Footprint blown out
+ * by the range all round. A square is the second of those and not four of the
+ * first: four Faces is no direction it is not fighting in, and tiling a circle
+ * with four rectangles left corners it could be charged home on. A Unit on the
+ * march has no zone at all, which is the whole argument against being caught in
+ * column.
  */
 export interface FireZone {
   /** Metres the fire carries beyond the Unit's own edge. */
