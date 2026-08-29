@@ -295,6 +295,21 @@ function mayAdvance(unit: Unit): boolean {
 }
 
 /**
+ * True where the Unit is committed to a Charge: the state it is in once it is
+ * running, and the Order that is about to put it there.
+ *
+ * Both, because Initiative runs before the Order does each tick. A Charge the
+ * rider has just handed over has no Charge state under it yet, so a rule that
+ * read the state alone saw a Unit standing free — and having walked it off on
+ * its own account it suspended the Order that would have begun the run, so the
+ * state never arrived and the Unit never went at all. The player let the horse
+ * go and watched its brief keep it.
+ */
+function committedToCharge(unit: Unit): boolean {
+  return unit.charging !== null || unit.order?.order.body.kind === "charge"
+}
+
+/**
  * True where the Unit is free to spend its Latitude at all: not committed to a
  * Charge, and not part-way through an Order that says where to be. A brief fills
  * the gaps between Orders and never argues with one — a battalion that closed up
@@ -302,7 +317,7 @@ function mayAdvance(unit: Unit): boolean {
  * the one thing no rung buys.
  */
 function unoccupied(unit: Unit): boolean {
-  return unit.charging === null && unit.order?.order.body.kind !== "move"
+  return !committedToCharge(unit) && unit.order?.order.body.kind !== "move"
 }
 
 /**
@@ -439,7 +454,11 @@ export const RULES: InitiativeRule[] = [
     name: "gave ground rather than be closed with",
     applies: (unit, battle) => {
       if (unit.standing !== "stand-off") return null
-      if (unit.charging !== null) return null
+      // Giving ground is preservation and outranks a march, but it does not
+      // outrank being let go at somebody: a Unit under a Charge Order is going
+      // the other way on the player's word, and its brief does not get to
+      // answer for it.
+      if (committedToCharge(unit)) return null
       // A Formation with no pace gives no ground: guns in battery are standing
       // on their trails and go nowhere at all, so the march this rule returns
       // would be one they could never walk and the Order above it would stay

@@ -924,6 +924,61 @@ describe("C2 Initiative — the Standing Order", () => {
     expect(held.briefedTo).toBeNull()
   })
 
+  it("does not give ground from the enemy the player has just let it go at", () => {
+    const { unit, enemy, battle } = facing(150, { standing: "stand-off" })
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: { kind: "charge", targetId: enemy.id },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    const stood = { ...unit.position }
+    // Initiative runs before the Order does, so a Charge just handed over has no
+    // Charge state under it yet. A brief that read the state alone found a Unit
+    // standing free, walked it away from what it had been let go at, and
+    // suspended the Order that would have begun the run — so the state it was
+    // waiting for never arrived and the Unit never went at all.
+    for (let i = 0; i < 300; i++) step(battle)
+    expect(unit.suspendedBy).not.toBe("gave ground rather than be closed with")
+    expect(unit.charging?.targetId).toBe(enemy.id)
+    expect(unit.position.x).toBeGreaterThan(stood.x)
+  })
+
+  it("does not close up on the nearest enemy while under a Charge Order", () => {
+    const unit = battalion({ standing: "close-up" })
+    // The one it was sent at is out of reach to the east; the one it was not is
+    // inside the leash to the south, which is where the brief would take it.
+    const near = battalion({
+      id: "au1",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 100, y: 380 },
+      facing: -Math.PI / 2,
+    })
+    const far = battalion({
+      id: "au2",
+      army: "austrian",
+      name: "IR 47",
+      position: { x: 700, y: 100 },
+      facing: Math.PI,
+    })
+    const battle = emptyBattle(blankField(200, 40), [unit, near, far])
+    unit.order = {
+      order: { id: "o1", unitId: unit.id, body: { kind: "charge", targetId: far.id }, issuedAt: 0 },
+      arrivedAt: 0,
+    }
+    for (let i = 0; i < 300; i++) step(battle)
+    expect(unit.suspendedBy).toBeNull()
+    expect(unit.charging?.targetId).toBe(far.id)
+    // Walking up at its own pace, straight at what it was aimed at, and not a
+    // metre of the hundred its brief would have spent on somebody else.
+    expect(unit.position.y).toBeCloseTo(100, 5)
+    expect(unit.position.x).toBeGreaterThan(100)
+  })
+
   it("posts a Unit where its Move Order sent it, so the leash is spent from there", () => {
     const { unit, battle } = facing(2000, {
       standing: "close-up",
