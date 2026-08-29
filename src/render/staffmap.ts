@@ -133,7 +133,10 @@ export const STAFF_MAP_DEFAULTS: StaffMapOptions = {
   paper: "tanned",
   grass: "wash",
   enclosure: "faint",
-  hachures: "full",
+  // Light rather than full. Rivoli has 250m of relief on it and the gorge walls
+  // at full weight are the loudest thing on the Field, which is a terrain
+  // drawing competing with the Units it is under (§7).
+  hachures: "light",
 }
 
 const GRASS: Record<StaffMapOptions["grass"], number> = { none: 0, wash: 0.58, full: 0.88 }
@@ -993,22 +996,39 @@ function bridges(context: CanvasRenderingContext2D, field: Field, deckTone: stri
       if (!wet) continue
 
       /** Cells of masonry landed on the bank at each end. */
-      const ABUTMENT = 1.4
+      const ABUTMENT = 1
       const half = (highest - lowest) / 2 + ABUTMENT
       const centre = (highest + lowest) / 2
 
-      // The deck is as wide as the road it carries and a little wider, so the
-      // parapets sit outside the road's own edges. Drawn narrower, the road's
-      // fill spilled past them on both sides and the bridge read as a gate
-      // somebody had left lying across the way.
-      let carriage = 0.5
-      for (const index of roadNear) {
-        const dx = (index % field.width) - anchor.mx
-        const dy = ((index / field.width) | 0) - anchor.my
-        if (Math.abs(dx * ux + dy * uy) > 2.5) continue
-        carriage = Math.max(carriage, Math.abs(-dx * uy + dy * ux))
+      /**
+       * The carriageway, walked out from the deck's own ends rather than
+       * measured over the cloud of road cells lying about.
+       *
+       * As a cloud it was wrong exactly where it mattered. The road at the
+       * bridge march *bends* on the far bank, so cells of the outgoing leg fell
+       * within reach of the incoming one, the perpendicular spread came out as
+       * the angle between them, and the deck was drawn half as wide again as
+       * the road it carries. A bridge is as wide as its narrower approach, so
+       * that is what is asked — at each end, one step at a time, and stopping
+       * at the first cell that is not a way.
+       */
+      const carriageAt = (along: number) => {
+        const ox = anchor.mx + ux * along
+        const oy = anchor.my + uy * along
+        let out = 0
+        for (const way of [1, -1]) {
+          for (let step = 1; step <= 3; step++) {
+            const x = Math.round(ox - uy * way * step)
+            const y = Math.round(oy + ux * way * step)
+            if (x < 0 || y < 0 || x >= field.width || y >= field.height) break
+            if (at(x, y) !== road && field.crossing[y * field.width + x] !== 1) break
+            out = Math.max(out, step)
+          }
+        }
+        return out
       }
-      const deck = Math.min(carriage * 2 + 1.1, 3) * CELL_PX
+      const carriage = Math.min(carriageAt(centre + half), carriageAt(centre - half))
+      const deck = Math.min(carriage * 2 + 1.3, 2.4) * CELL_PX
       const span = half * CELL_PX
 
       context.save()
@@ -1019,18 +1039,25 @@ function bridges(context: CanvasRenderingContext2D, field: Field, deckTone: stri
       context.rotate(line.angle)
       context.fillStyle = deckTone
       context.fillRect(-span, -deck / 2, span * 2, deck)
-      // Cutwaters first, so the parapets are drawn over their ends and the deck
-      // reads as one piece of masonry.
-      const piers = Math.max(1, Math.round((span * 2) / (CELL_PX * 2.2)) - 1)
-      context.strokeStyle = INK_SOFT
-      context.lineWidth = 1.1
-      const cutwaters = new Path2D()
-      for (let p = 1; p <= piers; p++) {
-        const x = -span + ((span * 2) / (piers + 1)) * p
-        cutwaters.moveTo(x, -deck / 2 - CELL_PX * 0.12)
-        cutwaters.lineTo(x, deck / 2 + CELL_PX * 0.12)
+      // Cutwaters, and only where a bridge is long enough to have wanted any.
+      // Drawn as ticks off each parapet rather than as lines across the deck:
+      // at this scale a full crossing is a rung, and three of them are a ladder
+      // somebody has laid over the river.
+      const cells = (span * 2) / CELL_PX
+      if (cells > 6) {
+        const piers = Math.max(1, Math.round(cells / 3) - 1)
+        context.strokeStyle = INK_SOFT
+        context.lineWidth = 1.1
+        const cutwaters = new Path2D()
+        for (let p = 1; p <= piers; p++) {
+          const x = -span + ((span * 2) / (piers + 1)) * p
+          cutwaters.moveTo(x, -deck / 2)
+          cutwaters.lineTo(x, -deck / 2 + deck * 0.3)
+          cutwaters.moveTo(x, deck / 2)
+          cutwaters.lineTo(x, deck / 2 - deck * 0.3)
+        }
+        context.stroke(cutwaters)
       }
-      context.stroke(cutwaters)
       context.strokeStyle = INK
       context.lineWidth = 1.8
       const parapets = new Path2D()
