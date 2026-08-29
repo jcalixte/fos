@@ -354,21 +354,93 @@ export interface FireZone {
   depth: number
 }
 
+/** A Footprint on the Field: what it covers, where it stands, and its facing. */
+export interface Standing {
+  shape: Footprint
+  at: Vec2
+  facing: number
+}
+
+/** The four corners of a Standing, in Field metres. */
+function cornersOf(s: Standing): Vec2[] {
+  const { along, across } = axes(s.facing)
+  const d = s.shape.depth / 2
+  const w = s.shape.width / 2
+  return [
+    [d, w],
+    [d, -w],
+    [-d, w],
+    [-d, -w],
+  ].map(([front, side]) => ({
+    x: s.at.x + along.x * front + across.x * side,
+    y: s.at.y + along.y * front + across.y * side,
+  }))
+}
+
 /**
- * The Unit's own body standing in the way of its fire on `bearing` — the
- * Faceless counterpart of a Face's standoff, and read the same way: how far the
- * Footprint reaches that way, halved.
+ * Metres of open ground between a Footprint and a point: the ground a ball has
+ * to cross from the nearest man standing in it, and zero for a point inside the
+ * Formation. The Faceless counterpart of a Face's standoff.
  *
- * Half the longest side would do in every direction at once, and that is what a
- * skirmish screen's beaten ground used to be: 700 men in Open Order are 187m
- * across and 18m deep, so the swarm was credited with 93m of standoff whichever
- * way it shot, and its fire did not begin to thin until most of a hundred
- * metres past the end of its own reach. What it actually
- * is is the Footprint blown out by the range on every side, which is 9m of
- * standoff to the front and 93m along the screen.
+ * What it must not be is the shadow the Footprint casts across the bearing, and
+ * that is what it was. 700 men in Open Order are 187m across and 18m deep, and
+ * measured that way the swarm was credited with 60m of standoff at 30° off its
+ * own front where it had nobody standing past 10m — so its beaten ground bulged
+ * into a peanut on the diagonals, up to 19m of reach it had no men to fire it,
+ * and pinched to a notch dead ahead where the two lobes met. A screen therefore
+ * out-reached the line it screened on every bearing except the one the tests
+ * were asking about.
+ *
+ * This is the Footprint blown out by the range on every side and nothing more:
+ * 9m of standoff to the front, 93m along the screen, and a corner rounded off
+ * at the range in between. Which is what the measure it replaces always claimed
+ * in prose to be.
  */
-export function allRoundStandoff(zone: FireZone, facing: number, bearing: number): number {
-  return spanAlong({ width: zone.width, depth: zone.depth }, facing, axes(bearing).along) / 2
+export function gapToPoint(shape: Footprint, at: Vec2, facing: number, point: Vec2): number {
+  const offset = { x: point.x - at.x, y: point.y - at.y }
+  const { along, across } = axes(facing)
+  const front = Math.abs(dot(offset, along)) - shape.depth / 2
+  const side = Math.abs(dot(offset, across)) - shape.width / 2
+  return Math.hypot(Math.max(0, front), Math.max(0, side))
+}
+
+/**
+ * Metres of open ground between two Footprints — the gap a ball actually
+ * crosses, rather than the gap between their two centres less what each of them
+ * casts across the line. Taken corner by corner because the nearest two
+ * rectangles come is a corner of one against an edge of the other.
+ */
+export function gapBetween(a: Standing, b: Standing): number {
+  let gap = Infinity
+  for (const c of cornersOf(b)) gap = Math.min(gap, gapToPoint(a.shape, a.at, a.facing, c))
+  for (const c of cornersOf(a)) gap = Math.min(gap, gapToPoint(b.shape, b.at, b.facing, c))
+  return gap
+}
+
+/**
+ * How far the beaten ground reaches from the Unit's centre on `bearing` — the
+ * same shape `gapToPoint` measures against, solved the other way round so the
+ * renderer can trace its edge. Out through a flat side where the ray leaves
+ * within the Footprint's own extent, and round the corner's quarter-circle of
+ * the range where it does not.
+ */
+export function reachOnBearing(zone: FireZone, facing: number, bearing: number): number {
+  const dir = axes(bearing).along
+  const { along, across } = axes(facing)
+  const front = Math.abs(dot(dir, along))
+  const side = Math.abs(dot(dir, across))
+  const w = zone.width / 2
+  const d = zone.depth / 2
+  if (side > 0) {
+    const out = (w + zone.range) / side
+    if (out * front <= d) return out
+  }
+  if (front > 0) {
+    const out = (d + zone.range) / front
+    if (out * side <= w) return out
+  }
+  const corner = side * w + front * d
+  return corner + Math.sqrt(Math.max(0, corner * corner - (w * w + d * d) + zone.range ** 2))
 }
 
 /** Null when the Unit cannot fire at all. */

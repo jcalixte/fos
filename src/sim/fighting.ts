@@ -1,9 +1,10 @@
 import {
-  allRoundStandoff,
   density,
   fireZone,
   firesOnTheMove,
   footprint,
+  gapBetween,
+  gapToPoint,
   grid,
   spanAlong,
   type FireZone,
@@ -167,22 +168,21 @@ function bearsOnFace(unit: Unit, zone: FireZone, target: Unit): Aim | null {
 }
 
 /**
- * Metres of ground between a Unit and a target along the line joining them, with
- * both bodies measured along that line rather than by their longest side — so
- * the gap a shot crosses is the ground actually between the two of them, and
- * fire thins with the range instead of carrying flat to the edge of a Frontage.
+ * Metres of open ground between a Unit and a target — the ground a ball crosses
+ * from the nearest man who fires it to the nearest man it can find, so fire
+ * thins with the range instead of carrying flat to the edge of a Frontage.
  *
  * The measure every Faceless and every all-round case reads, so a screen and a
  * square are asking the same question and getting it answered the same way.
  */
-function gapAlongBearing(unit: Unit, zone: FireZone, target: Unit, bearing: number): number {
-  const shape = footprint(target.arm, target.formation, target.strength)
-  const line = axes(bearing).along
-  const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
-  return (
-    Math.hypot(offset.x, offset.y) -
-    spanAlong(shape, target.facing, line) / 2 -
-    allRoundStandoff(zone, unit.facing, bearing)
+function gapToTarget(unit: Unit, zone: FireZone, target: Unit): number {
+  return gapBetween(
+    { shape: { width: zone.width, depth: zone.depth }, at: unit.position, facing: unit.facing },
+    {
+      shape: footprint(target.arm, target.formation, target.strength),
+      at: target.position,
+      facing: target.facing,
+    },
   )
 }
 
@@ -190,13 +190,9 @@ function gapAlongBearing(unit: Unit, zone: FireZone, target: Unit, bearing: numb
  * The whole-circle case: skirmishers have no Face and shoot every way at once.
  */
 function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
-  const bearing = Math.atan2(
-    target.position.y - unit.position.y,
-    target.position.x - unit.position.x,
-  )
-  const near = gapAlongBearing(unit, zone, target, bearing)
+  const near = gapToTarget(unit, zone, target)
   if (near > zone.range) return null
-  return { target, side: 0, gap: Math.max(0, near), overlap: 1 }
+  return { target, side: 0, gap: near, overlap: 1 }
 }
 
 /**
@@ -225,7 +221,7 @@ function bearsAllRound(unit: Unit, zone: FireZone, target: Unit): Aim | null {
 function bearsAllSides(unit: Unit, zone: FireZone, target: Unit): Aim | null {
   const offset = { x: target.position.x - unit.position.x, y: target.position.y - unit.position.y }
   const bearing = Math.atan2(offset.y, offset.x)
-  const near = gapAlongBearing(unit, zone, target, bearing)
+  const near = gapToTarget(unit, zone, target)
   if (near > zone.range) return null
 
   // The Face the shot goes out over: the one the target is nearest to square on.
@@ -237,7 +233,7 @@ function bearsAllSides(unit: Unit, zone: FireZone, target: Unit): Aim | null {
   // which way round the square that target is standing.
   const shape = footprint(target.arm, target.formation, target.strength)
   const widthwise = spanAlong(shape, target.facing, axes(bearing).across)
-  return { target, side, gap: Math.max(0, near), overlap: Math.min(1, widthwise / across) }
+  return { target, side, gap: near, overlap: Math.min(1, widthwise / across) }
 }
 
 /**
@@ -262,9 +258,8 @@ export function beatsPoint(unit: Unit, point: Vec2): boolean {
   // question is how far the fire carries that way — and a Unit with four Faces
   // has no way it does not carry.
   if (zone.faces !== 1) {
-    const heading = Math.atan2(offset.y, offset.x)
-    const near = Math.hypot(offset.x, offset.y) - allRoundStandoff(zone, unit.facing, heading)
-    return near <= zone.range
+    const shape = { width: zone.width, depth: zone.depth }
+    return gapToPoint(shape, unit.position, unit.facing, point) <= zone.range
   }
   const { across, standoff } = band(zone, 0)
   const face = axes(unit.facing)

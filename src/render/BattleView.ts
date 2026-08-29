@@ -1,6 +1,5 @@
 import { Application, Container, Graphics, Sprite, Texture, type ColorSource } from "pixi.js"
 import {
-  allRoundStandoff,
   bodyCount,
   faces,
   figureSlots,
@@ -8,6 +7,7 @@ import {
   footprint,
   mobRadius,
   poseFootprint,
+  reachOnBearing,
 } from "@/sim/formation"
 import { chargeable } from "@/sim/charge"
 import { HARRIED_RANGE } from "@/sim/headquarters"
@@ -623,12 +623,14 @@ export class BattleView {
         // has no Face to point, and a square has four and therefore no way it is
         // not pointing. Either way the beaten ground is the Unit's own Footprint
         // blown out by the range on every side — a lozenge and not a circle.
-        // Sampled off the same standoff the sim reads, so what is drawn is where
-        // the fire reaches and not near it.
+        // Traced off the same shape the sim measures its gaps against, so what
+        // is drawn is where the fire reaches and not near it — corners rounded
+        // off at the range, because that is what blowing a rectangle out on
+        // every side gives you.
         const ring: number[] = []
         for (let i = 0; i < ALL_ROUND_STEPS; i++) {
           const bearing = (i / ALL_ROUND_STEPS) * Math.PI * 2
-          const reach = zone.range + allRoundStandoff(zone, unit.facing, bearing)
+          const reach = reachOnBearing(zone, unit.facing, bearing)
           ring.push(unit.position.x + Math.cos(bearing) * reach)
           ring.push(unit.position.y + Math.sin(bearing) * reach)
         }

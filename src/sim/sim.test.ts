@@ -48,7 +48,7 @@ import { applyInitiative } from "./initiative"
 import { defaultStanding, leash } from "./standing"
 import { clearLine, route } from "./routing"
 import type { Battle, Field, FormationName, Grade, Unit } from "./types"
-import { distance } from "./vec"
+import { distance, rotate } from "./vec"
 
 function battalion(overrides: Partial<Unit> = {}): Unit {
   const unit: Unit = {
@@ -1264,6 +1264,39 @@ describe("C6 Fighting", () => {
     // by its 187m Frontage would have credited it with.
     const beyond = facingOff(150, {}, { formation: "open-order" })
     expect(aim(beyond.battle, beyond.shooter)).toBeNull()
+  })
+
+  it("beats no ground its own men are not standing within reach of", () => {
+    // The peanut. A Faceless Unit's own body was measured by the shadow it cast
+    // across the bearing rather than by where its men were, so a screen 150m
+    // across was credited with standoff on the diagonals that it had nobody
+    // standing on — up to 19m of reach fired by nobody — and its beaten ground
+    // pinched to a notch dead ahead where the two lobes met. The property that
+    // fixes it, and the one worth holding: every point a Unit beats has one of
+    // its own men inside the range of it.
+    const unit = battalion({ formation: "open-order", position: { x: 0, y: 0 }, facing: 0 })
+    const range = fireZone("infantry", "open-order", unit.strength)!.range
+    // Slots are laid out with the Face along local -y, which is the quarter
+    // turn the renderer gives the Unit's container.
+    const men = slots("infantry", "open-order", unit.strength).map((s) =>
+      rotate(s, unit.facing + Math.PI / 2),
+    )
+    for (let degrees = 0; degrees < 360; degrees += 5) {
+      const bearing = (degrees * Math.PI) / 180
+      let far = 0
+      for (let r = 1; r <= 400; r += 1) {
+        if (beatsPoint(unit, { x: Math.cos(bearing) * r, y: Math.sin(bearing) * r })) far = r
+      }
+      const edge = { x: Math.cos(bearing) * far, y: Math.sin(bearing) * far }
+      const nearest = Math.min(...men.map((m) => Math.hypot(m.x - edge.x, m.y - edge.y)))
+      // The slack is the men and not the measure: the outermost stand half a
+      // file's spacing inside the Footprint's own edge, and the rear rank of a
+      // Strength that does not divide evenly is a file short.
+      expect(nearest).toBeLessThan(range + 3)
+      // And the far edge is the far edge — a Formation that fell short of its
+      // own reach would pass the line above by standing still.
+      expect(nearest).toBeGreaterThan(range - 2)
+    }
   })
 
   it("leaves a square no corner to be charged home on", () => {

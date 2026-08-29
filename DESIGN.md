@@ -1159,6 +1159,21 @@ the open diagonal is the cost.
   of lie F5 cannot afford. Measured: 15.7 men a Volley at 60m against a line's 29.1, 7.4 at 110m,
   and nothing past 111.
 
+- **The beaten ground that fixed it was a peanut, and it still out-reached the line it screened on
+  every bearing but the one the fix was checked on.** Blowing a Footprint out by the range on every
+  side gives a rounded rectangle, and that is what the prose above says. What the Faceless case
+  measured was the Footprint's shadow across the bearing used as a radius — exact dead ahead and
+  along the flank, generous in between. A 560-man screen was credited with 145m of reach at 30° off
+  its own front, where the nearest man it had stood 126m from that ground: 19m of fire with nobody
+  to fire it. The two lobes met in a concave notch at the front and rear, which no dispersal of men
+  can produce and which was the thing visible on the screen. Now measured as the gap between two
+  Footprints taken corner by corner, and as a point-to-Footprint distance where the target is a bare
+  point like a Headquarters. Dead ahead is unmoved — 109m against the line's 101.8m, the difference
+  being the screen's own 18m of depth — and the diagonal gives back up to 19m. The renderer solves
+  the same shape for its outline instead of sampling a standoff, so the edge it draws is convex
+  because the ground is. Held by a test that walks every 5° and asks the men rather than the
+  measure: nothing a Unit beats is further than its range from somebody standing in it.
+
 - **"The Headquarters can be moved, and can be shot at" was written in ADR-0002 and neither half
   was built.** Sited once at Deployment, it turned the one decision the whole delay mechanic exists
   to pose into a fact about the player's setup: asked before the clock, against an afternoon he had
