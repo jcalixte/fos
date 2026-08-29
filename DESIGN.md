@@ -784,9 +784,9 @@ rather than trusting this table, which is what it is for.
 | 5 | F11 dead clock | 0:10 and 0:08 | 0:00 and 0:14 |
 | 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
 | 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
-| 4 | F10 Break at 15–30% | 18.4–43.6%, medians 19.4% and 22.8% | **15.3–57.4%**, medians 20.7% and 21.3% |
-| 4 | F10 Breaks outside the band | 1 of 7, and it says why | 1 of 16, and it says why |
-| 4 | F10 0 Strength is a bug | lowest 70 men | lowest 24 men |
+| 4 | F10 Break at 15–30% | **16.0–30.4%**, medians 18.9% and 22.8% | **15.1–33.4%**, medians 20.7% and 21.3% |
+| 4 | F10 Breaks outside the band | 2 of 7, and each says why | 2 of 15, and each says why |
+| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 29 men |
 | 8 | F4 routing under 5ms | — | 0.16–1.09ms through the gorge; **4.4–4.8ms corner to corner** |
 | 2 | F3 rule list under ~20 | 11 rules; 3 and 5 fire | 11 rules; 5 and 6 fire |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
@@ -900,17 +900,30 @@ during the fight that broke them, the ones at 42% had regained 1.42 and 1.65
 ([ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md)). A *per-Formation* constant was
 never reached for and F8 stands.
 
-**The four Breaks still outside the band are two shapes, one of each a battle, and both are
-recorded on the line that reports them.** Two are a small mounted Unit taking a whole battalion's
-Volley — the 1er Hussards at 43.6% off a Volley worth 36% of it, the Dragoner at 57.4% off one worth
-54%, both with nothing at all regained. No Morale rule decided either: `shots` scales with the Unit
-firing while the overlap reads the target's width and never its size, so a quarter of a
-two-hundred-and-eighty-man regiment goes at a stroke however well the depth is priced. That is the
-fire model's residual and it wants its own decision. The other two are the opposite case — the 1er/5e
-and the 14e Légère, both broken past the half-hour under fire so sporadic that the worst Volley
-either saw took 4% of it, both having steadied in the gaps. That is ADR-0011 working rather than
-failing: a battalion shot at once every two minutes is mostly out of the fight and ought to mend.
-What it costs is a Unit that fought all afternoon sitting a few points over the band.
+**Depth was priced twice over before a musket stopped searching, and that was the last of the
+tail.** The compounding recovers a ball that missed the front rank, and there is only one way a ball
+misses that the ranks behind can put right — it went between two men rather than over them.
+Elevation is not recoverable at any depth, because the sixty-eighth rank stands at the same height
+on the same ground as the first. So the compounding runs over ten ranks for a musket and without
+bound for a gun, which does not stop in the man it hits: `SEARCHED`, per Arm and never per Formation,
+so F8 stands. It is the one number here fitted rather than derived — the physics says a handful of
+ranks and not which handful — and the range it may take is narrow at both ends. Below about six the
+attack column stops being a fat enough target for §6's line-against-column exchange to hold; above
+about thirteen the tail comes back. The Dragoner falls from 57.4% to 30.2% and the 1er Hussards from
+43.6% to 30.4%, and the single Volleys that decided them from 54% and 36% of the Unit to 24% and 23%.
+
+**The four Breaks still outside the band are two shapes, two to a battle, and each says which on the
+line that reports it.** Two are a small mounted Unit taking a whole battalion's Volley — a quarter of
+a two-hundred-and-eighty-man regiment at a stroke, with nothing at all regained. That is not a Morale
+rule deciding anything: `shots` scales with the Unit firing while the overlap reads the target's
+width and never its size, so the fire a Unit draws does not know how many men it has to absorb it
+with. Both now sit within half a point of the band rather than twenty points outside it, so what is
+left is a shape to watch and no longer a number to chase. The other two are the opposite case — the
+1er/5e and the 14e Légère, both broken past the half-hour under fire so sporadic that the worst
+Volley either saw took 4% of it, both having steadied in the gaps. That is
+[ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md) working rather than failing: a
+battalion shot at once every two minutes is mostly out of the fight and ought to mend. What it costs
+is a Unit that fought all afternoon sitting a few points over the band.
 
 **Five of the eleven Initiative rules never fire in any of the four runs.** Firing: broke and
 running, deployed with the enemy too close to stay on the march, took march column to cover the

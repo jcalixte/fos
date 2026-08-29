@@ -88,6 +88,27 @@ const FIRING_RANKS: Record<Arm, number> = { infantry: 2, cavalry: 0, artillery: 
 const PENETRATION: Record<Arm, number> = { infantry: 1, cavalry: 0, artillery: 4 }
 
 /**
+ * Ranks a shot goes on searching before depth stops buying anything.
+ *
+ * The compounding below recovers a ball that missed the front rank, and there
+ * is only one way a ball misses that the ranks behind can put right: it went
+ * between two men rather than over them. Elevation is not recoverable at any
+ * depth — the sixty-eighth rank stands at the same height on the same ground as
+ * the first, so a ball thrown high is thrown high over all of them, which is
+ * what SHOT_IN_LANE already takes off the discharge. Files are not dressed
+ * perfectly, so it takes several ranks for the men behind to cover the gaps
+ * between the men in front, and once they are covered a deeper column offers a
+ * musket nothing further.
+ *
+ * Unbounded for a gun, and this is the one place the two Arms genuinely part.
+ * Round shot does not stop in the man it hits: it goes through the file and
+ * keeps going, so every rank behind is another it can find. That is the whole
+ * of why depth is worse in front of guns than in front of muskets, and it now
+ * says so twice — here, and in the penetration.
+ */
+const SEARCHED: Record<Arm, number> = { infantry: 10, cavalry: 0, artillery: Infinity }
+
+/**
  * Weapons laid on the target rather than levelled where the rank points. A gun
  * is traversed onto what it is shooting at; a musket in the second rank of a
  * hundred-and-forty-metre line points wherever the line points, and if the enemy
@@ -384,7 +405,7 @@ export function volleyCasualties(unit: Unit, shot: Aim): number {
   // anybody at all: a ball in a lane that misses the front rank of a column
   // still has eight more ranks to find, and a ball thrown over the column has
   // none however deep the column is.
-  const found = 1 - (1 - HIT_PER_BODY[unit.arm]) ** path
+  const found = 1 - (1 - HIT_PER_BODY[unit.arm]) ** Math.min(path, SEARCHED[unit.arm])
   const strikes = inLane(unit, shot.gap, zone.range) * found
   return shots * strikes * Math.min(PENETRATION[unit.arm], path)
 }
