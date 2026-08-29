@@ -763,7 +763,7 @@ now spoken for — which is the cost recorded as T18.
 
 ### Measured so far
 
-Milestone 1 only, on the bridge-march fixture.
+On the fixtures, where a rule is watched in isolation:
 
 | Rank | Target | Measured | Where |
 |------|--------|----------|-------|
@@ -772,6 +772,24 @@ Milestone 1 only, on the bridge-march fixture.
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
+
+And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
+steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
+authored Plan is watched once against an army doing nothing. Taken at `c91b09c`; take them again
+rather than trusting this table, which is what it is for.
+
+| Rank | Target | Castiglione | Rivoli |
+|------|--------|-------------|--------|
+| 5 | F11 20–40 min | 40:00, by Key Ground both ways | 40:00, by condition both ways |
+| 5 | F11 dead clock | 0:10 and 0:08 | 0:00 and 0:14 |
+| 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
+| 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
+| 4 | F10 Break at 15–30% | **18.0–30.0%**, median 22.1% | **19.4–89.7%**, medians 35.2% and 26.8% |
+| 4 | F10 0 Strength is a bug | lowest 63 men | lowest 19 men |
+| 8 | F4 routing under 5ms | — | 0.16–1.09ms through the gorge; **4.4–4.8ms corner to corner** |
+| 2 | F3 rule list under ~20 | 11 rules; 3 fire, 5 across both runs | 11 rules; 5 fire |
+| — | F18 identical replay | digest identical on a second run | digest identical on a second run |
+| — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
@@ -841,9 +859,77 @@ it cost them two of their five battalions routed. So the hamlet is not scenery, 
 does nothing loses 2–0 — which is the whole of what the far bank needed before it was worth
 playing.
 
-One of §9's triggers is still unmeasured: how many order-cycles a 20-minute battle allows to the
-far flank. So is the Austrian end of this one: the French Plan is authored intent and cannot read
-a defence, so what a defended crossing costs it is a thing to watch rather than a thing measured.
+**The order-cycle trigger is measured and is nowhere near tripping.** From the ground each
+Headquarters is deployed on, the farthest Unit of its own army is 496–870m off, which is a ride of
+38–67 seconds against a 2400-second clock: between 36 and 63 cycles to the far flank where §9's
+trigger fires below about three. The trigger was written against a 20-minute battle and both
+nominal clocks are 40, so it has twice the room the tension was phrased for. It can be struck when
+a Field is authored that is wider than these two, and not before.
+
+The Austrian end of the bridge fixture is still unmeasured. The French Plan is authored intent and
+cannot read a defence, so what a defended crossing costs it is a thing to watch rather than a thing
+measured.
+
+### What the nominal battles say
+
+**Both battles run the full clock, and almost none of it is dead.** Every one of the four runs
+reaches 40:00 — Castiglione decided on Key Ground both ways, Rivoli splitting its two pieces one
+apiece and falling through to condition. The last Volley or Contact lands between 0:00 and 0:14
+before the end. So T19's stated cost — *a decided battle can leave twenty minutes of dead clock* —
+does not materialise on either Field. It was the strongest argument against ADR-0006 and it is not
+one the nominal battles support.
+
+**Rivoli splitting 1–1 and falling to condition is the two-piece design working.** It is the case
+the second piece of Key Ground was added for: a single piece makes every result binary, and here
+the French hold Rivoli, the Austrians hold the chapel, and what each army has left decides the
+day — nobody when the French are taken and silent, the Austrians when they are not.
+
+**Castiglione meets F10 and Rivoli does not, which rank 4 says to record rather than tune away.**
+Castiglione's Breaks cost 18.0–30.0% of a battalion, inside the band and agreeing with the
+fixture's 16.4–25.9%. Rivoli's run from 19.4% to **89.7%**, and the tail is not noise: the
+Dragoner-Regiment Erzherzog Johann at 89.7%, IR 10 Jordis at 65.8%, IR 48 Schmidfeld at 54.6%, the
+24e Chasseurs à Cheval at 43.5%. Three of those four are the Arms and the Units that come up the
+Adige road, and two of the four are cavalry. Nothing here says which of those is the cause. What it
+does say is that the everyday battle is inside the budget and the ceiling battle is not, which is
+exactly the split §0 keeps two nominals to find. The retreat named in rank 4 is global Morale
+scalars; a *per-Formation* constant would mean F8 has failed, and this is the measurement that
+would justify reaching for one, so it is written down before anybody does.
+
+**Six of the eleven Initiative rules never fire in any of the four runs.** Firing: broke and
+running, deployed with the enemy too close to stay on the march, took march column to cover the
+ground, limbered up, rallied. Silent: formed square, countercharged, gave ground rather than be
+closed with, squeezed into march column for the Crossing, closed up to bring them under its fire,
+followed up as they gave way. T14 accepts that the list is order-sensitive and warns that a silent
+rule is either dead or shadowed by one above it, and the list is now more than half silent on the
+battles it is supposed to be exercised by.
+
+Two of those are worth separating from the rest. **Nothing ever formed square or countercharged**,
+which is the mechanic §0 already says the campaign under-exercises and tests against purpose-built
+fixtures instead — so that is the design working as written, not a gap. **Nothing ever squeezed
+into march column for the Crossing, on Rivoli**, whose whole point is a defile a battalion has to
+file up. The benign reading is that Quasdanovich's column is authored into march column already and
+never needs the rule; the other reading is that the rule is shadowed and the Crossing is being taken
+by Units that happen to be in the right Formation. The routes do go through the gorge, so this is a
+question about the rule and not about the ground.
+
+**The Latitude leash is untested by either battle.** The three rules that let a Unit take ground on
+its own account — gave ground, closed up, followed up — are all in the silent list, so in four full
+battles no Unit ever chose its own ground: the measured Shift from the Post is not a hundred metres
+or five hundred, it is *never*. ADR-0007's bound has therefore never been exercised, and §9's first
+trigger — *a playtest where the battle resolves much the same whether the player issues Orders or
+not* — still cannot be answered, because every Unit in every run stood at the default rung. The run
+that would answer it is the one §9 already names and nobody has done: an army briefed at `follow
+up`.
+
+**Two of this section's own targets cannot be checked as written.** Rank 2's *never idle under
+threat* predates ADR-0007: at `hold-ground` a Unit standing under fire it cannot answer is obeying
+its brief, so the measure reports 1210–6990 Unit-seconds of exactly that and cannot call any of it a
+fault. The target needs restating against the Latitude ladder before it is a thing that passes or
+fails. Rank 8's *under 5ms on 250×250* names a grid larger than the ceiling battle, which is
+240×150; the grid was never the hard part, and the number that nearly misses is corner to corner, which
+came in at 4.4ms, 4.7ms and 4.8ms on three runs of the same commit and is the one row here with no
+margin left in it. Nothing through the gorge comes close: 0.16–1.09ms. The gorge was the worry and
+the open diagonal is the cost.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 
