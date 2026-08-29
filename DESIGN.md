@@ -1198,6 +1198,53 @@ the open diagonal is the cost.
   of them can be in; they meet at 100m, where the screen is half a line's muskets loading at half its
   rate and comes off three times worse.
 
+- **The attack column was strictly worse than a line at everything, including the one thing it
+  exists for.** Depth was priced only as a liability and every one of those prices is right: round
+  shot ploughs it (16.4 men a minute against a line's 4.7 under an eight-gun battery at 400m), a
+  quarter of the Frontage means a quarter of the muskets bearing (28.2 a minute against 77.6), and
+  a narrow front meets a narrow slice of whatever it charges. What was missing is anything on the
+  other side of the ledger, so the Formation was a tax with no purchase — measured, a column sent
+  at a line broke at 5.2 minutes having inflicted 36 casualties and taken 164. Worse, `reach` in C8
+  is `width × files × min(ranks, 2) / frontage`, which is `width × 2 / spacing` for every infantry
+  Formation alike: **depth contributed nothing whatever to a Contact**, so a column's charge was a
+  *weaker* charge than a line's — it carried a steady line only at 0.08 Morale where a line's
+  carried at 0.26. The one thing a column is for, it was worst at.
+
+  Two halves, both derived. C3 hands C7 `backing` — the share of a Unit standing behind
+  `ENGAGED_RANKS`, the ranks that are actually in the fight, which is the same fact C8 was already
+  counting from the other end and is now the only place it is written down. A line is one rank
+  deep behind its fight and a column is seven, so the men behind cannot see it coming, cannot run
+  without going through the men behind *them*, and are pushing. And C8 reads `concentration` off
+  the Contact it already measures: the Unit's own Frontage against the front the two actually met
+  over, which is 1 for whichever side is narrower and therefore 1 for every Contact the design
+  already had — cavalry is 200m wide and reads 1 against a line and 1 against a square, so nothing
+  about what square is for moves.
+
+  **Depth is worth nothing against fire and something against shock, and that is what keeps F10
+  still.** Steadying a column against musketry was tried first and is the version that had to be
+  thrown away: casualties are almost all fire, so it moved where every Formation Breaks by the men
+  it has lost, and Castiglione promptly put a battalion out of the band at 33.3%. It is also wrong
+  on its own terms — a column being shot at is not steadied by being deep, it is a bigger target
+  for being deep, which C6 already charges it for. So `stiffening` is kept out of `steadiness` and
+  spent only on `dread` and on the Contact. The budget run is then byte-identical to what it was,
+  which is the whole of what it proves: the silent runs never Charge, so they show no collateral
+  damage and cannot show the change working.
+
+  What it buys: a column now carries a steady line at 0.21 Morale, exactly where a line's charge
+  carries it, having dealt 11 casualties and taken 5 against a line-charge's 33 and 16 — the same
+  hole punched for a third of the men, which is the trade. It is 1.47× harder to rush where a line
+  is 1.20×. Everything it pays stands untouched: it is still ploughed by round shot, still fires a
+  third of a line's Volley, and still dies crossing 400m of open ground in front of a battery. The
+  Formation button has said *it goes in without coming apart* since C3 was written, and it is now
+  a description rather than a hope.
+
+  Two corners are outside where they were and are recorded rather than tuned: horse carries a line
+  at 0.37 Morale rather than 0.44, because a line now has its own rank behind the fight to stand on
+  — still a *shaken* line by the ladder's own words, and one notch further gone than it used to
+  need. And a column is nearly as hard for cavalry to break frontally as a square (0.10 against
+  0.08), which was true before this at 0.14 against 0.11 and is not what square is for anyway: a
+  square has no flank, and a column struck off its Face still comes apart.
+
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which
   traverses and then fires, and generous for a line mid-wheel. And a square at 0.25 m/s clears the

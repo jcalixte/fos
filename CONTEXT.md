@@ -422,6 +422,12 @@ _Avoid_: game speed, time scale, simulation speed
   route by which **Grade** reaches lethality, rather than any direct multiplier
 - **Contact** ends when one **Unit** **Breaks** — it is never a state a **Unit** sits in
 - A **Charge** resolves against the **Face** it strikes; off a **Face** there is no fight
+- The ranks standing behind a **Unit**'s fight hold it together when something arrives at it:
+  depth is worth nothing against a **Volley** and something against a **Charge**, both coming on
+  and landing. A **Formation** with no **Face** has none of it, whatever its depth
+- A **Contact** costs the **Unit** it lands on more nerve for having landed on a narrow front —
+  a line struck along its whole length has been shoved, and one struck over a third of it has a
+  hole in the middle of it. This is what an **attack column** is for
 - A **Contact** pays a **Unit** for being in motion, so two regiments meeting head-on both pay it
   and one standing to receive brings nothing
 - Cavalry meets a **Charge** committed to it on its **Initiative**, because horse standing to
