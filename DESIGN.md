@@ -907,19 +907,23 @@ Two of those are worth separating from the rest. **Nothing ever formed square or
 which is the mechanic §0 already says the campaign under-exercises and tests against purpose-built
 fixtures instead — so that is the design working as written, not a gap. **Nothing ever squeezed
 into march column for the Crossing, on Rivoli**, whose whole point is a defile a battalion has to
-file up. The benign reading is that Quasdanovich's column is authored into march column already and
-never needs the rule; the other reading is that the rule is shadowed and the Crossing is being taken
-by Units that happen to be in the right Formation. The routes do go through the gorge, so this is a
-question about the rule and not about the ground.
+file up. That one is answered, and it is the benign reading: every Unit that goes up the Adige road
+is authored into the travelling Formation before it sets foot on the Field — IR 10 Jordis and the
+Dragoner in march column, the Kavalleriebatterie limbered, and Lusignan's two the same — so the
+rule's first guard finds the Unit already in the Formation it would have called for. Not shadowed:
+the rule fires on the bridge fixture, once, with the enemy inside ENGAGEMENT_RANGE, which is the
+case it was written for (`crossing.test.ts`). A silent rule here means the Scenario never posed the
+question, not that the list cannot answer it.
 
-**The Latitude leash is untested by either battle.** The three rules that let a Unit take ground on
-its own account — gave ground, closed up, followed up — are all in the silent list, so in four full
-battles no Unit ever chose its own ground: the measured Shift from the Post is not a hundred metres
-or five hundred, it is *never*. ADR-0007's bound has therefore never been exercised, and §9's first
-trigger — *a playtest where the battle resolves much the same whether the player issues Orders or
-not* — still cannot be answered, because every Unit in every run stood at the default rung. The run
-that would answer it is the one §9 already names and nobody has done: an army briefed at `follow
-up`.
+**The Latitude leash is unexercised by either battle, and the cause is authoring rather than the
+rule list.** The three rules that let a Unit take ground on its own account — gave ground, closed
+up, followed up — are all in the silent list, so in four full battles no Unit ever chose its own
+ground: the measured Shift from the Post is not a hundred metres or five hundred, it is *never*.
+Each is gated on the Unit's rung, every Unit is built at `defaultStanding()`, and a Standing Order
+can only be set from the player's own panel — no Roster carries one and no Plan issues one, though
+`standing` is an Order body a Plan could carry today. So the three rules cannot fire on any nominal
+run, and no measurement of those runs will ever say anything about the bound. All three fire in
+their own tests. **The bound itself is accepted rather than pending measurement** (§9).
 
 **Two of this section's own targets cannot be checked as written.** Rank 2's *never idle under
 threat* predates ADR-0007: at `hold-ground` a Unit standing under fire it cannot answer is obeying
@@ -958,7 +962,7 @@ the open diagonal is the cost.
 
 ### Tensions being watched (unresolved by design)
 
-- **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Trigger to revisit:** a playtest where the battle resolves much the same whether the player issues Orders or not — now to be run with an army briefed at `follow up` and not only at the default, since that is the rung with something to prove. *Measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.*
+- **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Accepted, and no longer waiting on a playtest:** the ladder and the Shift bound are taken as right, so the `follow up` run this line used to call for is not owed. *Measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.* **Trigger to reopen:** an army briefed above `hold ground` fighting much the same battle whether the player issues Orders or not — which is a thing to watch in play, not a measurement to schedule.
 - **Courier delay versus battle length.** Both tuned against Castiglione, in opposite directions. **Trigger:** when a 20-minute battle allows fewer than about three order-cycles to the far flank.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
 - **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.
