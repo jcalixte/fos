@@ -48,6 +48,7 @@ function battalion(): Unit {
     reload: 0,
     morale: 1,
     moraleCeiling: 1,
+    settling: 0,
     fatigue: FRESH,
     blown: false,
     routing: null,

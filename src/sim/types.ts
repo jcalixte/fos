@@ -87,6 +87,13 @@ export interface Unit {
   /** The highest Morale it can recover to. Every Rally lowers it. */
   moraleCeiling: number
   /**
+   * Seconds left before the Unit may begin to steady again. Set every time
+   * something takes its nerve and counted down while nothing does, so a Unit
+   * mends out of the fight and never between two Volleys
+   * (ADR-0011).
+   */
+  settling: number
+  /**
    * Accumulated exhaustion, 0 fresh to 1 blown. Counted apart from Morale
    * because it is spent apart: it is bought by the pace a Unit is asked for and
    * not by anything that has been done to it, so a battalion that marched all

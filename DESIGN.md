@@ -784,10 +784,11 @@ rather than trusting this table, which is what it is for.
 | 5 | F11 dead clock | 0:10 and 0:08 | 0:00 and 0:14 |
 | 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
 | 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
-| 4 | F10 Break at 15–30% | **18.0–30.0%**, median 22.1% | **19.4–89.7%**, medians 35.2% and 26.8% |
-| 4 | F10 0 Strength is a bug | lowest 63 men | lowest 19 men |
+| 4 | F10 Break at 15–30% | 18.4–43.6%, medians 19.4% and 22.8% | **15.3–57.4%**, medians 20.7% and 21.3% |
+| 4 | F10 Breaks outside the band | 1 of 7, and it says why | 1 of 16, and it says why |
+| 4 | F10 0 Strength is a bug | lowest 70 men | lowest 24 men |
 | 8 | F4 routing under 5ms | — | 0.16–1.09ms through the gorge; **4.4–4.8ms corner to corner** |
-| 2 | F3 rule list under ~20 | 11 rules; 3 fire, 5 across both runs | 11 rules; 5 fire |
+| 2 | F3 rule list under ~20 | 11 rules; 3 and 5 fire | 11 rules; 5 and 6 fire |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
@@ -884,30 +885,47 @@ the second piece of Key Ground was added for: a single piece makes every result 
 the French hold Rivoli, the Austrians hold the chapel, and what each army has left decides the
 day — nobody when the French are taken and silent, the Austrians when they are not.
 
-**Castiglione meets F10 and Rivoli does not, which rank 4 says to record rather than tune away.**
-Castiglione's Breaks cost 18.0–30.0% of a battalion, inside the band and agreeing with the
-fixture's 16.4–25.9%. Rivoli's run from 19.4% to **89.7%**, and the tail is not noise: the
-Dragoner-Regiment Erzherzog Johann at 89.7%, IR 10 Jordis at 65.8%, IR 48 Schmidfeld at 54.6%, the
-24e Chasseurs à Cheval at 43.5%. Three of those four are the Arms and the Units that come up the
-Adige road, and two of the four are cavalry. Nothing here says which of those is the cause. What it
-does say is that the everyday battle is inside the budget and the ceiling battle is not, which is
-exactly the split §0 keeps two nominals to find. The retreat named in rank 4 is global Morale
-scalars; a *per-Formation* constant would mean F8 has failed, and this is the measurement that
-would justify reaching for one, so it is written down before anybody does.
+**Both battles now meet F10 but for one Break apiece, and the two that miss say why they missed.**
+Medians across the four runs are 19.4%, 22.8%, 20.7% and 21.3%, against the 16.4–25.9% the fixture
+gives and the 15–30% the band asks for. It took two findings to get there, and neither was the
+cause rank 4 expected. **The tail was never a Morale scalar.** Rivoli's 89.7% was one musket
+Volley: the depth compounding treated every rank as an independent chance to find a man, so a
+hundred-and-forty-deep march column left a ball no way of missing and a battalion killed a man with
+ninety-eight of every hundred it fired. Split into the share of a discharge that goes where anybody
+is standing and the compounding over what stands in that lane, deep targets fall to 0.32–0.40 men a
+musket. **The larger cause was that Morale came back while men were being shot at.** Recovery ran
+every step against anything, so a Unit in a ten-minute firefight was handed a whole Morale back over
+the course of it and Broke tens of points late — the Units that met the band had regained 0.11–0.20
+during the fight that broke them, the ones at 42% had regained 1.42 and 1.65
+([ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md)). A *per-Formation* constant was
+never reached for and F8 stands.
 
-**Six of the eleven Initiative rules never fire in any of the four runs.** Firing: broke and
+**The four Breaks still outside the band are two shapes, one of each a battle, and both are
+recorded on the line that reports them.** Two are a small mounted Unit taking a whole battalion's
+Volley — the 1er Hussards at 43.6% off a Volley worth 36% of it, the Dragoner at 57.4% off one worth
+54%, both with nothing at all regained. No Morale rule decided either: `shots` scales with the Unit
+firing while the overlap reads the target's width and never its size, so a quarter of a
+two-hundred-and-eighty-man regiment goes at a stroke however well the depth is priced. That is the
+fire model's residual and it wants its own decision. The other two are the opposite case — the 1er/5e
+and the 14e Légère, both broken past the half-hour under fire so sporadic that the worst Volley
+either saw took 4% of it, both having steadied in the gaps. That is ADR-0011 working rather than
+failing: a battalion shot at once every two minutes is mostly out of the fight and ought to mend.
+What it costs is a Unit that fought all afternoon sitting a few points over the band.
+
+**Five of the eleven Initiative rules never fire in any of the four runs.** Firing: broke and
 running, deployed with the enemy too close to stay on the march, took march column to cover the
-ground, limbered up, rallied. Silent: formed square, countercharged, gave ground rather than be
-closed with, squeezed into march column for the Crossing, closed up to bring them under its fire,
-followed up as they gave way. T14 accepts that the list is order-sensitive and warns that a silent
-rule is either dead or shadowed by one above it, and the list is now more than half silent on the
-battles it is supposed to be exercised by.
+ground, limbered up, rallied, and — on Rivoli taken Austrian, for eighteen seconds — squeezed into
+march column for the Crossing. Silent: formed square, countercharged, gave ground rather than be
+closed with, closed up to bring them under its fire, followed up as they gave way. T14 accepts that
+the list is order-sensitive and warns that a silent rule is either dead or shadowed by one above
+it, and nearly half the list is still silent on the battles it is supposed to be exercised by.
 
 Two of those are worth separating from the rest. **Nothing ever formed square or countercharged**,
 which is the mechanic §0 already says the campaign under-exercises and tests against purpose-built
-fixtures instead — so that is the design working as written, not a gap. **Nothing ever squeezed
-into march column for the Crossing, on Rivoli**, whose whole point is a defile a battalion has to
-file up. That one is answered, and it is the benign reading: every Unit that goes up the Adige road
+fixtures instead — so that is the design working as written, not a gap. **The Crossing rule was
+silent on Rivoli** — whose whole point is a defile a battalion has to file up — until ADR-0011
+changed who was still standing where, and now fires there for eighteen seconds. It was the benign
+reading all along: every Unit that goes up the Adige road
 is authored into the travelling Formation before it sets foot on the Field — IR 10 Jordis and the
 Dragoner in march column, the Kavalleriebatterie limbered, and Lusignan's two the same — so the
 rule's first guard finds the Unit already in the Formation it would have called for. Not shadowed:

@@ -109,6 +109,7 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     reload: 0,
     morale: FULL_MORALE,
     moraleCeiling: FULL_MORALE,
+    settling: 0,
     fatigue: FRESH,
     blown: false,
     routing: null,

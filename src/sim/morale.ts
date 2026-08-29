@@ -239,6 +239,7 @@ export function shake(unit: Unit, casualties: number, from: Vec2, weight = 1): v
   if (casualties <= 0) return
   const share = casualties / Math.max(1, unit.strength + casualties)
   unit.morale -= (share * SHOCK * flanking(unit, from) * weight) / steadiness(unit)
+  unit.settling = SETTLING
 }
 
 /**
@@ -251,15 +252,39 @@ export function dread(unit: Unit, charger: Unit, exposed: boolean, dt: number): 
   if (isRouting(unit)) return
   const rate = DREAD[charger.arm] * (exposed ? DREAD_EXPOSED : 1)
   unit.morale -= (rate * dt) / (steadiness(unit) * stiffening(unit))
+  unit.settling = SETTLING
 }
 
-/** Morale creeping back toward the Ceiling, hastened by its own Headquarters. */
+/**
+ * Morale creeping back toward the Ceiling, hastened by its own Headquarters.
+ *
+ * Nothing creeps back while the Unit is still being shaken. A battalion
+ * steadies when it is out of it and not between two Volleys, and the count runs
+ * down here because this is the one thing asked of every Unit every step
+ * (ADR-0011).
+ */
 export function recover(battle: Battle, unit: Unit, dt: number): void {
+  if (unit.settling > 0) {
+    unit.settling = Math.max(0, unit.settling - dt)
+    return
+  }
   if (unit.morale >= unit.moraleCeiling) return
   const hq = battle.armies.find((a) => a.id === unit.army)?.headquarters
   const comfort = hq && distance(unit.position, hq.position) <= HQ_COMFORT ? 2 : 1
   unit.morale = Math.min(unit.moraleCeiling, unit.morale + RECOVERY * comfort * dt)
 }
+
+/**
+ * Seconds a Unit goes on being shaken after the last thing that shook it, and
+ * therefore how long it must be left alone before it steadies at all.
+ *
+ * Longer than a reload on purpose. A battalion loads in twenty-two and a half
+ * seconds, so a window shorter than that would hand a Unit its nerve back
+ * between the Volleys of the enemy taking it — which is the whole of what this
+ * is for. Thirty is the same window the budget run already reads a Unit's last
+ * Volley against when it asks whether the Unit has answered for itself.
+ */
+const SETTLING = 30
 
 /** Metres to the nearest enemy, or Infinity if the Unit is alone on the Field. */
 function nearestEnemy(battle: Battle, unit: Unit): number {

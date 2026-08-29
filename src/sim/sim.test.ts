@@ -74,6 +74,7 @@ function battalion(overrides: Partial<Unit> = {}): Unit {
     reload: 0,
     morale: 1,
     moraleCeiling: 1,
+    settling: 0,
     fatigue: 0,
     blown: false,
     routing: null,
