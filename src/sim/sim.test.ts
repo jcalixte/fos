@@ -1928,6 +1928,38 @@ describe("C6 Fighting — the Charge", () => {
     expect(cavalry.strength).toBe(400)
   })
 
+  /** A battalion in `formation`, already touching a steady line, Contact resolved. */
+  function footStrikes(formation: FormationName) {
+    const enemy = targetOf({ formation: "line" })
+    const foot = battalion({ id: "fr", formation, facing: 0 })
+    place(foot, enemy, 1)
+    foot.charging = { targetId: enemy.id, launchedAt: 0, recoiling: false, pursuing: false }
+    const battle = emptyBattle(blankField(250, 250), [foot, enemy])
+    resolveContact(battle, foot, enemy)
+    return { foot, enemy, contact: battle.contacts[0] }
+  }
+
+  it("lets a column punch a hole where a line only pushes, for a third of the men", () => {
+    // Both onto the same steady line. The column meets a third of the front, so
+    // it kills a third as many and loses a third as many — and costs the same
+    // nerve, because a line struck in one place has a hole in it and a line
+    // struck along its whole length has only been shoved.
+    const inLine = footStrikes("line")
+    const inColumn = footStrikes("attack-column")
+    expect(inColumn.contact.width).toBeLessThan(inLine.contact.width / 2)
+    expect(inColumn.contact.targetCasualties).toBeLessThan(inLine.contact.targetCasualties / 2)
+    expect(inColumn.contact.casualties).toBeLessThan(inLine.contact.casualties / 2)
+    expect(inColumn.enemy.morale).toBeCloseTo(inLine.enemy.morale, 1)
+  })
+
+  it("gives no hole to a Formation with no Face, whatever its Frontage", () => {
+    // A battalion on the road is three metres across and would otherwise punch
+    // the hardest hole on the Field. It is the one shape that must not.
+    const road = footStrikes("march-column")
+    expect(road.contact.width).toBeLessThan(10)
+    expect(road.enemy.morale).toBeGreaterThan(footStrikes("line").enemy.morale)
+  })
+
   it("makes square worth the drill out of Frontage alone, with no rule of its own", () => {
     const line = struck({ formation: "line" })
     const square = struck({ formation: "square" })

@@ -190,6 +190,36 @@ function contactWidth(unit: Unit, target: Unit): number {
 }
 
 /**
+ * How concentrated the blow one Unit took was, as a multiple on what it cost its
+ * nerve. Its own Frontage against the front the two actually met over: a line
+ * struck along its whole length has been pushed, and the same line struck over a
+ * third of it has had a hole punched in the middle of it, and the second is the
+ * one battalions came apart from.
+ *
+ * This is the half of the attack column C8 owed it. Casualties stay exactly as
+ * geometric as they were — only the bayonets that reach anybody kill anybody, so
+ * a 47m column kills a 47m column's worth of men and takes a 47m column's worth
+ * back. What was missing is that those two are not the same event to the Unit
+ * they happen to: the column has been hit across the whole of its front and the
+ * line has been hit in one place, and a line does not have to lose many men in
+ * one place to stop being a line.
+ *
+ * It is never less than 1, and it is 1 for whichever side is the narrower —
+ * which is every Contact the design already had. Cavalry is 200m wide and reads
+ * 1 against a line and 1 against a square, so nothing about what square is for
+ * moves; a column into a line is the case this exists for.
+ *
+ * Nothing for a blow struck by a Unit with no Face. A battalion on the road is
+ * three metres across and would otherwise punch the hardest hole on the Field,
+ * which is the exact opposite of what being caught in march column means.
+ */
+function concentration(taker: Unit, striker: Unit, width: number): number {
+  if (width <= 0) return 1
+  if (faces(striker.arm, striker.formation) === 0) return 1
+  return Math.max(1, frontage(taker.arm, taker.formation, taker.strength) / width)
+}
+
+/**
  * Bodies a Unit gets into the fight over `width` metres of it. The ranks that
  * can reach across a Contact are C3's `ENGAGED_RANKS`: the third rank of a line
  * has no more of a bayonet in the fight than it has a musket in the Volley, and
@@ -298,10 +328,10 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
 
   target.strength -= dealt
   unit.strength -= taken
-  // What each blow is worth beyond the men in it: how much of the Unit was
-  // standing behind the fight to hold it together while it landed.
-  shake(target, dealt, unit.position, 1 / stiffening(target))
-  shake(unit, taken, target.position, 1 / stiffening(unit))
+  // What each blow is worth beyond the men in it: how narrow a front it landed
+  // on, against how much of the Unit was standing behind the fight to hold it.
+  shake(target, dealt, unit.position, concentration(target, unit, width) / stiffening(target))
+  shake(unit, taken, target.position, concentration(unit, target, width) / stiffening(unit))
 
   // Off a Face the Contact itself is the cause, and it is what the Dispatch
   // names. On a Face, Morale decides — which is F10, and the reason a steady

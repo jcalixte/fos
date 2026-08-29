@@ -231,9 +231,9 @@ function flanking(unit: Unit, from: Vec2): number {
  * do in the teeth.
  *
  * `weight` is what this particular blow is worth beyond the men in it, and is 1
- * for everything but a Contact. C8 works it out from how much depth the Unit had
- * behind the fight when it landed; all this knows is that the same men lost can
- * cost more nerve or less for the way they were lost.
+ * for everything but a Contact. C8 works it out from how narrow a front the blow
+ * landed on and how much depth the Unit had behind the fight; all this knows is
+ * that the same men lost can cost more nerve or less for the way they were lost.
  */
 export function shake(unit: Unit, casualties: number, from: Vec2, weight = 1): void {
   if (casualties <= 0) return
