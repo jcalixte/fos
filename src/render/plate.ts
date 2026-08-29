@@ -107,6 +107,36 @@ export function plateField(): Field {
   return field
 }
 
+/**
+ * A Field small enough to be a thumbnail, carrying the four things a paper tone
+ * has to hold up against: grass, a wood, a road and water. Used by Settings to
+ * show a tone rather than name it — a colour offered without a picture of it is
+ * not a choice, it is a guess.
+ */
+export function swatchField(): Field {
+  const wide = 44
+  const high = 28
+  const field = makeField(wide, high, CELL)
+  const paint = (cx: number, cy: number, ground: Ground) => {
+    if (cx < 0 || cy < 0 || cx >= wide || cy >= high) return
+    field.ground[cy * wide + cx] = GROUNDS.indexOf(ground)
+  }
+  for (let cy = 0; cy < high; cy++) {
+    for (let cx = 0; cx < wide; cx++)
+      field.elevation[cy * wide + cx] = 30 * smoothstep((cy - 14) / 12)
+  }
+  for (let cy = 3; cy < 14; cy++) {
+    for (let cx = 4; cx < 19; cx++) {
+      if (((cx - 11) / 7.5) ** 2 + ((cy - 8) / 5.5) ** 2 <= 1) paint(cx, cy, "wood")
+    }
+  }
+  for (let cy = 0; cy < high; cy++) {
+    for (let d = 0; d < 2; d++) paint(30 + Math.round(2 * Math.sin(cy / 6)) + d, cy, "water")
+  }
+  for (let cx = 0; cx < wide; cx++) paint(cx, 19 + Math.round(1.5 * Math.sin(cx / 12)), "road")
+  return field
+}
+
 // ---------------------------------------------------------------------------
 
 const ARMS: Arm[] = ["infantry", "cavalry", "artillery"]

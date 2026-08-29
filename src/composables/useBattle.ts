@@ -1,5 +1,7 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
+import { STAFF_MAP_DEFAULTS } from "@/render/staffmap"
+import { loadSettings } from "@/settings"
 import { loadScenario } from "@/scenario/loader"
 import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
 import { concede, isOver } from "@/sim/battle"
@@ -285,7 +287,11 @@ export function useBattle() {
         v.destroy()
         return
       }
-      v.setField(battle.field)
+      // Read at the moment the Field is baked rather than held in the
+      // composable: the texture is built once and never rebuilt, so the only
+      // honest time to ask what the player wanted is now.
+      const look = loadSettings()
+      v.setField(battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
       view.value = v
 
       const r = markRaw(new BattleRunner(battle))

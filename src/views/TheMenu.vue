@@ -37,7 +37,15 @@ onMounted(async () => {
 
 <template>
   <div class="flex h-dvh flex-col overflow-hidden bg-base-300 text-base-content">
-    <TopBar />
+    <TopBar>
+      <!-- Neither of these is a battle, so they are offered here rather than in
+           the list: one is how the Field is drawn, and the other is for
+           whoever is working on the drawing. -->
+      <div class="ml-auto flex items-center gap-1">
+        <RouterLink to="/settings" class="btn btn-ghost btn-xs">settings</RouterLink>
+        <RouterLink to="/plate" class="btn btn-ghost btn-xs">plate</RouterLink>
+      </div>
+    </TopBar>
     <main class="relative min-h-0 flex-1">
       <BattleMenu :battles="battles" :last="last" :error="error" :loading="loading" />
     </main>

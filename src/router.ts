@@ -3,6 +3,7 @@ import { loadCatalogue } from "@/scenario/catalogue"
 import TheBattle from "@/views/TheBattle.vue"
 import TheMenu from "@/views/TheMenu.vue"
 import ThePlate from "@/views/ThePlate.vue"
+import TheSettings from "@/views/TheSettings.vue"
 
 /**
  * The two things a cold URL can honestly name: the battles on offer, and one
@@ -27,6 +28,8 @@ const routes: RouteRecordRaw[] = [
    * on C9, C10 or C11 and needs to see all of it at once.
    */
   { path: "/plate", name: "plate", component: ThePlate },
+  /** How the Field is drawn. Kept, so it is a page rather than a dialog. */
+  { path: "/settings", name: "settings", component: TheSettings },
   {
     path: "/battles/:battle",
     name: "battle",
