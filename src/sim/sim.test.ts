@@ -33,6 +33,8 @@ import {
   ARMY_BREAK,
   canRally,
   hasArmyBroken,
+  hasBroken,
+  stiffening,
   describeMorale,
   dread,
   isRouting,
@@ -1413,6 +1415,56 @@ describe("C7 Morale", () => {
     expect(lost).toBeLessThan(0.3)
   })
 
+  it("holds a battalion together by the ranks standing behind its fight", () => {
+    const stiff = (formation: FormationName) => stiffening(battalion({ formation }))
+    // A line is one rank deep behind its fight and a column is seven.
+    expect(stiff("attack-column")).toBeGreaterThan(stiff("line"))
+    // A square is four ranks to a Face, so it sits between the two — its answer
+    // to horse is that it has no flank, and was never meant to be this.
+    expect(stiff("square")).toBeGreaterThan(stiff("line"))
+    expect(stiff("square")).toBeLessThan(stiff("attack-column"))
+    // And nothing at all for the Formations with no Face. Depth on a road is
+    // not men holding onto each other, and neither is a screen at 1.6m
+    // intervals — both stand exactly where they stood before any of this.
+    expect(stiff("march-column")).toBe(1)
+    expect(stiff("open-order")).toBe(1)
+  })
+
+  it("spends depth on being rushed and never on being shot at, which is what keeps F10 still", () => {
+    // Where a Unit Breaks by the men it has lost, taken one at a time so
+    // nothing about the rate of fire or Morale creeping back is in the answer.
+    // Casualties are almost all fire, so this is the number F10's band is drawn
+    // on, and no amount of depth may move it.
+    const breaksAt = (formation: FormationName) => {
+      const unit = battalion({ formation })
+      let lost = 0
+      while (!hasBroken(unit) && lost < 700) {
+        shake(unit, 1, { x: 2000, y: unit.position.y })
+        unit.strength -= 1
+        lost += 1
+      }
+      return lost / 700
+    }
+    const line = breaksAt("line")
+    expect(line).toBeGreaterThan(0.15)
+    expect(line).toBeLessThan(0.3)
+    for (const formation of ["attack-column", "square", "march-column", "open-order"] as const) {
+      expect(breaksAt(formation)).toBeCloseTo(line)
+    }
+  })
+
+  it("costs a column less nerve than a line to have horse coming on at it", () => {
+    const watching = (formation: FormationName) => {
+      const unit = battalion({ formation })
+      const horse = battalion({ id: "au", army: "austrian", arm: "cavalry", formation: "line" })
+      for (let i = 0; i < 300; i++) dread(unit, horse, false, STEP)
+      return unit.morale
+    }
+    expect(watching("attack-column")).toBeGreaterThan(watching("line"))
+    expect(watching("square")).toBeGreaterThan(watching("line"))
+    expect(watching("march-column")).toBeLessThan(watching("line"))
+  })
+
   it("makes a conscript battalion Break sooner than an elite one", () => {
     const conscript = untilSomebodyBreaks({ grade: "conscript" })
     const elite = untilSomebodyBreaks({ grade: "elite" })
@@ -1890,11 +1942,15 @@ describe("C6 Fighting — the Charge", () => {
 
   it("is thrown back by a steady line and carries a shaken one, the geometry being equal", () => {
     expect(struck({ morale: 1 }).contact.outcome).toBe("recoiled")
-    expect(struck({ morale: 0.4 }).contact.outcome).toBe("broke")
+    // Read off the ladder rather than off the tuning: 0.3 is `shaken`, which is
+    // the rung this is about. Horse carries a line up to about 0.37 now that the
+    // rank behind its fight is worth something to it — a line one notch further
+    // gone than it used to need, and still a shaken one and not a broken one.
+    expect(struck({ morale: 0.3 }).contact.outcome).toBe("broke")
   })
 
   it("decides by Morale and not by Strength: the loser Breaks with most of its men", () => {
-    const { enemy, contact } = struck({ morale: 0.4 })
+    const { enemy, contact } = struck({ morale: 0.3 })
     expect(contact.outcome).toBe("broke")
     expect(1 - enemy.strength / 700).toBeLessThan(0.15)
     expect(enemy.strength).toBeGreaterThan(500)

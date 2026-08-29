@@ -292,6 +292,45 @@ export function faces(arm: Arm, formation: FormationName): 0 | 1 | 4 {
 }
 
 /**
+ * Ranks that are in the fight itself. A bayonet reaches the rank in front of it
+ * and no further, so the third rank of anything is behind the fighting whatever
+ * the Formation — which is why C8 counts these into a Contact, and why what is
+ * left over is `backing` below. One fact, read from both ends.
+ */
+export const ENGAGED_RANKS = 2
+
+/**
+ * The share of a Unit standing behind the ranks that are in the fight — the men
+ * who cannot reach the enemy and are therefore not fighting him but holding the
+ * Unit together. C7 reads it as steadiness, which is the only thing depth has
+ * ever been worth.
+ *
+ * This is the other half of what C3 owes the attack column. Depth was priced
+ * only as a liability: round shot ploughs it, few muskets bear out of it, and a
+ * narrow front meets a narrow slice of what it charges. Every one of those is
+ * right, and together they made the Formation strictly worse than line at
+ * everything — which is not what a column is. What the ranks behind actually
+ * bought was that the battalion did not come apart: the men in them cannot see
+ * what is happening, cannot fire, cannot run without going through the men
+ * behind *them*, and are pushing. A line is one rank deep behind its fight and
+ * a column is seven.
+ *
+ * A share and not a count, so it saturates: no amount of depth makes a Unit
+ * unbreakable, it only ever approaches every man but the front two.
+ *
+ * Nothing for a Formation with no Face, and that is the whole of the guard a
+ * march column needs — 175 ranks of battalion on a road is the deepest thing on
+ * the Field and the least able to stand, because it is not formed to fight at
+ * all. It takes Open Order out with it, which is right for the same reason from
+ * the other end: a screen is men who are not holding onto each other.
+ */
+export function backing(arm: Arm, formation: FormationName, strength: number): number {
+  if (spec(arm, formation).faces === 0) return 0
+  const { ranks } = grid(arm, formation, strength)
+  return Math.max(0, (ranks - ENGAGED_RANKS) / ranks)
+}
+
+/**
  * The ground a Unit can beat with fire, in Unit-local metres. Derived from
  * Frontage and the Formation's range, never authored.
  *

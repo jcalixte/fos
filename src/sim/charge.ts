@@ -1,6 +1,6 @@
 import { isBlown } from "./fatigue"
-import { faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
-import { breakUnit, hasBroken, isRouting, ROUT_SPEED, shake } from "./morale"
+import { ENGAGED_RANKS, faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
+import { breakUnit, hasBroken, isRouting, ROUT_SPEED, shake, stiffening } from "./morale"
 import type { Arm, Battle, Unit, UnitId, Vec2 } from "./types"
 import { angleDelta, axes, bearing, distance } from "./vec"
 
@@ -60,13 +60,6 @@ export const CONTACT_RANGE = 2
 
 /** Metres a Unit thrown back puts between itself and what threw it. */
 export const RECOIL_DISTANCE = 120
-
-/**
- * Ranks that can reach across a Contact. The third rank of a line has no more
- * of a bayonet in the fight than it has a musket in the Volley, and the ninth
- * rank of a column has nothing to do but push.
- */
-const CONTACT_RANKS = 2
 
 /**
  * Men one body takes off the other side in the seconds a Contact lasts. Per
@@ -196,12 +189,19 @@ function contactWidth(unit: Unit, target: Unit): number {
   )
 }
 
-/** Bodies a Unit gets into the fight over `width` metres of it. */
+/**
+ * Bodies a Unit gets into the fight over `width` metres of it. The ranks that
+ * can reach across a Contact are C3's `ENGAGED_RANKS`: the third rank of a line
+ * has no more of a bayonet in the fight than it has a musket in the Volley, and
+ * the ninth rank of a column has nothing to do but push. What the pushing is
+ * worth is that same fact read from the other end, which C3 hands to C7 as
+ * `backing` rather than anything here counting it twice.
+ */
 function reach(unit: Unit, width: number): number {
   const g = grid(unit.arm, unit.formation, unit.strength)
   const front = frontage(unit.arm, unit.formation, unit.strength)
   if (front <= 0) return 0
-  return (width * g.files * Math.min(g.ranks, CONTACT_RANKS)) / front
+  return (width * g.files * Math.min(g.ranks, ENGAGED_RANKS)) / front
 }
 
 /** Every enemy Unit committed to a Charge on this one, the thrown-back excluded. */
@@ -298,8 +298,10 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
 
   target.strength -= dealt
   unit.strength -= taken
-  shake(target, dealt, unit.position)
-  shake(unit, taken, target.position)
+  // What each blow is worth beyond the men in it: how much of the Unit was
+  // standing behind the fight to hold it together while it landed.
+  shake(target, dealt, unit.position, 1 / stiffening(target))
+  shake(unit, taken, target.position, 1 / stiffening(unit))
 
   // Off a Face the Contact itself is the cause, and it is what the Dispatch
   // names. On a Face, Morale decides — which is F10, and the reason a steady

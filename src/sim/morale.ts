@@ -1,6 +1,6 @@
 import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { fireLeft, nerveLeft } from "./fatigue"
-import { TRAVELLING_FORMATION } from "./formation"
+import { backing, TRAVELLING_FORMATION } from "./formation"
 import type { Arm, Army, ArmyId, Battle, Grade, Unit, Vec2 } from "./types"
 import { angleDelta, bearing, distance } from "./vec"
 
@@ -38,14 +38,29 @@ export const FULL_MORALE = 1
 
 /**
  * What casualties cost in Morale, as a multiple of the share of the Unit they
- * took. Set so that Break lands inside F10's 15–30% band: a line battalion
- * spends its whole Morale on about a fifth of its men, a conscript one sooner
- * and an elite one later.
+ * took. Set so that Break lands inside F10's 15–30% band: a battalion with
+ * nothing standing behind its fight spends its whole Morale on about a sixth of
+ * its men, a conscript one sooner and an elite one later, and what depth is
+ * worth is added on top of that floor rather than taken out of it.
  */
 const SHOCK = 5.6
 
 /** How much of that a Grade shrugs off. This is what Grade means under fire. */
 const STEADINESS: Record<Grade, number> = { conscript: 0.75, line: 1, elite: 1.2 }
+
+/**
+ * What the ranks behind the fight are worth to the men in it, as a multiple of
+ * what a Unit shrugs off. The one thing depth has ever bought, and the only
+ * place C3's geometry reaches Morale directly.
+ *
+ * A global scalar against a derived share, which is what DESIGN section 6 says
+ * to do when F8's geometry has to hit F10's numbers: `backing` sets the
+ * relative effect and this sets how much it is worth. There is no
+ * per-Formation constant anywhere in it — a column stands because it *is* deep,
+ * a march column does not because it has no Face, and a screen does not because
+ * it is men who have let go of each other.
+ */
+const BACKING = 0.6
 
 /**
  * What a Unit shrugs off, all told: its Grade, less what it has spent its legs
@@ -56,6 +71,26 @@ const STEADINESS: Record<Grade, number> = { conscript: 0.75, line: 1, elite: 1.2
  */
 function steadiness(unit: Unit): number {
   return STEADINESS[unit.grade] * nerveLeft(unit)
+}
+
+/**
+ * What the ranks behind the fight are worth when the Unit is rushed, as a
+ * further multiple on what it shrugs off.
+ *
+ * Deliberately not part of `steadiness`, which is to say deliberately worth
+ * nothing against fire. Depth holds a battalion together when something arrives
+ * at it — the men behind cannot see it coming, cannot run without going through
+ * the men behind *them*, and are pushing — and that is a fact about a shock, not
+ * about ten minutes of musketry. A column being shot at is not steadied by being
+ * deep; it is a bigger target for being deep, which C6 already charges it for.
+ *
+ * Keeping it out of fire is also what keeps F10 honest. Casualties are almost
+ * all fire, so where a Unit Breaks by the men it has lost does not move an inch
+ * for any of this: every Formation still spends its Morale on the sixth of its
+ * men SHOCK is calibrated to. What moves is what it takes to rush one.
+ */
+export function stiffening(unit: Unit): number {
+  return 1 + BACKING * backing(unit.arm, unit.formation, unit.strength)
 }
 
 /**
@@ -194,11 +229,16 @@ function flanking(unit: Unit, from: Vec2): number {
  * What a Unit's losses cost its Morale. Called with the men it just lost and
  * where they came from, so the same casualties in the back cost more than they
  * do in the teeth.
+ *
+ * `weight` is what this particular blow is worth beyond the men in it, and is 1
+ * for everything but a Contact. C8 works it out from how much depth the Unit had
+ * behind the fight when it landed; all this knows is that the same men lost can
+ * cost more nerve or less for the way they were lost.
  */
-export function shake(unit: Unit, casualties: number, from: Vec2): void {
+export function shake(unit: Unit, casualties: number, from: Vec2, weight = 1): void {
   if (casualties <= 0) return
   const share = casualties / Math.max(1, unit.strength + casualties)
-  unit.morale -= (share * SHOCK * flanking(unit, from)) / steadiness(unit)
+  unit.morale -= (share * SHOCK * flanking(unit, from) * weight) / steadiness(unit)
 }
 
 /**
@@ -210,7 +250,7 @@ export function shake(unit: Unit, casualties: number, from: Vec2): void {
 export function dread(unit: Unit, charger: Unit, exposed: boolean, dt: number): void {
   if (isRouting(unit)) return
   const rate = DREAD[charger.arm] * (exposed ? DREAD_EXPOSED : 1)
-  unit.morale -= (rate * dt) / steadiness(unit)
+  unit.morale -= (rate * dt) / (steadiness(unit) * stiffening(unit))
 }
 
 /** Morale creeping back toward the Ceiling, hastened by its own Headquarters. */
