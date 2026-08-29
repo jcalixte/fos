@@ -234,6 +234,10 @@ describe("the bridge march", () => {
 
     // The deck is cells 96 to 104 on row 74. Where the Unit stood when it chose
     // to deploy is the whole assertion: on the far side of it, not short of it.
+    // Every time it chose, and not the first time only — the battalion crosses,
+    // stands, breaks, rallies and re-forms here, so how many times it deploys is
+    // a fact about the firefight and not about the rule under test. What the rule
+    // claims is that none of them is short of the deck.
     const deployedAt: number[] = []
     let said = 0
     while (b.time < 1800 && unit.order) {
@@ -245,8 +249,8 @@ describe("the bridge march", () => {
       }
     }
 
-    expect(deployedAt).toHaveLength(1)
-    expect(deployedAt[0]).toBeGreaterThan(104)
+    expect(deployedAt.length).toBeGreaterThan(0)
+    for (const cx of deployedAt) expect(cx).toBeGreaterThan(104)
     expect(b.dispatches.map((d) => d.text)).not.toContain(
       "1er/4e de Ligne squeezed into march column for the crossing",
     )

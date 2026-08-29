@@ -99,19 +99,38 @@ const PENETRATION: Record<Arm, number> = { infantry: 1, cavalry: 0, artillery: 4
 const AIMED: Record<Arm, boolean> = { infantry: false, cavalry: false, artillery: true }
 
 /**
- * Chance one shot strikes one particular body standing in its path, at
- * point-blank. Per *body*, not per shot: what a shot's chance of hitting
- * anything comes to is that compounded over everything standing in its way, so
- * depth raises it and nothing has to say that a column is easier to hit.
+ * The share of a discharge that goes where somebody is standing at all: what is
+ * left after the balls thrown over the heads of the target and wide of its
+ * flanks, which would have missed it at any depth whatever.
  *
- * Calibrated so that the shape of a firefight comes out where the period puts
- * it: two lines at sixty metres take about thirty men a Volley off each other,
- * an eight-gun battery at four hundred metres takes three or four off a line and
- * three times that off a column standing in front of it.
+ * It is the term the depth compounding cannot supply, and leaving it out is what
+ * made a march column lethal to be in. A ball that misses the first two ranks
+ * misses them by being high or wide, and it goes on missing the hundred and
+ * thirty-eight ranks behind them for the same reason — so the misses down a file
+ * are one miss and not a hundred and forty independent ones. Compounded as
+ * though they were independent, a battalion at a hundred metres killed a man
+ * with ninety-eight of every hundred balls it fired.
+ *
+ * One for a gun, because laying it on the target is precisely the removal of the
+ * error this describes; what dispersion a gun has is where it always was, in the
+ * per-body chance below.
  */
-const HIT_PER_BODY: Record<Arm, number> = { infantry: 0.035, cavalry: 0, artillery: 0.075 }
+const SHOT_IN_LANE: Record<Arm, number> = { infantry: 0.4, cavalry: 0, artillery: 1 }
 
-/** How much of that is left at the far edge of the Formation's reach. */
+/**
+ * Chance one shot already in a lane strikes one particular body standing in
+ * that lane. Per *body*, not per shot: a ball that misses the front rank has
+ * every rank behind it still to find, which is the case against depth and the
+ * half of it that compounding gets right.
+ *
+ * Calibrated with SHOT_IN_LANE so that the shape of a firefight comes out where
+ * the period puts it: two lines at sixty metres take about thirty men a Volley
+ * off each other, an eight-gun battery at four hundred metres takes three or
+ * four off a line and three times that off a column standing in front of it.
+ */
+const HIT_PER_BODY: Record<Arm, number> = { infantry: 0.095, cavalry: 0, artillery: 0.075 }
+
+/** How much of the shot still in a lane is left at the far edge of the reach. */
 const HIT_AT_RANGE = 0.3
 
 /** A Face that bears on an enemy, and how much of it does. */
@@ -325,13 +344,22 @@ export function bodiesInPath(target: Unit, direction: number): number {
 }
 
 /**
+ * The share of a discharge that is in a lane, at this range and from this Unit.
+ *
+ * Both of the things that make a Volley worse than it might have been live
+ * here rather than in the per-body chance, because both are aiming and neither
+ * is geometry: the range, because a ball's error grows with the ground it
+ * crosses, and the Unit's own state, because shaken men level worse. What
+ * stands in the lane once a ball is in it does not care how far away the man who
+ * fired it was.
+ *
  * Grade is deliberately not in here. It buys rate of fire and the steadiness to
  * keep firing as the Unit is shot at, and it reaches lethality only through
  * Morale — never as a multiplier on the Volley itself.
  */
-function hitPerBody(unit: Unit, gap: number, range: number): number {
+function inLane(unit: Unit, gap: number, range: number): number {
   const falloff = 1 - (1 - HIT_AT_RANGE) * Math.min(1, gap / range)
-  return HIT_PER_BODY[unit.arm] * falloff * fireEffect(unit)
+  return SHOT_IN_LANE[unit.arm] * falloff * fireEffect(unit)
 }
 
 /**
@@ -352,10 +380,12 @@ export function volleyCasualties(unit: Unit, shot: Aim): number {
     shot.target.position.x - unit.position.x,
   )
   const path = bodiesInPath(shot.target, direction)
-  const q = hitPerBody(unit, shot.gap, zone.range)
-  // Compounded over the depth: a ball that misses the front rank of a column
-  // still has eight more ranks to find, which is the whole case against depth.
-  const strikes = 1 - (1 - q) ** path
+  // Compounded over the depth, but only over the shot that was going to find
+  // anybody at all: a ball in a lane that misses the front rank of a column
+  // still has eight more ranks to find, and a ball thrown over the column has
+  // none however deep the column is.
+  const found = 1 - (1 - HIT_PER_BODY[unit.arm]) ** path
+  const strikes = inLane(unit, shot.gap, zone.range) * found
   return shots * strikes * Math.min(PENETRATION[unit.arm], path)
 }
 
