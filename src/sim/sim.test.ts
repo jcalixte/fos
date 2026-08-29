@@ -1222,29 +1222,45 @@ describe("C6 Fighting", () => {
     expect(shooter.reload).toBeCloseTo(reloadSeconds("infantry", "line"))
   })
 
-  it("leaves a screen out-shot by the line it is standing off from", () => {
-    // The whole reason the reload is charged to the Formation: at 120m a screen
-    // fires and nothing can fire back, so what it does per minute out there has
-    // to stay under what a line does inside its own reach.
-    const screen = facingOff(120, {}, { formation: "open-order" })
-    const line = facingOff(60)
+  it("gives a screen no ground to fire from that a line cannot fire back onto", () => {
+    // The property that keeps Open Order honest, and the reason its reach is a
+    // hundred metres like every other infantry Formation's. A screen that could
+    // stand where nothing answered did not have to win a firefight to win one:
+    // it walked backwards, and a line, which cannot fire while it marches,
+    // followed it until it broke.
+    for (let gap = 40; gap <= 200; gap += 10) {
+      const screen = facingOff(gap, {}, { formation: "open-order" })
+      const line = facingOff(gap, { formation: "open-order" })
+      if (!aim(screen.battle, screen.shooter)) continue
+      expect(aim(line.battle, line.shooter)).not.toBeNull()
+    }
+  })
+
+  it("leaves a screen out-shot by the line it is standing in front of", () => {
+    // The whole reason the reload is charged to the Formation: the screen is
+    // half a line's muskets loading at half its rate, so at the range they both
+    // reach it has to come off far worse than the line does.
+    const screen = facingOff(100, {}, { formation: "open-order" })
+    const line = facingOff(100)
     const perMinute = (u: typeof line.shooter, b: typeof line.battle) =>
       (volleyCasualties(u, aim(b, u)!) * 60) / u.reload || 0
     resolveFire(screen.battle, screen.shooter, STEP, true)
     resolveFire(line.battle, line.shooter, STEP, true)
     expect(perMinute(screen.shooter, screen.battle)).toBeLessThan(
-      perMinute(line.shooter, line.battle) / 3,
+      perMinute(line.shooter, line.battle) / 2,
     )
   })
 
   it("thins a screen's fire with the range, and not with its own Frontage", () => {
-    const near = facingOff(60, {}, { formation: "open-order" })
-    const far = facingOff(140, {}, { formation: "open-order" })
+    const near = facingOff(50, {}, { formation: "open-order" })
+    const far = facingOff(105, {}, { formation: "open-order" })
     expect(volleyCasualties(far.shooter, aim(far.battle, far.shooter)!)).toBeLessThan(
       volleyCasualties(near.shooter, aim(near.battle, near.shooter)!) * 0.8,
     )
-    // And it reaches as far as the range says, not as far as the swarm is wide.
-    const beyond = facingOff(200, {}, { formation: "open-order" })
+    // And it reaches as far as the range says, not as far as the swarm is wide:
+    // 150m is well outside the screen's reach and well inside what measuring it
+    // by its 187m Frontage would have credited it with.
+    const beyond = facingOff(150, {}, { formation: "open-order" })
     expect(aim(beyond.battle, beyond.shooter)).toBeNull()
   })
 

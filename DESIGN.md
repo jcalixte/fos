@@ -1136,8 +1136,8 @@ the open diagonal is the cost.
   thing it exists for.** A Unit fires only where it covered no ground in the step, which is right
   and load-bearing — it is what makes **Halt** worth an Order and an advance under fire cost
   something. But it was applied to every Formation that has reach, and skirmishing *is* fire and
-  movement: men advancing, firing and falling back inside the swarm. Open Order reaches 150m
-  against a line's 100m and walks at 1.2 m/s against its 0.8, and every bit of that was worthless,
+  movement: men advancing, firing and falling back inside the swarm. Open Order walks at 1.2 m/s
+  against a line's 0.8 and is mostly the ground between men, and every bit of that was worthless,
   because the screen had to stand still to shoot like the line it was screening. What halting
   actually buys is a dressed **Face**, so the rule now reads off the Face and not the Order: a
   Formation with no Face has no line to dress and fires on the march. Derived from `faces` and
@@ -1156,8 +1156,8 @@ the open diagonal is the cost.
   bearing — so a screen's beaten ground is its own Footprint blown out by the range on every side,
   9m of standoff to the front and 93m along the screen. The renderer samples the same standoff
   rather than drawing a circle, because a beaten ground drawn where the fire is not is the one kind
-  of lie F5 cannot afford. Measured: 18.4 men a Volley at 60m against a line's 29.1, 9.6 at 140m,
-  and nothing past 159.
+  of lie F5 cannot afford. Measured: 15.7 men a Volley at 60m against a line's 29.1, 7.4 at 110m,
+  and nothing past 111.
 
 - **"The Headquarters can be moved, and can be shot at" was written in ADR-0002 and neither half
   was built.** Sited once at Deployment, it turned the one decision the whole delay mechanic exists
@@ -1178,6 +1178,25 @@ the open diagonal is the cost.
   *invisible*, and ADR-0002 draws the Courier precisely because an unseen delay reads as lag. A
   wait at the table can be drawn: the rider sits at the Headquarters, the Ghost is already out on
   the Field, and the Order is visibly written and visibly not gone.
+
+- **Open Order out-ranged the line by fifty metres, and that was its survivability charged twice.**
+  It was the one infantry Formation whose `range` was not 100 — the per-Formation combat constant F8
+  exists to forbid, sitting in the table in plain sight. Reach is a fact about the musket and the man
+  carrying it, and it is the same musket and the same man; what the Formation buys is Density, and
+  Density already pays out — most of what is sent at a screen finds the ground between the men, which
+  is why it is the safest place on the Field under guns. The extra fifty metres bought a second
+  thing on top: a band from 111m to 161m, centre to centre, where the screen fired and no line could
+  answer. Against a line that band is not a band but a game: a line cannot fire while it marches and
+  walks at 0.8 m/s against the screen's 1.2, so the screen backs away inside its 250m of `stand-off`
+  leash while the line spends its 100m of `close-up` and never arrives. Measured before the change,
+  twenty minutes of it with nobody issuing an Order: the line 700 to 403 and routing, the screen
+  untouched at 700. Now every infantry Formation that can fire reaches the same hundred metres, so
+  any ground a screen can fire from is ground a halted line can fire back onto, and the price of a
+  line's fire stays the thing it is supposed to be — you must stop. What Open Order is for survives
+  whole: it lives under round shot, it fires on the march at half the rate, it outwalks foot, and
+  horse rides over it because it has no Face. The two Formations no longer meet in a fight only one
+  of them can be in; they meet at 100m, where the screen is half a line's muskets loading at half its
+  rate and comes off three times worse.
 
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which

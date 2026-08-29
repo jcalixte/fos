@@ -54,13 +54,16 @@ const RELOAD_BY_GRADE: Record<Grade, number> = { conscript: 1.1, line: 1, elite:
  *
  * Charged to the Formation and not to the step. Reading whether the Unit had
  * moved *this tick* meant a screen that halted reloaded as fast as a dressed
- * battalion, so Open Order kept its 150m reach and its all-round aim and paid
- * nothing at all for either: parked at 130m it beat a line to death from
- * outside the line's reach, at a line's own rate of fire, and the one price the
- * Formation is supposed to carry was refunded the moment it stopped walking.
+ * battalion, so Open Order kept its all-round aim and its Density and paid
+ * nothing at all for either the moment it stopped walking — which is the one
+ * price the Formation is supposed to carry, refunded by standing still.
  * A skirmisher loads on his own account whether or not his feet are moving,
  * which is what CONTEXT means by Open Order firing on the move and paying for
  * it in the reload.
+ *
+ * It is the whole of what a screen pays, now that its reach is a line's. Half
+ * the muskets of the line it stands in front of, loading at half the rate, is
+ * what makes standing in front of one a bad way to spend a battalion.
  */
 const RELOAD_ON_THE_MOVE = 2
 

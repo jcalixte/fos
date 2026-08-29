@@ -69,7 +69,25 @@ const INFANTRY: Record<string, FormationSpec> = {
     rankDepth: 3,
     faces: 0,
     speed: 1.2,
-    range: 150,
+    // The same musket the same man carried in the line. Reach is a fact about
+    // the weapon, so every infantry Formation that can fire reaches the same
+    // hundred metres, and the only infantry number that ever differed was this
+    // one — which is the per-Formation constant F8 exists to forbid.
+    //
+    // It was 150, and the fifty metres were the Formation's survivability
+    // charged a second time. Density already prices dispersal: most of what is
+    // sent at a screen finds the ground between the men, and that is what keeps
+    // it alive. The extra reach bought it a band from 111m to 161m where it
+    // fired and no line could answer — and against a line, which cannot fire
+    // while it marches and walks at 0.8 against the screen's 1.2, that band
+    // could be held open for as long as the leash allowed. Twenty minutes of it
+    // routed a battalion for the loss of nobody at all.
+    //
+    // At a hundred, any shot the screen takes is a shot a halted line can take
+    // back, and the price of a line's fire stays what it should be: you must
+    // stop. What Open Order is for is intact — it survives round shot, it fires
+    // on the march, it outwalks foot, and horse eats it.
+    range: 100,
   },
 }
 
@@ -302,7 +320,8 @@ export interface FireZone {
  * Half the longest side would do in every direction at once, and that is what a
  * skirmish screen's beaten ground used to be: 700 men in Open Order are 187m
  * across and 18m deep, so the swarm was credited with 93m of standoff whichever
- * way it shot, and its fire did not begin to thin until 240m. What it actually
+ * way it shot, and its fire did not begin to thin until most of a hundred
+ * metres past the end of its own reach. What it actually
  * is is the Footprint blown out by the range on every side, which is 9m of
  * standoff to the front and 93m along the screen.
  */
