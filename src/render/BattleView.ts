@@ -1206,7 +1206,10 @@ export class BattleView {
     }
 
     if (view.headquarters) {
-      this.drawHeadquarters(g, view.headquarters, mpp)
+      // Only his own army's, because only his own Headquarters is drawn — and
+      // only his own dictates anything.
+      const dictated = units.filter((u) => u.dictated && u.army === view.playerArmy)
+      this.drawHeadquarters(g, view.headquarters, mpp, dictated)
     }
 
     if (view.drag) {
@@ -1235,7 +1238,12 @@ export class BattleView {
    * command until the mark and the staff are the same place, so the wait has to
    * be something he can see the end of.
    */
-  private drawHeadquarters(g: Graphics, hq: HeadquartersView, mpp: number): void {
+  private drawHeadquarters(
+    g: Graphics,
+    hq: HeadquartersView,
+    mpp: number,
+    dictated: UnitSnapshot[],
+  ): void {
     const { x, y } = hq.position
     const r = 7 * mpp
     const colour = hq.harried ? 0xd8632f : 0xf5e6a8
@@ -1260,6 +1268,18 @@ export class BattleView {
     // not a state change a player catches out of the corner of his eye.
     if (hq.harried) {
       g.circle(x, y, r * 3.2).stroke({ width: mpp, color: colour, alpha: 0.45 })
+    }
+    // What was said in the saddle, drawn the way a Courier held at the table is:
+    // a hollow mark on the staff and a thread to the Unit it is for. Without it
+    // the press puts a Ghost on the Field with no rider anywhere behind it,
+    // which reads as an Order the app has mislaid — the notebook is the one
+    // thing the player has to be able to see while nothing is leaving.
+    for (const unit of dictated) {
+      g.moveTo(x, y).lineTo(unit.position.x, unit.position.y)
+      g.stroke({ width: mpp, color: colour, alpha: 0.12 })
+    }
+    if (dictated.length > 0) {
+      g.circle(x, y, 4.5 * mpp).stroke({ width: mpp, color: colour, alpha: 0.8 })
     }
   }
 

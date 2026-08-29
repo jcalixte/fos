@@ -210,6 +210,15 @@ function rungTip(option: Latitude): string {
             in {{ label(unit.formation) }}{{ unit.hasOrder ? ", under orders" : "" }}
           </span>
         </p>
+
+        <!-- An Order said to a staff in the saddle. Beside the Unit it was said
+             for, and not only in the bar across the top, because this is the
+             card the player pressed a button on and the Field answers him with
+             a Ghost that has nothing riding at it. It says why rather than
+             what: there is no table, so there is no rider. -->
+        <p v-if="unit.dictated" class="text-xs text-warning">
+          dictated in the saddle — there is no table to write it at, so no rider has it yet
+        </p>
       </div>
 
       <div class="flex items-center gap-x-6">

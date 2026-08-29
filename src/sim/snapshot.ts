@@ -1,5 +1,6 @@
 import { unitSpeed } from "./battle"
 import { describeFatigue, type FatigueWord } from "./fatigue"
+import { dictatedUnits } from "./headquarters"
 import { aim } from "./fighting"
 import { describeMorale, type MoraleWord } from "./morale"
 import { briefsInFlight, ghosts, type Ghost } from "./orders"
@@ -35,6 +36,13 @@ export interface UnitSnapshot {
    * one was taken at all while it is still on the road.
    */
   briefedTo: Latitude | null
+  /**
+   * True while an Order for it is in an aide's notebook: said to a staff that
+   * was in the saddle, with no rider under it and nothing on the road. The
+   * Ghost alone cannot say that — a Ghost with no Courier riding at it reads as
+   * an Order the app has lost (ADR-0008).
+   */
+  dictated: boolean
   /** True while it is walking somewhere on its own account, not under Orders. */
   shifting: boolean
   /**
@@ -96,6 +104,7 @@ export interface BattleSnapshot {
 
 export function snapshot(battle: Battle): BattleSnapshot {
   const briefs = briefsInFlight(battle)
+  const dictated = dictatedUnits(battle)
   return {
     time: battle.time,
     units: battle.units.map((unit) => ({
@@ -118,6 +127,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       hasOrder: unit.order !== null,
       standing: unit.standing,
       briefedTo: briefs.get(unit.id) ?? null,
+      dictated: dictated.has(unit.id),
       shifting: unit.shift !== null,
       morale: describeMorale(unit),
       fatigue: describeFatigue(unit),

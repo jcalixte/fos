@@ -45,17 +45,22 @@ function take(armyId: string): void {
  * The Headquarters in one line, or nothing while it is standing clear. Riding
  * outranks harried: a staff in the saddle is not sending riders at all, so what
  * the wait at the table would have cost is beside the point. What it says while
- * riding has to carry both halves — nothing is leaving, and what he says now is
- * being written down — or the player reads the dictation as a delivery.
+ * riding has to carry three things — why nothing is leaving, that nothing is,
+ * and that what he says now is written down — because *riding* on its own is
+ * only where the staff is, and the player is left to guess what that has to do
+ * with the rider who never set off.
  */
 const headquartersNote = computed(() => {
   if (ui.phase !== "battle") return null
   const hq = ui.headquarters
   if (hq.riding) {
     const held = hq.dictated
-      ? ` (${hq.dictated} dictated, waiting)`
-      : " — what you order now is dictated"
-    return { text: `The Headquarters is riding${held}`, tone: "text-error" }
+      ? `${hq.dictated} Order${hq.dictated === 1 ? " is" : "s are"} written down, waiting on the staff`
+      : "what you order now is written down instead"
+    return {
+      text: `The Headquarters is riding — nobody is at a table, so no rider leaves; ${held}`,
+      tone: "text-error",
+    }
   }
   if (hq.harried) {
     return { text: "The Headquarters is harried — Orders are slow to leave", tone: "text-warning" }
@@ -287,9 +292,10 @@ onBeforeUnmount(() => {
             <span class="font-semibold text-base-content">Deployment.</span>
             Drag your Units inside the marked zone, and drag the Headquarters to where you mean to
             stand — every Order you give will be ridden from there. You can send it to new ground
-            once the clock runs, but nothing can be ordered while it is on the move. Select a Unit
-            to form it up, and drag from open ground to point it: before the clock runs, both are
-            free.
+            once the clock runs, but no rider leaves it while it is on the move — there is no table
+            to write at, so what you order then is taken down and rides when it is established.
+            Select a Unit to form it up, and drag from open ground to point it: before the clock
+            runs, both are free.
           </p>
         </div>
 

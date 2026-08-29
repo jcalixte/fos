@@ -101,6 +101,20 @@ export function canSendCourier(headquarters: Headquarters): boolean {
 }
 
 /**
+ * Every Unit with an Order in an aide's notebook, said in the saddle and not
+ * yet on the road. The screen's question rather than the simulation's: a
+ * dictated Order has no rider to watch, so the card and the Field both have to
+ * be able to say which Units are waiting on the staff (ADR-0008).
+ */
+export function dictatedUnits(battle: Battle): Set<UnitId> {
+  const out = new Set<UnitId>()
+  for (const army of battle.armies) {
+    for (const entry of army.headquarters?.dictated ?? []) out.add(entry.unitId)
+  }
+  return out
+}
+
+/**
  * Say an Order at a Headquarters. A rider takes it where there is one to take
  * it, and where the staff is in the saddle it is dictated instead and goes the
  * moment the staff is established. The rule lives here rather than in the

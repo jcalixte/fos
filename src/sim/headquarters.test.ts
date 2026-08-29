@@ -18,6 +18,7 @@ import {
 import { unitWeight } from "./morale"
 import { COURIER_SPEED, estimateDelay, ghosts } from "./orders"
 import { blankField, entryToUnit } from "./scenario"
+import { snapshot } from "./snapshot"
 import type { Battle, Field, Headquarters, Unit, Vec2 } from "./types"
 import { distance } from "./vec"
 
@@ -204,9 +205,13 @@ describe("a staff in the saddle", () => {
     // Ghost stands on the ground he named, with no rider out yet.
     const ghost = ghosts(battle).find((g) => g.unitId === target.id)
     expect(ghost?.position).toEqual({ x: 700, y: 200 })
+    // And the Unit says so on its own card, so a Ghost with nothing riding at
+    // it is never left to be read as an Order the app has mislaid.
+    expect(snapshot(battle).units[0].dictated).toBe(true)
 
     run(battle, 200 / HEADQUARTERS_SPEED + 1)
     expect(hq.dictated).toHaveLength(0)
+    expect(snapshot(battle).units[0].dictated).toBe(false)
     expect(battle.couriers).toHaveLength(1)
     // From the ground the staff ended up on, not the ground it dictated from.
     expect(battle.couriers[0].origin.x).toBeCloseTo(300, 0)
