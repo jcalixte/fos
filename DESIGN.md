@@ -1036,6 +1036,12 @@ against — so the smoke is `#dcdcd6`, which is as white as the white army can a
 0.10 of the bank's own visibility against open ground, 1.27 rather than 1.37, and smoke is the one
 mark on this map that also reads by moving.
 
+**The bank was looked at on the plate, and it reads.** Which is the only way this one could have
+been closed: every number above bounds what smoke may do to the ground, and none of them says
+whether a drifting cloud at 0.268 over the grass is a battlefield or a smudge. Six sources on the
+period's reload clocks, the toggle thrown both ways over the same ground, and the drift carried
+across the Arm-by-Grade-by-Morale band. F13 is built.
+
 **Smoke had to be aged on battle time, and that is a Tempo bug caught before it was written.** A
 Flash and a Clash burn down on the wall clock, which is right for sub-second marks. Tempo defaults
 to **4**, so a bank on the wall clock would be four times as thick at the Tempo the game is played at
