@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process"
 import { describe, expect, it } from "vitest"
 import { isOver, STEP, step } from "../src/sim/battle"
+import { isDisordered } from "../src/sim/disorder"
 import { beatsPoint } from "../src/sim/fighting"
 import { RULES } from "../src/sim/initiative"
 import { hasBroken, isRouting, shareGone } from "../src/sim/morale"
@@ -77,6 +78,13 @@ interface RunReport {
   arrivals: ArrivalRecord[]
   ruleSeconds: Map<string, number>
   idleUnderThreat: number
+  /**
+   * Disorder, measured as the thing it claims to be: how often a Unit's ranks
+   * were taken off it, how long they stayed off, and by which of the two causes.
+   * Told apart by the Dispatch, which is where the cause is written down —
+   * the state itself is one number and does not remember what set it.
+   */
+  disorder: { spells: number; seconds: number; longest: number; byPursuit: number }
   drift: Map<string, number>
   shareGone: { army: string; share: number }[]
   digest: string
@@ -160,6 +168,12 @@ function run(scenario: string, taken: string): RunReport {
   let idleUnderThreat = 0
   const routingLast = new Set<string>()
   const firedAt = new Map<string, number>()
+  const raggedSince = new Map<string, number>()
+  let disorderSpells = 0
+  let disorderSeconds = 0
+  let disorderLongest = 0
+  let disorderByPursuit = 0
+  let dispatchesRead = 0
 
   for (let n = 0; n < CLOCK_LIMIT_STEPS && !isOver(battle); n++) {
     const strengthWas = new Map(battle.units.map((u) => [u.id, u.strength]))
@@ -243,6 +257,30 @@ function run(scenario: string, taken: string): RunReport {
       }
     }
 
+    for (const unit of battle.units) {
+      if (isDisordered(unit)) {
+        disorderSeconds += STEP
+        if (!raggedSince.has(unit.id)) {
+          raggedSince.set(unit.id, battle.time)
+          disorderSpells++
+        }
+      } else {
+        const from = raggedSince.get(unit.id)
+        if (from !== undefined) {
+          disorderLongest = Math.max(disorderLongest, battle.time - from)
+          raggedSince.delete(unit.id)
+        }
+      }
+    }
+    // Which cause, read off the Dispatch the state does not keep. Only the new
+    // ones each step, so the feed is walked once over the battle and not once
+    // a step.
+    for (; dispatchesRead < battle.dispatches.length; dispatchesRead++) {
+      if (battle.dispatches[dispatchesRead].text.includes("in disorder, loose among")) {
+        disorderByPursuit++
+      }
+    }
+
     // Idle under threat, sampled once a second: F3's target stated as its
     // failure. Sampled because the faithful test is every enemy against every
     // Unit, and at 10Hz over forty minutes that is the run's whole cost.
@@ -273,6 +311,16 @@ function run(scenario: string, taken: string): RunReport {
     arrivals: authoredArrivals,
     ruleSeconds,
     idleUnderThreat,
+    disorder: {
+      spells: disorderSpells,
+      seconds: disorderSeconds,
+      longest: Math.max(
+        disorderLongest,
+        ...[...raggedSince.values()].map((t) => battle.time - t),
+        0,
+      ),
+      byPursuit: disorderByPursuit,
+    },
     drift,
     shareGone: battle.armies.map((a) => ({ army: a.id, share: shareGone(battle, a) })),
     digest: digest(battle),
@@ -348,6 +396,13 @@ function report(r: RunReport): void {
   for (const [name, seconds] of fired) lines.push(`      ${seconds.toFixed(0)}s  ${name}`)
   const silent = RULES.map((rule) => rule.name).filter((name) => !r.ruleSeconds.has(name))
   if (silent.length) lines.push(`      never fired: ${silent.join(" · ")}`)
+  lines.push(
+    `C7  Disorder: ${r.disorder.spells} spells` +
+      (r.disorder.spells === 0
+        ? " — no Unit ever lost its ranks"
+        : `, ${r.disorder.byPursuit} of them a Pursuit and the rest a mob coming back through` +
+          `; ${r.disorder.seconds.toFixed(0)} Unit-seconds, longest ${r.disorder.longest.toFixed(0)}s`),
+  )
   lines.push(
     `    ground taken unbidden, from the Post: ${
       r.drift.size === 0
