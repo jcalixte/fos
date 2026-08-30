@@ -9,6 +9,7 @@ commander: you take one of the two armies, deploy it, then issue Orders that tak
 pnpm install
 pnpm dev           # the battle on :5173
 pnpm test          # the simulation, headless — no canvas involved
+pnpm measure       # the DESIGN section 8 budget: whole battles stepped to the clock
 pnpm lint          # oxlint  (pnpm lint:fix to autofix)
 pnpm fmt           # oxfmt   (pnpm fmt:check to verify only)
 pnpm build         # type-check and build to static assets
@@ -16,6 +17,9 @@ node scripts/make-bridge-fixture.mjs     # repaint the bridge fixture's Field
 node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what stands on it
 node scripts/make-rivoli-field.mjs       # repaint Rivoli's, and audit that nothing is walled in
 ```
+
+Vite builds the site; **Bun runs the tests**, because it is what the multiplayer server runs on and
+the simulation is measured on whatever engine plays it ([ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)).
 
 Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify.
 
@@ -174,6 +178,7 @@ Not built yet: Concealment, sound.
 
 - [CONTEXT.md](./CONTEXT.md) — the ubiquitous language: what a Unit, Order, Formation and Grade mean here
 - [DESIGN.md](./DESIGN.md) — goals, the functions that serve them, and what was traded away
+- [PLAN.md](./PLAN.md) — the multiplayer build, in the order it should be built (delete when done)
 - [docs/adr/](./docs/adr/) — decisions
   - [0001 — A Unit is always a battalion-sized body](./docs/adr/0001-unit-is-always-a-battalion.md)
   - [0002 — Orders are couriered from a Headquarters](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md)

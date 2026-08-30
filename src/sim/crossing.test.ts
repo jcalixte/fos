@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "bun:test"
 import { admits, STEP, step } from "./battle"
 import { cellAt, cellIndex } from "./field"
 import { ORDERED } from "./disorder"
@@ -211,9 +211,9 @@ describe("the bridge march", () => {
     // deploying rule looks as far for a Crossing as it does for the enemy, and
     // the battalion crosses in the column it is already in.
     const { field } = bridgeField()
-    const unit = {
+    const unit: Unit = {
       ...battalion(),
-      formation: "march-column" as const,
+      formation: "march-column",
       position: { x: 500, y: 596 },
     }
     const austrian: Unit = {

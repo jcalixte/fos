@@ -49,9 +49,21 @@ This aligns tests with the server; a solo battle in Chrome is now the one runnin
 test covers. That trade is deliberate and is the thing to revisit if solo play is where the bugs
 actually come from.
 
-**DESIGN §8's measured numbers become Bun's numbers.** They should be re-measured under `bun test`
-rather than assumed to carry over, and the ones that move are evidence about how much any of this
-matters — if nothing moves, the whole concern was theoretical and this ADR can be relaxed.
+**DESIGN §8's measured numbers became Bun's numbers, and nothing about a battle moved.** The
+budget was taken both ways on the same commit. The four nominal runs agree on every simulation
+number the report prints — Breaks to the second, casualty shares, lowest Strength to seventeen
+digits, Disorder spells, drift, order-cycles. Only stopwatches moved: routing is 10–35% quicker on
+JavaScriptCore and the run takes half as long. **So the concern above is theoretical and not
+measured** — `sin`, `cos`, `hypot` and `atan2` agree between V8 and JSC at this simulation's depth,
+which is the thing this ADR was afraid of and did not find.
+
+The decision stands regardless, because what was checked is four battles on two engines on one
+machine and not those four functions in general, and because the price of keeping the authority and
+the baseline on one engine is one line of `package.json`. What the finding does buy is confidence
+in the reverse direction: a battle reported from a browser is very unlikely to be irreproducible on
+the server. Read the Why above accordingly: the resolver, the socket and the absent build step are
+what is carrying this decision, and the divergence argument is, on the evidence, a precaution rather
+than a fix.
 
 **F18's target was never true without an engine named.** *"Bit-identical outcome"* has always meant
 bit-identical *per engine*; it went unnoticed because one person on one browser was both the player

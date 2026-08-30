@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process"
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "bun:test"
 import { isOver, STEP, step } from "../src/sim/battle"
 import { isDisordered } from "../src/sim/disorder"
 import { beatsPoint } from "../src/sim/fighting"

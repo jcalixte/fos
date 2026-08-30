@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "bun:test"
 import { step, STEP, unitSpeed } from "./battle"
 import { beginCharge } from "./charge"
 import { describeFatigue, FRESH, isBlown, weary } from "./fatigue"

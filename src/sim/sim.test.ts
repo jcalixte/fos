@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it } from "bun:test"
 import { concede, isOver, STEP, step, unitSpeed } from "./battle"
 import { blankField, entryToUnit, takeCommand } from "./scenario"
 import { snapshot } from "./snapshot"

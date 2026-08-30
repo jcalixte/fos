@@ -2,7 +2,7 @@
   "extends": "@vue/tsconfig/tsconfig.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.scripts.tsbuildinfo",
-    "types": ["node"],
+    "types": ["node", "@types/bun"],
     "allowJs": true,
     "checkJs": false,
     "noEmit": true,
@@ -14,5 +14,5 @@
     "noFallthroughCasesInSwitch": true,
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["scripts/**/*.ts", "scripts/**/*.mjs", "vitest.measure.config.ts"]
+  "include": ["scripts/**/*.ts", "scripts/**/*.mjs"]
 }

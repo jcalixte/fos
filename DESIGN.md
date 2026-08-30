@@ -966,7 +966,7 @@ On the fixtures, where a rule is watched in isolation:
 | Rank | Target | Measured | Where |
 |------|--------|----------|-------|
 | 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
-| 8 | F4 routing under 10ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
+| 8 | F4 routing under 10ms on 250×250 | 1.9ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
@@ -987,13 +987,33 @@ Roster gave it. Take them again rather than trusting this table, which is what i
 | 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **9.3–44.3%**, medians 18.3% and 18.8% |
 | 4 | F10 Breaks outside the band | 2 of 11, and each says why | 5 of 28, and each says why |
 | 4 | F10 0 Strength is a bug | lowest 69 men | lowest 45 men, and it is a mob on the run |
-| 8 | F4 routing under 10ms | — | 0.16–1.49ms through the gorge; **4.4–5.0ms corner to corner** |
+| 8 | F4 routing under 10ms | — | 0.15–0.65ms through the gorge; **4.0ms corner to corner** |
 | 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 fire both ways |
 | 2 | F3 the Latitude leash, in metres from the Post | close-up 100m; stand-off 250m; follow-up 300m | close-up 100m; stand-off 250m; follow-up 300m |
 | — | C7 Disorder, spells and Unit-seconds | 1 spell / 21s and 6 / 345s | 7 / 258s and 15 / 937s |
 | — | C7 Disorder bought by a Pursuit | **none, on any run** | **none, on any run** |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
+
+**The engine moved and the battles did not.** [ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)
+took `pnpm test` and `pnpm measure` to Bun so that the tests run on whatever engine the authority
+runs on, and asked for the budget to be re-taken rather than assumed to carry over. Taken both ways
+on the same commit, the four nominal runs agree on every simulation number the report prints: the
+same Breaks at the same second, the same casualty shares, the same lowest Strength to seventeen
+digits (73.23555467172763), the same Disorder spells and Unit-seconds, the same drift in metres, the
+same order-cycles. **The only lines that moved are wall clock.** The routing probes are 10–35%
+quicker on JavaScriptCore — 4.39ms to 4.00ms corner to corner, 0.99ms to 0.65ms down the gorge — and
+the whole measure run takes 9.8s against 19.2s. The table above now carries Bun's numbers, and the
+two it changed are both stopwatches.
+
+So `sin`, `cos`, `hypot` and `atan2` agree between V8 and JavaScriptCore at this simulation's depth,
+and ADR-0014's concern is theoretical rather than measured — which is exactly what its own
+Consequence said to write down if nothing moved. The rule stands anyway, and for a reason the
+measurement does not weaken: what was checked is four battles on two engines on one machine, not
+those four functions in general, and the cost of keeping the authority and the baseline on one
+engine is one line of `package.json`. What the result does buy is that a battle reported from a
+browser is very unlikely to be irreproducible on the server, which was the failure ADR-0014 was
+most worried about.
 
 Rank 1's real question — whether the delay is *fun* — was answered by playing the fixture, and
 it is. The central bet holds: an Order that takes a minute and a half to arrive is a game. Nothing
