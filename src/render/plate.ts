@@ -171,6 +171,7 @@ function unit(over: Partial<UnitSnapshot> & { army: string; position: Vec2 }): U
     shifting: false,
     morale: "steady",
     fatigue: "fresh",
+    disordered: false,
     routing: false,
     charging: null,
     aiming: null,
@@ -224,6 +225,10 @@ export function plateSnapshot(): BattleSnapshot {
     { charging: "plate-0", pursuing: true, arm: "cavalry" },
     { aiming: "plate-0" },
     { strength: 90, fatigue: "blown" },
+    // In line, which is the hardest case for the glyph: a battalion in line is
+    // the thinnest thing on the Field, so a mark that reads across this one
+    // reads across everything.
+    { disordered: true },
   ]
   states.forEach((state, column) => {
     units.push(unit({ army: "blue", position: { x: 130 + column * 172, y: 560 }, ...state }))

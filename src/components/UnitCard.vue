@@ -58,6 +58,19 @@ const rides = computed(() => canPursue(props.unit.arm))
 const blown = computed(() => props.unit.fatigue === "blown")
 
 /**
+ * In disorder: its ranks are not its own, so it will not change Formation and
+ * will not be let go at anybody until it has re-formed. Read the same way blown
+ * is and offered the same way — the buttons stay where they were and say why
+ * they will not answer.
+ *
+ * The Form buttons are *not* disabled by it, unlike the Charge. A Form Order is
+ * a Courier ride, and the Unit has every chance of having its ranks back before
+ * the rider arrives; a Charge Order dies at the Unit the moment it lands. The
+ * card offers what will still be true when the rider gets there.
+ */
+const ragged = computed(() => props.unit.disordered)
+
+/**
  * Halting, pointing and charging are all Orders, and there are no Orders at
  * Deployment — nothing is marching to be halted and no rider will carry
  * anything until the clock runs. Hidden rather than disabled: a greyed row the
@@ -186,6 +199,14 @@ function rungTip(option: Latitude): string {
               ·
               <span :class="blown ? 'text-error' : 'text-warning'">{{ unit.fatigue }}</span>
             </template>
+            <!-- And the third of C7's three, said the same way and silent while
+                 the Unit is Ordered. It is on the map as the glyph across the
+                 Unit; this is what the glyph means, for a player who has not
+                 learned it yet. -->
+            <template v-if="ragged">
+              ·
+              <span class="text-error">in disorder</span>
+            </template>
           </p>
         </div>
 
@@ -281,18 +302,20 @@ function rungTip(option: Latitude): string {
             :tip="
               blown
                 ? 'blown — it will not go at anybody until it has its wind back'
-                : arming
-                  ? rides
-                    ? 'now press the Unit to go at — a mob among them, which is a Pursuit'
-                    : 'now press the Unit to go at'
-                  : 'aim a Charge at a Unit'
+                : ragged
+                  ? 'in disorder — it will not go at anybody until it has re-formed'
+                  : arming
+                    ? rides
+                      ? 'now press the Unit to go at — a mob among them, which is a Pursuit'
+                      : 'now press the Unit to go at'
+                    : 'aim a Charge at a Unit'
             "
           >
             <button
               type="button"
               class="btn btn-xs"
               :class="arming ? 'btn-error' : 'btn-ghost'"
-              :disabled="deaf || blown"
+              :disabled="deaf || blown || ragged"
               @click="emit('charge')"
             >
               {{ arming ? "pick a target" : "charge" }}

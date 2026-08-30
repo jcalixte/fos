@@ -77,6 +77,13 @@ const ALL_ROUND_STEPS = 48
  * - **Morale** takes the dressing and the Face, and brings the Rout's own colour
  *   in with it, so a Unit is visibly coming apart before it goes.
  *
+ * A fourth read arrived after those three and had nowhere to go, which is what
+ * T18 wrote down as the cost of spending every channel a Unit has. It is
+ * **Disorder**, and it takes the glyph — the last rung §8 rank 7 left on the
+ * ladder — because unlike the three above it has no geometry and no colour of
+ * its own to be read off, and unlike Formation it is not already being said by
+ * the silhouette.
+ *
  * Hue is not available to any of them: it says which army, and one of the two
  * armies is white (#e3e7ef), which rules out saying anything by paling a Unit
  * out. Everything here is geometry or dark ink for that reason.
@@ -159,6 +166,43 @@ const MORALE_INK: MoraleInk[] = [
   { colour: 0xf2e3cb, faceDuty: 0.75, face: 2.2, faceAlpha: 0.85, dress: 1.2, dressAlpha: 0.5 },
   { colour: 0xffffff, faceDuty: 1, face: 2.4, faceAlpha: 0.8, dress: 1.2, dressAlpha: 0.35 },
 ]
+
+/**
+ * The Disorder glyph, and the whole of what §8 rank 7 called the last rung of
+ * F5's fallback ladder — the one channel a Unit had left after T18 spent its
+ * silhouette, its hue, its keyline, its edge, its Figures and its ring.
+ *
+ * It is spent on Disorder and not on Formation. A glyph that named the
+ * Formation would be labelling something the silhouette already says and would
+ * mean G2 was being carried by UI; Disorder has no silhouette, no colour and no
+ * edge of its own to be read off, and it decides whether the Unit can make
+ * square or go at anybody — so it is the one read on a Unit that cannot be had
+ * any other way.
+ *
+ * Drawn as a saw-tooth, on the Unit and not beside it. A mark standing off the
+ * body would be a mark the player has to attribute to one of two Units packed a
+ * few pixels apart; laid across the middle in the same dark ink Grade's keyline
+ * uses, it is unambiguously this Unit's, it reads on a white army and a blue
+ * one alike, and what it says is what it looks like — ranks that are no longer
+ * straight.
+ *
+ * Fixed in screen pixels rather than in metres, because it is a legend and not
+ * a piece of ground: it has to read the same on a battery forty metres wide and
+ * a battalion a hundred and forty.
+ */
+const GLYPH_PX = 18
+
+/** Peak to trough, in screen pixels. Deeper than a line is, on purpose. */
+const GLYPH_RISE_PX = 5
+
+/** Teeth across it. Three reads as a zigzag; two reads as a chevron. */
+const GLYPH_TEETH = 3
+
+/** Glyph stroke weight, in screen pixels: heavier than any keyline it lies over. */
+const GLYPH_WEIGHT = 1.8
+
+/** The dark ink Grade's keyline is cut in, and the only ink that reads on both armies. */
+const DARK_INK = 0x11150f
 
 /**
  * How a Figure is drawn per Arm, across the Face by front-to-rear, as multiples
@@ -865,6 +909,7 @@ export class BattleView {
         figureMetres.toFixed(2),
         unit.strength,
         unit.routing,
+        unit.disordered,
         unit.grade,
         unit.morale,
         selected,
@@ -981,7 +1026,7 @@ export class BattleView {
       })
       this.strokePoly(g, around, 1, line * DASH_PX, {
         width: line * edge.width,
-        color: 0x11150f,
+        color: DARK_INK,
         alpha: edge.alpha,
       })
       g.rect(rect.x, rect.y, rect.width, rect.depth).fill({ color: colour, alpha: 0.85 })
@@ -1091,11 +1136,38 @@ export class BattleView {
         )
       }
     }
+    if (unit.disordered) this.buildGlyph(g, line)
     if (selected) {
       const pad = 6 * line
       g.rect(-width / 2 - pad, -depth / 2 - pad, width + pad * 2, depth + pad * 2)
       g.stroke({ width: line * 2, color: 0xf5e6a8, alpha: 0.95 })
     }
+  }
+
+  /**
+   * The saw-tooth that says a Unit's ranks are not its own, laid across the
+   * middle of it. Over the Figures, because it is the one thing on a Unit that
+   * has to be read before anything else about it: a battalion in disorder will
+   * not make square and a regiment in disorder will not charge, and neither
+   * fact is anywhere else on the Field.
+   *
+   * Nothing about it is read off the Unit — not its Frontage, not its Arm and
+   * not its depth. It is the same mark on everything that can carry it, which
+   * is what makes it a glyph rather than a fifth thing the silhouette is doing.
+   */
+  private buildGlyph(g: Graphics, line: number): void {
+    const half = (GLYPH_PX * line) / 2
+    const rise = (GLYPH_RISE_PX * line) / 2
+    const teeth = GLYPH_TEETH * 2
+    const points: Vec2[] = []
+    for (let i = 0; i <= teeth; i++) {
+      points.push({ x: -half + (i * half * 2) / teeth, y: i % 2 === 0 ? rise : -rise })
+    }
+    this.strokeOpen(g, points, 1, line * DASH_PX, {
+      width: line * GLYPH_WEIGHT,
+      color: DARK_INK,
+      alpha: 0.9,
+    })
   }
 
   private rectCorners(rect: LocalRect): Vec2[] {
