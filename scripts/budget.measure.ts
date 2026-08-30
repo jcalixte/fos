@@ -8,7 +8,7 @@ import { COURIER_SPEED } from "../src/sim/orders"
 import { route } from "../src/sim/routing"
 import { takeCommand } from "../src/sim/scenario"
 import type { Arm, Battle, Unit, Vec2 } from "../src/sim/types"
-import { distance } from "../src/sim/vec"
+import { bearing, distance } from "../src/sim/vec"
 import { loadScenarioFromDisk } from "./load-headless"
 
 /**
@@ -42,6 +42,13 @@ interface BreakRecord {
   regained: number
   /** The largest share of itself one Volley ever took, which is the other thing that does. */
   worstVolley: number
+  /**
+   * Where the fire that killed its men came from, weighted by the men, on the
+   * scale `flanking` prices shock on: 0 is straight into the Face, 1 is square
+   * on the flank, 2 is from behind. The third thing that buys a Unit past
+   * F10's band, and the only one that is not about how much it was shot.
+   */
+  shotFromOff: number
 }
 
 interface ArrivalRecord {
@@ -137,6 +144,11 @@ function run(scenario: string, taken: string): RunReport {
   // Volley too big for any Morale rule to be what decided the Unit.
   const regained = new Map<string, number>()
   const worstVolley = new Map<string, number>()
+  // Men lost to fire, and the same men weighted by how far off the Face it
+  // came from — the two halves of the casualty-weighted bearing reported at a
+  // Break. Cheap to keep for every Unit and only read for the ones that miss.
+  const shotMen = new Map<string, number>()
+  const shotOff = new Map<string, number>()
   const moraleWas = new Map<string, number>()
   const ruleSeconds = new Map<string, number>()
   const drift = new Map<string, number>()
@@ -161,6 +173,16 @@ function run(scenario: string, taken: string): RunReport {
     for (const volley of battle.volleys) {
       const share = volley.casualties / Math.max(1, strengthWas.get(volley.targetId) ?? 1)
       if (share > (worstVolley.get(volley.targetId) ?? 0)) worstVolley.set(volley.targetId, share)
+      const target = battle.units.find((u) => u.id === volley.targetId)
+      const shooter = battle.units.find((u) => u.id === volley.unitId)
+      if (target && shooter) {
+        // The same `1 - cos` off the Face that `flanking` charges on, read
+        // here rather than imported: what is wanted is the bearing, and the
+        // multiplier that C7 makes of it is C7's business.
+        const off = 1 - Math.cos(bearing(target.position, shooter.position) - target.facing)
+        shotMen.set(volley.targetId, (shotMen.get(volley.targetId) ?? 0) + volley.casualties)
+        shotOff.set(volley.targetId, (shotOff.get(volley.targetId) ?? 0) + volley.casualties * off)
+      }
     }
 
     if (firstVolleyAt === null && battle.volleys.length > 0) firstVolleyAt = battle.time
@@ -197,6 +219,7 @@ function run(scenario: string, taken: string): RunReport {
           lostShare: (started - unit.strength) / started,
           regained: regained.get(unit.id) ?? 0,
           worstVolley: worstVolley.get(unit.id) ?? 0,
+          shotFromOff: (shotOff.get(unit.id) ?? 0) / Math.max(1, shotMen.get(unit.id) ?? 0),
         })
         if (firstBreakAt === null) firstBreakAt = battle.time
         lastBloodAt = battle.time
@@ -296,7 +319,8 @@ function report(r: RunReport): void {
     const why =
       pct < 15 || pct > 30
         ? `   ← one Volley took ${(b.worstVolley * 100).toFixed(0)}% of it, ` +
-          `and it had ${b.regained.toFixed(2)} Morale back before it went`
+          `it had ${b.regained.toFixed(2)} Morale back before it went, ` +
+          `and it was shot ${b.shotFromOff.toFixed(2)} off its Face`
         : ""
     lines.push(
       `      ${clock(b.at)}  ${(b.lostShare * 100).toFixed(1)}%  ${b.grade.padEnd(9)} ${b.name}${why}`,
@@ -381,15 +405,40 @@ describe(`DESIGN section 8, measured at ${HEAD}`, () => {
            * fits: a budget that moves to meet the measurement has stopped
            * being one.
            *
-           * What is left outside it is at most one Break a battle, and always
-           * the same shape: a small mounted Unit taking a whole battalion's
-           * Volley at once. ADR-0011 records that as the fire model's residual
-           * and not Morale's — `shots` scales with the Unit firing while the
-           * overlap reads the target's width and never its size, so a quarter
-           * of a two-hundred-and-eighty-man regiment goes at a stroke however
-           * well the depth is priced. Asserted by that shape rather than by
-           * name, so a miss of any other kind fails here instead of joining a
-           * list.
+           * What is left outside it is one of three shapes, and each is
+           * asserted by its shape rather than by name, so a miss of any other
+           * kind fails here instead of joining a list.
+           *
+           * **One Volley took a fifth of it.** A small mounted Unit taking a
+           * whole battalion's Volley at once. ADR-0011 records that as the
+           * fire model's residual and not Morale's — `shots` scales with the
+           * Unit firing while the overlap reads the target's width and never
+           * its size, so a quarter of a two-hundred-and-eighty-man regiment
+           * goes at a stroke however well the depth is priced.
+           *
+           * **It steadied in the gaps.** A Unit shot at once every two minutes
+           * is mostly out of the fight and mends between Volleys, which is
+           * ADR-0011 working rather than failing, and costs the band a Unit
+           * that fought all afternoon.
+           *
+           * **It was shot off its Face.** Fire from the flank costs more nerve
+           * than the men in it, on purpose: `flanking` exists because Units
+           * broke from being flanked long before the casualties justified it.
+           * A Unit shot square on the flank all afternoon Breaks below a band
+           * that counts casualties, and that is the rule doing its job. This
+           * shape appeared only once Rosters carried a Standing Order — the
+           * three Latitude rules are what put a Unit somewhere other than
+           * where it was posted, and a flank is something somebody has to
+           * manoeuvre to find.
+           *
+           * The three are not interchangeable, and the assertion does not treat
+           * them as such. A big Volley and a Unit that steadied both explain a
+           * Break that came *late*; being shot off the Face explains one that
+           * came *early*, and only that. Twelve of the thirty-one Breaks inside
+           * the band were also flanked past the bound, so read as a blanket
+           * excuse this clause would forgive nearly anything — read against the
+           * direction of the miss it forgives exactly the two Units whose nerve
+           * went for fewer men than the band counts.
            */
           it("rank 4 — F10: Breaks cost 15–30% of a Unit, or the miss is on the record", () => {
             const r = of(scenario, taken)
@@ -400,13 +449,15 @@ describe(`DESIGN section 8, measured at ${HEAD}`, () => {
               return pct < 15 || pct > 30
             })
             for (const b of outside) {
-              // One of the two, and the report says which. Either a single
-              // Volley took a fifth of the Unit at a stroke, which no Morale
-              // rule was ever going to be what decided it, or the Unit was let
-              // alone long enough between Volleys to steady — which is
-              // ADR-0011 working rather than failing, and costs the band a Unit
-              // that fought sporadically for half an hour.
-              expect(b.worstVolley > 0.2 || b.regained > 0.5).toBe(true)
+              // The bound is 0.5 on the same `1 - cos` scale `flanking` prices
+              // shock on, which is sixty degrees off the Face and a quarter of
+              // the full flank penalty. Below that a Unit is being shot at
+              // roughly where it is standing to be shot at, and its nerve going
+              // early wants some other explanation than the direction.
+              const early = b.lostShare * 100 < 15
+              expect(early ? b.shotFromOff > 0.5 : b.worstVolley > 0.2 || b.regained > 0.5).toBe(
+                true,
+              )
             }
           })
 
