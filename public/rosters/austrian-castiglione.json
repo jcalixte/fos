@@ -14,6 +14,7 @@
       "grade": "line",
       "strength": 760,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1380, "y": 320 },
       "facing": 3.14159
     },
@@ -24,6 +25,7 @@
       "grade": "line",
       "strength": 720,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1380, "y": 490 },
       "facing": 3.14159
     },
@@ -34,6 +36,7 @@
       "grade": "elite",
       "strength": 520,
       "formation": "open-order",
+      "standing": "stand-off",
       "position": { "x": 1230, "y": 300 },
       "facing": 3.14159
     },
@@ -44,6 +47,7 @@
       "grade": "line",
       "strength": 740,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1380, "y": 660 },
       "facing": 3.14159
     },
@@ -54,6 +58,7 @@
       "grade": "line",
       "strength": 700,
       "formation": "line",
+      "standing": "close-up",
       "position": { "x": 1380, "y": 830 },
       "facing": 3.14159
     },
@@ -64,6 +69,7 @@
       "grade": "line",
       "strength": 120,
       "formation": "in-battery",
+      "standing": "hold-ground",
       "position": { "x": 1250, "y": 500 },
       "facing": 3.14159
     },
@@ -74,6 +80,7 @@
       "grade": "line",
       "strength": 720,
       "formation": "line",
+      "standing": "close-up",
       "position": { "x": 1380, "y": 1000 },
       "facing": 3.14159
     },
@@ -84,6 +91,7 @@
       "grade": "elite",
       "strength": 135,
       "formation": "in-battery",
+      "standing": "hold-ground",
       "position": { "x": 1190, "y": 900 },
       "facing": 3.14159
     },
@@ -94,6 +102,7 @@
       "grade": "conscript",
       "strength": 780,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1200, "y": 1040 },
       "facing": 3.14159
     },
@@ -104,6 +113,7 @@
       "grade": "elite",
       "strength": 300,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1540, "y": 940 },
       "facing": 3.14159
     },
@@ -114,6 +124,7 @@
       "grade": "line",
       "strength": 280,
       "formation": "line",
+      "standing": "hold-ground",
       "position": { "x": 1560, "y": 620 },
       "facing": 3.14159
     }
