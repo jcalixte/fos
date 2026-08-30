@@ -6,7 +6,9 @@ here verbatim — this document names Goals, Functions and Components but never 
 Hard-to-reverse decisions live in [docs/adr/](./docs/adr/); this is the index that shows where
 they sit in the cascade.
 
-Scope is a single battle. Campaign persistence, multiplayer and anything above the Unit are out.
+Scope is a single battle, fought by one **Commander** or by two
+([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)). Campaign
+persistence and anything above the Unit are out.
 
 **Decisions are cross-checked against two nominal battles, both from the first Italian campaign.**
 **Castiglione (5 Aug 1796)** is the everyday case — open rolling ground, all three Arms manoeuvring
