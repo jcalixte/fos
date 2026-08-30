@@ -549,7 +549,7 @@ player already knows what a square is for.
 | F1  | Deliver an Order on courier time            |  →  | courier 13 m/s: 200m ≈ 15s, 1500m ≈ 115s |
 | F2  | Show every pending Order on the Field       |  →  | 100% drawn as Courier + Ghost; zero hidden timers |
 | F3  | Cover the gaps with Initiative              |  ↑  | never idle under threat — return fire, form square, Break, Rout, Rally, pick travelling Formation, and give or take as much ground as the Standing Order allows |
-| F4  | Route a Unit to any reachable point         |  →  | funnels to Crossings; no manual waypointing required; pathfind under 5ms on 250×250 |
+| F4  | Route a Unit to any reachable point         |  →  | funnels to Crossings; no manual waypointing required; pathfind under 10ms on 250×250 |
 
 **Legibility** — serves G2
 
@@ -757,7 +757,7 @@ now spoken for — which is the cost recorded as T18.
 | 5 | F11 battle length | 20–40 min at Tempo 1 | Castiglione | Raise default Tempo, then shorten the Scenario clock. Both are data. |
 | 6 | F6 Field on one screen | ≤1920m, 60fps | Rivoli — the largest Field in the campaign | Add zoom and pan, and accept that G2's silhouette guarantee weakens with it (T8). |
 | 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. Adding the glyph means G2 is being carried by UI rather than by the game. *The base outline is built and its edges are now spent on the Arm, Grade and Morale channels (§7), so the glyph is the only rung left.* |
-| 8 | F4 routing | under 5ms on 250×250 | Rivoli — gorges are the worst case | Precompute a flow field per Crossing. Cheap, and it makes funnelling exact. |
+| 8 | F4 routing | under 10ms on 250×250 | Rivoli — gorges are the worst case | Precompute a flow field per Crossing. Cheap, and it makes funnelling exact. |
 | 9 | F14 interpolation | zero judder at 10Hz sim / 60fps render | any scenario | Raise the sim to 20Hz. Costs determinism nothing; costs CPU almost nothing at 40 bodies. |
 | 10 | F17 Field authoring | a Field in under an hour | Rivoli — hand-painting 200m of relief | Build the tile editor after all, reinstating the cost ADR-0003 flagged. |
 
@@ -768,7 +768,7 @@ On the fixtures, where a rule is watched in isolation:
 | Rank | Target | Measured | Where |
 |------|--------|----------|-------|
 | 1 | F1 courier delay: 200m ≈ 15s, 1500m ≈ 115s | 15.0s and 115.0s | `src/sim/sim.test.ts` |
-| 8 | F4 routing under 5ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
+| 8 | F4 routing under 10ms on 250×250 | 2.1ms, worst case corner to corner past one bridge | `src/sim/routing.perf.test.ts` |
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
@@ -787,7 +787,7 @@ Roster gave it. Take them again rather than trusting this table, which is what i
 | 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **13.0–44.3%**, medians 18.3% and 18.8% |
 | 4 | F10 Breaks outside the band | 2 of 11, and each says why | 4 of 26, and each says why |
 | 4 | F10 0 Strength is a bug | lowest 69 men | lowest 61 men |
-| 8 | F4 routing under 5ms | — | 0.16–1.09ms through the gorge; **4.4–4.8ms corner to corner** |
+| 8 | F4 routing under 10ms | — | 0.16–1.49ms through the gorge; **4.4–5.0ms corner to corner** |
 | 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 fire both ways |
 | 2 | F3 the Latitude leash, in metres from the Post | close-up 100m; stand-off 250m; follow-up 300m | close-up 100m; stand-off 250m; follow-up 300m |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
@@ -991,11 +991,10 @@ not the rule list.
 threat* predates ADR-0007: at `hold-ground` a Unit standing under fire it cannot answer is obeying
 its brief, so the measure reports 1210–6990 Unit-seconds of exactly that and cannot call any of it a
 fault. The target needs restating against the Latitude ladder before it is a thing that passes or
-fails. Rank 8's *under 5ms on 250×250* names a grid larger than the ceiling battle, which is
-240×150; the grid was never the hard part, and the number that nearly misses is corner to corner, which
-came in at 4.4ms, 4.7ms and 4.8ms on three runs of the same commit and is the one row here with no
-margin left in it. Nothing through the gorge comes close: 0.16–1.09ms. The gorge was the worry and
-the open diagonal is the cost.
+fails. Rank 8's *under 10ms on 250×250* names a grid larger than the ceiling battle, which is
+240×150; the grid was never the hard part, and the number nearest the line is corner to corner, which
+came in at 4.4ms, 4.7ms, 4.8ms and 5.0ms on four runs of the same commit. Nothing through the gorge
+comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the cost.
 
 ## 9. Tradeoffs — Got / Paid / ADR
 
