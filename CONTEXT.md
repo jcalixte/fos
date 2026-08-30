@@ -1,15 +1,15 @@
 # Field of Strategy III
 
-Real-time tactical battles of the Napoleonic era, seen from above in 2D. The player is the
-army commander: they take one of the Scenario's two armies, deploy it before the battle, and
-issue Orders during it.
+Real-time tactical battles of the Napoleonic era, seen from above in 2D. A **Commander** takes one
+of the Scenario's two armies, arranges it before the battle, and issues Orders during it. A battle
+is fought by one Commander against an authored **Plan**, or by two against each other.
 
 ## Language
 
 ### The army
 
 **Unit**:
-The smallest body of troops the player can give an Order to: one body that maneuvers and
+The smallest body of troops a **Commander** can give an Order to: one body that maneuvers and
 changes Formation as one. What it is called historically — battalion, squadron, battery — is a
 display name; the model sees only an Arm, a Grade and a Strength.
 _Avoid_: stack, squad, troop, group, regiment, battalion
@@ -89,7 +89,7 @@ _Avoid_: max morale, morale cap
 Chasing a Routing Unit to finish it rather than letting it get away. It leaves the pursuer in
 Disorder, heavy with Fatigue and far out of position. It is not an Order of its own: it is what a
 **Charge** becomes when what it was aimed at is a mob, which is why only an **Arm** that outruns a
-**Rout** can make one, and why the moment the player decides it is the moment he lets the horse go.
+**Rout** can make one, and why the moment the Commander decides it is the moment he lets the horse go.
 _Avoid_: chase, follow up, mop up
 
 ### The ground
@@ -141,8 +141,16 @@ _Avoid_: packing, spread, cover, evasion, armour
 
 **Powder Smoke**:
 The cloud a Unit leaves behind when it fires. It is drawn and it drifts, and that is all it does
-— it never blinds the player, and whether it blunts fire is a dial that starts at nothing.
+— it never blinds the Commander, and whether it blunts fire is a dial that starts at nothing.
 _Avoid_: smog, fog, dust, haze
+
+**Report**:
+What a **Unit**'s own officers render about it: its exact **Strength** in men, how it is blowing,
+and what its next **Volley** would fall on. A **Commander** gets Reports from his own **Units** and
+from no others — an enemy Unit is read off the **Field** like everything else on it, by its
+silhouette, its bar and its glyph. Not a **Dispatch**, which is a line about something that just
+happened; a Report is how a Unit stands right now, and it is asked for rather than delivered.
+_Avoid_: card, panel, inspector, stats, tooltip, readout
 
 **Concealment**:
 The state of a Unit the enemy cannot see, because opaque Ground covers it or a Height stands
@@ -151,12 +159,22 @@ _Avoid_: fog of war, stealth, hidden, invisible
 
 ### Commanding
 
+**Commander**:
+Whoever has taken an **Army**. A battle has one or two of them, and an **Army** answers to exactly
+one — everything the language says about commanding is said about a Commander and never about
+whoever happens to be watching. Two Commanders share a battle and nothing inside one: separate
+**Headquarters**, separate **Couriers**, separate **Orders**, and no sight of each other's **Army**
+until both have finished **Deployment**.
+_Avoid_: player, user, side, host, guest, opponent
+
 **Headquarters**:
-The player's own position on the Field. Orders are couriered from it, so it is what makes
+A **Commander**'s own position on the Field. Orders are couriered from it, so it is what makes
 distance cost time; it is also an eye, and it can be shot at. Sited at Deployment and sent to new
 ground by hand after, at a staff's pace — and while it is riding, no Order can leave it at all,
 though what is said then is a **Dictated Order** and goes the moment it is established
-([ADR-0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)).
+([ADR-0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md)). It is the one piece of
+a **Commander**'s command apparatus the enemy can see, because it is the one that can be
+**Harried** and **Overrun** — a thing that cannot be aimed at is not a thing that can be shot at.
 _Avoid_: HQ (in prose), base, command post, general
 
 **Dictated Order**:
@@ -183,18 +201,26 @@ _Avoid_: captured, taken, destroyed, killed, decapitated
 **Courier**:
 The rider who carries an Order from the Headquarters to a Unit. His speed and the distance he
 must ride are the whole of an Order's delay, and he is drawn on the Field while he rides — an
-Order in flight is a thing the player can watch, not a hidden timer.
+Order in flight is a thing a **Commander** can watch, not a hidden timer. He is drawn for the
+Commander who sent him and for nobody else: at the scale this game is seen from, a single rider is
+smaller than a pixel, so what is on the screen is a promise about your own Order rather than a man
+anyone could see. Whether the enemy's riders show at all is a dial, and it starts at nothing —
+their *number* is a read on how busy his staff is, which is a mechanic and not a depiction.
 _Avoid_: messenger, aide, runner, dispatch, latency
 
 **Ghost**:
 The greyed outline drawn where an Order will put a Unit — its destination Footprint, in the
 ordered Formation and facing — held on screen from the moment the Order is issued until the
-Courier arrives.
+Courier arrives. A **Commander** sees his own and never the enemy's: a **Courier** is a man riding,
+but a Ghost is what he is carrying, and reading it would be reading the enemy's mail.
 _Avoid_: preview, marker, waypoint, indicator
 
 **Dispatch**:
 A single reported line of what just happened and why — "12e Ligne broke: 31% down, enfiladed by
-the battery on the ridge". Delivered at once, unlike an Order.
+the battery on the ridge". Delivered at once, unlike an Order. A **Commander**'s own army only: it
+is his command's log, the way a **Report** is his battalion's return. What the enemy's army does he
+watches — a **Break** is on the bar and a **Rout** is a mob running — but he is never told it, and
+never told why.
 _Avoid_: event, log line, notification, message, feed
 
 **Initiative**:
@@ -236,19 +262,28 @@ split anything wider.
 _Avoid_: army list, order of battle, force, lineup
 
 **Taking an Army**:
-Which of a Scenario's two armies the player commands, answered before Deployment and never
+Which of a Scenario's two armies a **Commander** takes, answered before Deployment and never
 revisited: an army is arranged by the hand that will command it. Taking one drops its half of
 the Plan, since an army that is commanded cannot also be driven.
 _Avoid_: side, faction, team, picking a colour
 
 **Deployment**:
-The paused phase before a battle in which the player arranges the army they have taken inside a
-zone and sites the Headquarters. No Orders are given; nothing is being commanded yet.
+The paused phase before a battle in which each **Commander** arranges the army they have taken
+inside a zone and sites the **Headquarters**. No Orders are given; nothing is being commanded yet.
+Where a battle has two Commanders neither sees the other's army while it is being arranged, and it
+ends when both have **Stood To** or the Deployment clock runs out — whichever comes first.
 _Avoid_: setup, placement, pre-battle, draft
+
+**Stand To**:
+A **Commander** declaring his army arranged and handing the afternoon to the clock. It is the act
+and the state both: he Stands To, and then he is standing to while the other finishes. What he is
+told while he waits is *that* the other is still arranging and never what he is doing, or
+**Deployment** stops being blind in the one room built to keep it so.
+_Avoid_: ready, commit, confirm, lock in, start
 
 **Arrival**:
 A Unit entering the Field after the clock has started, at a named point or a Field edge, on a
-clock time or a trigger. Unlike Deployment, the player does not place it and cannot see it coming.
+clock time or a trigger. Unlike Deployment, a Commander does not place it and cannot see it coming.
 _Avoid_: reinforcement, spawn, entry, respawn
 
 **Key Ground**:
@@ -268,18 +303,29 @@ _Avoid_: defeat, game over, army rout, collapse
 
 **Outcome**:
 What decided a battle: an **Army Break**, the **Key Ground** counted when the **Scenario** clock
-ran out, what each army had left where that count was even, or the player choosing to **Break
+ran out, what each army had left where that count was even, or a **Commander** choosing to **Break
 Off**. It names the army left holding the Field, and never a score. It says which of the four
 decided it rather than merely that the clock ran out, because an army that split the **Key
 Ground** one apiece and won on what it had left did not win on ground it never took.
 _Avoid_: result, victory points, win condition, score
 
 **Break Off**:
-The player taking his own army off the Field rather than fight the clock out. It is the one way a
+A **Commander** taking his own army off the Field rather than fight the clock out. It is the one way a
 battle ends that no rule reaches — the commander's hand, not his men's nerve, which is why it is
 not an **Army Break**. It always leaves the day to the enemy, so a commander cannot bank a **Key
 Ground** he happens to be sitting on by stopping the clock on it.
 _Avoid_: concede, surrender, forfeit, quit, resign
+
+**Out of Contact**:
+A **Commander** whose army is on the Field and who is not at the table — a dead connection, a
+closed tab, a man who walked away. It is not a **Break Off**, which is a decision: the battle does
+not stop, the clock runs, and his army fights on the **Standing Orders** and **Initiative** it
+already carries, drifting no further from its **Post** than its **Latitude** allows. He rejoins at
+the same address and takes his army where it has got to, having lost the afternoon he was away and
+nothing else; if he never comes back the **Scenario** clock ends the battle as it always does. The
+other **Commander** is told — what this game hides is what stands on the **Field**, never who is at
+the table.
+_Avoid_: disconnected, offline, dropped, AFK, timed out, abandoned
 
 **Return**:
 What each army had to show for the afternoon, read off the battle at the moment it ended: Units
@@ -291,19 +337,19 @@ _Avoid_: score, summary, results screen, scoreboard, stats
 
 **Plan**:
 An army's authored intent — Orders fired by clock time or by trigger. A Scenario carries one for
-each army and only the one the player has not taken is ever fired, so either army can be played
-and the other has an afternoon of its own. There is no planning intelligence behind it; the
+each army, and a Plan is fired only for an army no **Commander** has taken — so either army can be
+played and the other has an afternoon of its own, and a battle with two Commanders fires neither. There is no planning intelligence behind it; the
 tactical competence lives in each Unit's Initiative.
 _Avoid_: AI, script, strategy, behaviour tree
 
 **Order**:
-An instruction the player issues to a Unit, which reaches it only after a delivery delay
+An instruction a **Commander** issues to a Unit, which reaches it only after a delivery delay
 rather than taking effect at once.
 _Avoid_: command, instruction, action, move
 
 **Route**:
 The line a Unit works out for itself across the Field to reach where an Order sends it. The
-player may draw one instead, but does not have to.
+Commander may draw one instead, but does not have to.
 _Avoid_: path, waypoints, trajectory
 
 **Formation**:
@@ -344,8 +390,11 @@ _Avoid_: melee, fight, combat, battle
 ### Time
 
 **Tempo**:
-The dial that runs the battle clock faster or slower than history. It scales how long the
-player waits; it changes no ratio inside the battle.
+The dial that runs the battle clock faster or slower than history. It scales how long a
+**Commander** waits; it changes no ratio inside the battle. Where a battle has two Commanders it is
+not something either can do to the other: each asks for a Tempo and the battle runs at the slower
+of the two, so the afternoon goes at the pace of whoever needs the most time. Thinking is the one
+thing the dial is not neutral about, and that is the whole reason it is asked for rather than set.
 _Avoid_: game speed, time scale, simulation speed
 
 ## Relationships
@@ -365,7 +414,7 @@ _Avoid_: game speed, time scale, simulation speed
 - An **Order** is one of: **Move**, **Form**, **Charge**, **Fire**, **Halt**, **Withdraw**, or a
   new **Standing Order**
 - A **Move** carries a destination, an arrival facing and an arrival **Formation**
-- A **Move**'s arrival **Formation** is the last one the player asked that **Unit** for with a
+- A **Move**'s arrival **Formation** is the last one the **Commander** asked that **Unit** for with a
   **Form**, never the one it happens to be standing in — so a battalion told to make square and
   then sent somewhere goes there to make square, and one **Initiative** has filed into column
   arrives in what it was told to hold and not in the column it travelled in
@@ -386,11 +435,11 @@ _Avoid_: game speed, time scale, simulation speed
 - **Latitude** is spent in metres from the **Post**, so a **Unit** acting on its own account can
   drift from the ground it was given and can never choose different ground
 - A **Scenario** carries a **Field**, two **Rosters**, a **Plan** for each army, a clock, and its **Key Ground**
-- The player takes one **Army** before **Deployment**; the **Plan** written for it is dropped, and
+- A **Commander** takes one **Army** before **Deployment**; the **Plan** written for it is dropped, and
   the one written for the other is what it fights the afternoon to
 - A battle ends when the **Scenario** clock runs out — and then the **Key Ground** is counted, and
   where it is even, what each army has left — or at an **Army Break**, which takes every **Unit**
-  of an army, or when the player chooses to **Break Off**
+  of an army, or when a **Commander** chooses to **Break Off**
 - To **Break Off** is to lose: an army that has gone has left whatever it was standing on, the
   same as one that has reached **Army Break**
 - An army ending on the clock with more **Key Ground** wins it whatever it cost; only where the
@@ -442,7 +491,7 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Contact** pays a **Unit** for being in motion, so two regiments meeting head-on both pay it
   and one standing to receive brings nothing
 - Cavalry meets a **Charge** committed to it on its **Initiative**, because horse standing to
-  receive is horse ridden over: the one **Charge** the player does not give, and it can be aimed at
+  receive is horse ridden over: the one **Charge** a Commander does not give, and it can be aimed at
   nothing but what is already coming on
 - A **Square** resists cavalry by having four **Faces** and therefore no flank — it needs no rule
   of its own
@@ -458,7 +507,7 @@ _Avoid_: game speed, time scale, simulation speed
 
 ## Example dialogue
 
-> **Dev:** "When the player tells a Unit to form square, does it form square?"
+> **Dev:** "When the Commander tells a Unit to form square, does it form square?"
 > **Designer:** "It receives an Order to form square. Whether it has formed square by the
 > time the cavalry arrives is the whole game."
 >
@@ -474,12 +523,12 @@ _Avoid_: game speed, time scale, simulation speed
 
 - "formation" was used for both the *shape* a Unit holds and the *body of troops* itself.
   Resolved: **Formation** is the shape; **Unit** is the body of troops. Never swapped.
-- "command" is avoided for a player instruction — **Order** is the term. "Command" is left
+- "command" is avoided for a **Commander**'s instruction — **Order** is the term. "Command" is left
   free for its historical sense (a body of troops under an officer).
 - a Unit is never "destroyed" or "killed". It **Breaks**, and what happens next is a **Rout**.
 - "broken" and "Disordered" are different states: a Disordered Unit still obeys Orders.
 - the camera is not the eye. Visibility is computed from where the army is, not from where the
-  player is looking.
+  Commander is looking.
 - the ladder is neutral in the model, not French. "Vieille Garde" is a French *label* for the
   guard rung, not the rung itself — otherwise the Coldstream Guards end up carrying it.
 - "discipline makes them deadlier" is true but indirect. **Grade** buys rate of fire and
@@ -487,6 +536,14 @@ _Avoid_: game speed, time scale, simulation speed
 - a battalion historically detached a skirmish company rather than dispersing whole. Modelling
   that would split a Unit in two and break "one Unit, one Formation", so **Open Order** applies
   to the whole battalion. Known simplification, deliberately taken.
+- a **Report** and a **Dispatch** both "report" and are not the same thing. A Dispatch is an event
+  — a line about what just happened, delivered. A Report is a state — how a **Unit** stands, asked
+  for by selecting it. Neither is ever rendered about the enemy's army: a
+  **Commander** gets his own Reports and his own Dispatches, and watches everything else.
+- reading an enemy **Unit** is not **Concealment** and does not touch T9. Nothing is hidden on the
+  **Field**; you simply are not sent a **Report** about a battalion that is not yours. The rule
+  holds whether the enemy is a **Plan** or a second **Commander** — a rule that applied in one
+  battle and not another would be two games.
 - **Contact** is deliberately not called "melee": melee suggests a sustained grind, and this is
   a thing that is over in seconds.
 - **Tempo** scales the clock only. Changing how a battle *plays* means editing the underlying
