@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
 import { concede, isOver, STEP, step, unitSpeed } from "./battle"
-import { blankField, takeCommand } from "./scenario"
+import { blankField, entryToUnit, takeCommand } from "./scenario"
 import { snapshot } from "./snapshot"
 import { cellIndex } from "./field"
 import {
@@ -983,6 +983,37 @@ describe("C2 Initiative — the Standing Order", () => {
     // metre of the hundred its brief would have spent on somebody else.
     expect(unit.position.y).toBeCloseTo(100, 5)
     expect(unit.position.x).toBeGreaterThan(100)
+  })
+
+  it("carries the rung its Roster gave it onto the Field", () => {
+    // Free at Deployment (ADR-0007), and this is the author spending that
+    // freedom rather than the player: until a Roster could say it, every Unit
+    // in every authored battle stood at hold-ground and the three rules that
+    // spend a leash could not fire on any of them.
+    const entry = {
+      id: "fr-11e",
+      name: "11e Légère",
+      arm: "infantry",
+      grade: "elite",
+      strength: 560,
+      formation: "open-order",
+      standing: "stand-off",
+      position: { x: 100, y: 100 },
+    } as const
+    expect(entryToUnit(entry, "french").standing).toBe("stand-off")
+  })
+
+  it("gives a Roster that says nothing the army it had before rungs were authorable", () => {
+    const entry = {
+      id: "fr-11e",
+      name: "11e Légère",
+      arm: "infantry",
+      grade: "elite",
+      strength: 560,
+      formation: "open-order",
+      position: { x: 100, y: 100 },
+    } as const
+    expect(entryToUnit(entry, "french").standing).toBe(defaultStanding())
   })
 
   it("posts a Unit where its Move Order sent it, so the leash is spent from there", () => {

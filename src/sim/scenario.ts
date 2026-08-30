@@ -13,6 +13,7 @@ import type {
   Grade,
   HeldGround,
   KeyGround,
+  Latitude,
   OrderBody,
   PlannedOrder,
   Unit,
@@ -33,6 +34,17 @@ export interface RosterEntry {
   grade: Grade
   strength: number
   formation: FormationName
+  /**
+   * The rung it carries onto the Field. A Standing Order is free at Deployment
+   * (ADR-0007), and this is that freedom spent by the author rather than by the
+   * player: a Roster says what its Units were briefed to do before anybody took
+   * command of them. The player may still revise it for nothing until the clock
+   * starts, and the enemy army's rungs are the only brief its Plan ever gives.
+   *
+   * Absent means `defaultStanding()`, so a Roster that says nothing gets the
+   * army it got before rungs were authorable.
+   */
+  standing?: Latitude
   /** Where it stands at Deployment, in metres. Absent if it is an Arrival. */
   position?: Vec2
   /** Radians. */
@@ -103,7 +115,7 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     order: null,
     route: [],
     suspendedBy: null,
-    standing: defaultStanding(),
+    standing: entry.standing ?? defaultStanding(),
     post: entry.position ? { ...entry.position } : { x: 0, y: 0 },
     shift: null,
     reload: 0,
