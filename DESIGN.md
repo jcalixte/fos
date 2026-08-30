@@ -24,7 +24,7 @@ Strength weights used in matrices: **9** strong, **3** medium, **1** weak, blank
 
 ## House of Quality
 
-The same data as §§1–2, §5 and §6, in one picture: goals and their weights down the left, the twenty functions across the top, the relation matrix in the body, the function-versus-function correlations in the roof, and the derived engineering priorities in the basement. The **relative weight** row is where the effort should go.
+The same data as §§1–2, §5 and §6, in one picture: the nine goals and their weights down the left, the twenty-four functions across the top, the relation matrix in the body, the function-versus-function correlations in the roof, and the derived engineering priorities in the basement. The **relative weight** row is where the effort should go.
 
 ```tikz
 \usetikzlibrary{arrows.meta, positioning, shapes.geometric, shapes.misc, calc, fit, backgrounds}
@@ -263,8 +263,8 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \end{tikzpicture}%
 }
 
-\def\qfdNW{7}
-\def\qfdNH{20}
+\def\qfdNW{9}
+\def\qfdNH{24}
 \def\qfdWhatW{4.4}
 \def\qfdHdrH{3.7}
 \def\qfdImpTitle{Weight}
@@ -275,7 +275,6 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
 
 \begin{document}
 \begin{qfdhouse}
-
   % --- WHATs and weights ---
   \pgfmathsetmacro{\qfdWhatTextW}{\qfdWhatW - 0.2}
   \node[anchor=west, font=\scriptsize, text width=\qfdWhatTextW cm, align=left]
@@ -292,6 +291,10 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
     at ({\qfdLeftEdge + 0.1}, {-6 + 0.5}) {A link you can hand over};
   \node[anchor=west, font=\scriptsize, text width=\qfdWhatTextW cm, align=left]
     at ({\qfdLeftEdge + 0.1}, {-7 + 0.5}) {Good to watch};
+  \node[anchor=west, font=\scriptsize, text width=\qfdWhatTextW cm, align=left]
+    at ({\qfdLeftEdge + 0.1}, {-8 + 0.5}) {Worth fighting twice};
+  \node[anchor=west, font=\scriptsize, text width=\qfdWhatTextW cm, align=left]
+    at ({\qfdLeftEdge + 0.1}, {-9 + 0.5}) {Teaches its own marks};
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-1 + 0.5}) {10};
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-2 + 0.5}) {9};
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-3 + 0.5}) {9};
@@ -299,6 +302,8 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-5 + 0.5}) {7};
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-6 + 0.5}) {5};
   \node[font=\scriptsize] at ({-\qfdImpW/2}, {-7 + 0.5}) {8};
+  \node[font=\scriptsize] at ({-\qfdImpW/2}, {-8 + 0.5}) {7};
+  \node[font=\scriptsize] at ({-\qfdImpW/2}, {-9 + 0.5}) {5};
 
   % --- HOWs ---
   \node[rotate=90, anchor=west, font=\scriptsize] at ({1 - 0.5}, 0.15) {F1~Order on courier time};
@@ -321,6 +326,10 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[rotate=90, anchor=west, font=\scriptsize] at ({18 - 0.5}, 0.15) {F18~Identical replay};
   \node[rotate=90, anchor=west, font=\scriptsize] at ({19 - 0.5}, 0.15) {F19~Static build};
   \node[rotate=90, anchor=west, font=\scriptsize] at ({20 - 0.5}, 0.15) {F20~Arrival};
+  \node[rotate=90, anchor=west, font=\scriptsize] at ({21 - 0.5}, 0.15) {F21~Two Commanders};
+  \node[rotate=90, anchor=west, font=\scriptsize] at ({22 - 0.5}, 0.15) {F22~The cut};
+  \node[rotate=90, anchor=west, font=\scriptsize] at ({23 - 0.5}, 0.15) {F23~Blind Deployment};
+  \node[rotate=90, anchor=west, font=\scriptsize] at ({24 - 0.5}, 0.15) {F24~Out of Contact};
 
   % --- Relations ---
   \node[qfdrel/S] at ({1 - 0.5}, {-1 + 0.5}) {};
@@ -336,6 +345,10 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/W] at ({13 - 0.5}, {-1 + 0.5}) {};
   \node[qfdrel/W] at ({15 - 0.5}, {-1 + 0.5}) {};
   \node[qfdrel/W] at ({20 - 0.5}, {-1 + 0.5}) {};
+  \node[qfdrel/M] at ({21 - 0.5}, {-1 + 0.5}) {};
+  \node[qfdrel/M] at ({22 - 0.5}, {-1 + 0.5}) {};
+  \node[qfdrel/W] at ({23 - 0.5}, {-1 + 0.5}) {};
+  \node[qfdrel/W] at ({24 - 0.5}, {-1 + 0.5}) {};
   \node[qfdrel/S] at ({2 - 0.5}, {-2 + 0.5}) {};
   \node[qfdrel/W] at ({3 - 0.5}, {-2 + 0.5}) {};
   \node[qfdrel/S] at ({5 - 0.5}, {-2 + 0.5}) {};
@@ -349,6 +362,7 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/M] at ({14 - 0.5}, {-2 + 0.5}) {};
   \node[qfdrel/M] at ({15 - 0.5}, {-2 + 0.5}) {};
   \node[qfdrel/W] at ({20 - 0.5}, {-2 + 0.5}) {};
+  \node[qfdrel/W] at ({22 - 0.5}, {-2 + 0.5}) {};
   \node[qfdrel/M] at ({1 - 0.5}, {-3 + 0.5}) {};
   \node[qfdrel/S] at ({3 - 0.5}, {-3 + 0.5}) {};
   \node[qfdrel/M] at ({4 - 0.5}, {-3 + 0.5}) {};
@@ -362,6 +376,9 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/M] at ({17 - 0.5}, {-3 + 0.5}) {};
   \node[qfdrel/S] at ({18 - 0.5}, {-3 + 0.5}) {};
   \node[qfdrel/M] at ({20 - 0.5}, {-3 + 0.5}) {};
+  \node[qfdrel/M] at ({21 - 0.5}, {-3 + 0.5}) {};
+  \node[qfdrel/M] at ({22 - 0.5}, {-3 + 0.5}) {};
+  \node[qfdrel/M] at ({23 - 0.5}, {-3 + 0.5}) {};
   \node[qfdrel/M] at ({1 - 0.5}, {-4 + 0.5}) {};
   \node[qfdrel/M] at ({3 - 0.5}, {-4 + 0.5}) {};
   \node[qfdrel/W] at ({4 - 0.5}, {-4 + 0.5}) {};
@@ -373,6 +390,9 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/M] at ({15 - 0.5}, {-4 + 0.5}) {};
   \node[qfdrel/M] at ({16 - 0.5}, {-4 + 0.5}) {};
   \node[qfdrel/S] at ({20 - 0.5}, {-4 + 0.5}) {};
+  \node[qfdrel/M] at ({21 - 0.5}, {-4 + 0.5}) {};
+  \node[qfdrel/M] at ({23 - 0.5}, {-4 + 0.5}) {};
+  \node[qfdrel/W] at ({24 - 0.5}, {-4 + 0.5}) {};
   \node[qfdrel/M] at ({3 - 0.5}, {-5 + 0.5}) {};
   \node[qfdrel/W] at ({6 - 0.5}, {-5 + 0.5}) {};
   \node[qfdrel/W] at ({7 - 0.5}, {-5 + 0.5}) {};
@@ -386,6 +406,8 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/W] at ({6 - 0.5}, {-6 + 0.5}) {};
   \node[qfdrel/W] at ({16 - 0.5}, {-6 + 0.5}) {};
   \node[qfdrel/S] at ({19 - 0.5}, {-6 + 0.5}) {};
+  \node[qfdrel/S] at ({21 - 0.5}, {-6 + 0.5}) {};
+  \node[qfdrel/S] at ({24 - 0.5}, {-6 + 0.5}) {};
   \node[qfdrel/W] at ({1 - 0.5}, {-7 + 0.5}) {};
   \node[qfdrel/M] at ({2 - 0.5}, {-7 + 0.5}) {};
   \node[qfdrel/W] at ({3 - 0.5}, {-7 + 0.5}) {};
@@ -399,17 +421,43 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[qfdrel/S] at ({14 - 0.5}, {-7 + 0.5}) {};
   \node[qfdrel/S] at ({15 - 0.5}, {-7 + 0.5}) {};
   \node[qfdrel/W] at ({20 - 0.5}, {-7 + 0.5}) {};
+  \node[qfdrel/W] at ({23 - 0.5}, {-7 + 0.5}) {};
+  \node[qfdrel/M] at ({1 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/W] at ({2 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/M] at ({3 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/W] at ({7 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/W] at ({8 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/W] at ({10 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/M] at ({11 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/M] at ({19 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/S] at ({21 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/S] at ({22 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/S] at ({23 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/S] at ({24 - 0.5}, {-8 + 0.5}) {};
+  \node[qfdrel/M] at ({2 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/W] at ({3 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/M] at ({5 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/W] at ({6 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/S] at ({7 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/W] at ({10 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/M] at ({12 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/W] at ({13 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/W] at ({14 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/M] at ({15 - 0.5}, {-9 + 0.5}) {};
+  \node[qfdrel/M] at ({16 - 0.5}, {-9 + 0.5}) {};
 
   % --- Roof correlations ---
   \node[font=\tiny] at (C-1-2) {$+\!+$};
   \node[font=\tiny] at (C-1-3) {$+\!+$};
   \node[font=\tiny] at (C-1-11) {$-$};
   \node[font=\tiny] at (C-1-15) {$+$};
+  \node[font=\tiny] at (C-1-21) {$+$};
   \node[font=\tiny] at (C-2-3) {$+$};
   \node[font=\tiny] at (C-2-11) {$+$};
   \node[font=\tiny] at (C-2-13) {$-$};
   \node[font=\tiny] at (C-3-7) {$+\!+$};
   \node[font=\tiny] at (C-3-11) {$+$};
+  \node[font=\tiny] at (C-3-24) {$+\!+$};
   \node[font=\tiny] at (C-4-20) {$+$};
   \node[font=\tiny] at (C-5-6) {$-$};
   \node[font=\tiny] at (C-5-12) {$+\!+$};
@@ -417,6 +465,7 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[font=\tiny] at (C-6-13) {$-$};
   \node[font=\tiny] at (C-6-14) {$+$};
   \node[font=\tiny] at (C-7-8) {$-$};
+  \node[font=\tiny] at (C-7-22) {$-\!-$};
   \node[font=\tiny] at (C-8-9) {$+\!+$};
   \node[font=\tiny] at (C-8-10) {$-$};
   \node[font=\tiny] at (C-8-11) {$-$};
@@ -425,101 +474,124 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
   \node[font=\tiny] at (C-9-15) {$+\!+$};
   \node[font=\tiny] at (C-10-11) {$+\!+$};
   \node[font=\tiny] at (C-11-20) {$-$};
+  \node[font=\tiny] at (C-11-23) {$-$};
+  \node[font=\tiny] at (C-11-24) {$+$};
   \node[font=\tiny] at (C-12-14) {$+\!+$};
   \node[font=\tiny] at (C-13-14) {$+$};
   \node[font=\tiny] at (C-14-18) {$-$};
   \node[font=\tiny] at (C-16-17) {$+\!+$};
   \node[font=\tiny] at (C-16-20) {$+\!+$};
   \node[font=\tiny] at (C-17-18) {$+$};
+  \node[font=\tiny] at (C-18-21) {$-$};
+  \node[font=\tiny] at (C-19-21) {$-\!-$};
+  \node[font=\tiny] at (C-21-22) {$+\!+$};
+  \node[font=\tiny] at (C-21-23) {$+\!+$};
+  \node[font=\tiny] at (C-21-24) {$+\!+$};
+  \node[font=\tiny] at (C-22-23) {$+\!+$};
 
-  % --- Basement: target / difficulty / absolute / relative %% ---
+  % --- Basement ---
   \node[font=\tiny] at ({1 - 0.5}, {-\qfdNW - 0.5}) {13 m/s};
   \node[font=\tiny] at ({1 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({1 - 0.5}, {-\qfdNW - 2.5}) {149};
-  \node[font=\tiny\bfseries] at ({1 - 0.5}, {-\qfdNW - 3.5}) {5.4};
+  \node[font=\tiny] at ({1 - 0.5}, {-\qfdNW - 2.5}) {170};
+  \node[font=\tiny\bfseries] at ({1 - 0.5}, {-\qfdNW - 3.5}) {4.8};
   \node[font=\tiny] at ({2 - 0.5}, {-\qfdNW - 0.5}) {100\%};
   \node[font=\tiny] at ({2 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({2 - 0.5}, {-\qfdNW - 2.5}) {195};
-  \node[font=\tiny\bfseries] at ({2 - 0.5}, {-\qfdNW - 3.5}) {7.1};
+  \node[font=\tiny] at ({2 - 0.5}, {-\qfdNW - 2.5}) {217};
+  \node[font=\tiny\bfseries] at ({2 - 0.5}, {-\qfdNW - 3.5}) {6.1};
   \node[font=\tiny] at ({3 - 0.5}, {-\qfdNW - 0.5}) {never idle};
   \node[font=\tiny] at ({3 - 0.5}, {-\qfdNW - 1.5}) {4};
-  \node[font=\tiny] at ({3 - 0.5}, {-\qfdNW - 2.5}) {233};
-  \node[font=\tiny\bfseries] at ({3 - 0.5}, {-\qfdNW - 3.5}) {8.5};
+  \node[font=\tiny] at ({3 - 0.5}, {-\qfdNW - 2.5}) {259};
+  \node[font=\tiny\bfseries] at ({3 - 0.5}, {-\qfdNW - 3.5}) {7.3};
   \node[font=\tiny] at ({4 - 0.5}, {-\qfdNW - 0.5}) {$<$5 ms};
   \node[font=\tiny] at ({4 - 0.5}, {-\qfdNW - 1.5}) {3};
   \node[font=\tiny] at ({4 - 0.5}, {-\qfdNW - 2.5}) {73};
-  \node[font=\tiny\bfseries] at ({4 - 0.5}, {-\qfdNW - 3.5}) {2.7};
+  \node[font=\tiny\bfseries] at ({4 - 0.5}, {-\qfdNW - 3.5}) {2.0};
   \node[font=\tiny] at ({5 - 0.5}, {-\qfdNW - 0.5}) {4 distinct};
   \node[font=\tiny] at ({5 - 0.5}, {-\qfdNW - 1.5}) {3};
-  \node[font=\tiny] at ({5 - 0.5}, {-\qfdNW - 2.5}) {115};
-  \node[font=\tiny\bfseries] at ({5 - 0.5}, {-\qfdNW - 3.5}) {4.2};
+  \node[font=\tiny] at ({5 - 0.5}, {-\qfdNW - 2.5}) {130};
+  \node[font=\tiny\bfseries] at ({5 - 0.5}, {-\qfdNW - 3.5}) {3.6};
   \node[font=\tiny] at ({6 - 0.5}, {-\qfdNW - 0.5}) {1920 m};
   \node[font=\tiny] at ({6 - 0.5}, {-\qfdNW - 1.5}) {1};
-  \node[font=\tiny] at ({6 - 0.5}, {-\qfdNW - 2.5}) {155};
-  \node[font=\tiny\bfseries] at ({6 - 0.5}, {-\qfdNW - 3.5}) {5.7};
+  \node[font=\tiny] at ({6 - 0.5}, {-\qfdNW - 2.5}) {160};
+  \node[font=\tiny\bfseries] at ({6 - 0.5}, {-\qfdNW - 3.5}) {4.5};
   \node[font=\tiny] at ({7 - 0.5}, {-\qfdNW - 0.5}) {every event};
   \node[font=\tiny] at ({7 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({7 - 0.5}, {-\qfdNW - 2.5}) {177};
-  \node[font=\tiny\bfseries] at ({7 - 0.5}, {-\qfdNW - 3.5}) {6.5};
+  \node[font=\tiny] at ({7 - 0.5}, {-\qfdNW - 2.5}) {229};
+  \node[font=\tiny\bfseries] at ({7 - 0.5}, {-\qfdNW - 3.5}) {6.4};
   \node[font=\tiny] at ({8 - 0.5}, {-\qfdNW - 0.5}) {0 constants};
   \node[font=\tiny] at ({8 - 0.5}, {-\qfdNW - 1.5}) {4};
-  \node[font=\tiny] at ({8 - 0.5}, {-\qfdNW - 2.5}) {115};
-  \node[font=\tiny\bfseries] at ({8 - 0.5}, {-\qfdNW - 3.5}) {4.2};
+  \node[font=\tiny] at ({8 - 0.5}, {-\qfdNW - 2.5}) {122};
+  \node[font=\tiny\bfseries] at ({8 - 0.5}, {-\qfdNW - 3.5}) {3.4};
   \node[font=\tiny] at ({9 - 0.5}, {-\qfdNW - 0.5}) {20--25 s};
   \node[font=\tiny] at ({9 - 0.5}, {-\qfdNW - 1.5}) {3};
   \node[font=\tiny] at ({9 - 0.5}, {-\qfdNW - 2.5}) {166};
-  \node[font=\tiny\bfseries] at ({9 - 0.5}, {-\qfdNW - 3.5}) {6.1};
+  \node[font=\tiny\bfseries] at ({9 - 0.5}, {-\qfdNW - 3.5}) {4.7};
   \node[font=\tiny] at ({10 - 0.5}, {-\qfdNW - 0.5}) {15--30\%};
   \node[font=\tiny] at ({10 - 0.5}, {-\qfdNW - 1.5}) {5};
-  \node[font=\tiny] at ({10 - 0.5}, {-\qfdNW - 2.5}) {172};
-  \node[font=\tiny\bfseries] at ({10 - 0.5}, {-\qfdNW - 3.5}) {6.3};
+  \node[font=\tiny] at ({10 - 0.5}, {-\qfdNW - 2.5}) {184};
+  \node[font=\tiny\bfseries] at ({10 - 0.5}, {-\qfdNW - 3.5}) {5.2};
   \node[font=\tiny] at ({11 - 0.5}, {-\qfdNW - 0.5}) {20--40 min};
   \node[font=\tiny] at ({11 - 0.5}, {-\qfdNW - 1.5}) {3};
-  \node[font=\tiny] at ({11 - 0.5}, {-\qfdNW - 2.5}) {120};
-  \node[font=\tiny\bfseries] at ({11 - 0.5}, {-\qfdNW - 3.5}) {4.4};
+  \node[font=\tiny] at ({11 - 0.5}, {-\qfdNW - 2.5}) {141};
+  \node[font=\tiny\bfseries] at ({11 - 0.5}, {-\qfdNW - 3.5}) {4.0};
   \node[font=\tiny] at ({12 - 0.5}, {-\qfdNW - 0.5}) {no pop};
   \node[font=\tiny] at ({12 - 0.5}, {-\qfdNW - 1.5}) {4};
-  \node[font=\tiny] at ({12 - 0.5}, {-\qfdNW - 2.5}) {118};
-  \node[font=\tiny\bfseries] at ({12 - 0.5}, {-\qfdNW - 3.5}) {4.3};
+  \node[font=\tiny] at ({12 - 0.5}, {-\qfdNW - 2.5}) {133};
+  \node[font=\tiny\bfseries] at ({12 - 0.5}, {-\qfdNW - 3.5}) {3.7};
   \node[font=\tiny] at ({13 - 0.5}, {-\qfdNW - 0.5}) {1/Volley};
   \node[font=\tiny] at ({13 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({13 - 0.5}, {-\qfdNW - 2.5}) {163};
-  \node[font=\tiny\bfseries] at ({13 - 0.5}, {-\qfdNW - 3.5}) {6.0};
+  \node[font=\tiny] at ({13 - 0.5}, {-\qfdNW - 2.5}) {168};
+  \node[font=\tiny\bfseries] at ({13 - 0.5}, {-\qfdNW - 3.5}) {4.7};
   \node[font=\tiny] at ({14 - 0.5}, {-\qfdNW - 0.5}) {10/60 Hz};
   \node[font=\tiny] at ({14 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({14 - 0.5}, {-\qfdNW - 2.5}) {99};
-  \node[font=\tiny\bfseries] at ({14 - 0.5}, {-\qfdNW - 3.5}) {3.6};
+  \node[font=\tiny] at ({14 - 0.5}, {-\qfdNW - 2.5}) {104};
+  \node[font=\tiny\bfseries] at ({14 - 0.5}, {-\qfdNW - 3.5}) {2.9};
   \node[font=\tiny] at ({15 - 0.5}, {-\qfdNW - 0.5}) {6 events};
   \node[font=\tiny] at ({15 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({15 - 0.5}, {-\qfdNW - 2.5}) {133};
-  \node[font=\tiny\bfseries] at ({15 - 0.5}, {-\qfdNW - 3.5}) {4.9};
+  \node[font=\tiny] at ({15 - 0.5}, {-\qfdNW - 2.5}) {148};
+  \node[font=\tiny\bfseries] at ({15 - 0.5}, {-\qfdNW - 3.5}) {4.1};
   \node[font=\tiny] at ({16 - 0.5}, {-\qfdNW - 0.5}) {0 code};
   \node[font=\tiny] at ({16 - 0.5}, {-\qfdNW - 1.5}) {2};
-  \node[font=\tiny] at ({16 - 0.5}, {-\qfdNW - 2.5}) {119};
-  \node[font=\tiny\bfseries] at ({16 - 0.5}, {-\qfdNW - 3.5}) {4.4};
+  \node[font=\tiny] at ({16 - 0.5}, {-\qfdNW - 2.5}) {134};
+  \node[font=\tiny\bfseries] at ({16 - 0.5}, {-\qfdNW - 3.5}) {3.8};
   \node[font=\tiny] at ({17 - 0.5}, {-\qfdNW - 0.5}) {$<$1 h};
   \node[font=\tiny] at ({17 - 0.5}, {-\qfdNW - 1.5}) {3};
   \node[font=\tiny] at ({17 - 0.5}, {-\qfdNW - 2.5}) {90};
-  \node[font=\tiny\bfseries] at ({17 - 0.5}, {-\qfdNW - 3.5}) {3.3};
+  \node[font=\tiny\bfseries] at ({17 - 0.5}, {-\qfdNW - 3.5}) {2.5};
   \node[font=\tiny] at ({18 - 0.5}, {-\qfdNW - 0.5}) {bit-exact};
   \node[font=\tiny] at ({18 - 0.5}, {-\qfdNW - 1.5}) {3};
   \node[font=\tiny] at ({18 - 0.5}, {-\qfdNW - 2.5}) {102};
-  \node[font=\tiny\bfseries] at ({18 - 0.5}, {-\qfdNW - 3.5}) {3.7};
-  \node[font=\tiny] at ({19 - 0.5}, {-\qfdNW - 0.5}) {no server};
+  \node[font=\tiny\bfseries] at ({18 - 0.5}, {-\qfdNW - 3.5}) {2.9};
+  \node[font=\tiny] at ({19 - 0.5}, {-\qfdNW - 0.5}) {solo static};
   \node[font=\tiny] at ({19 - 0.5}, {-\qfdNW - 1.5}) {1};
-  \node[font=\tiny] at ({19 - 0.5}, {-\qfdNW - 2.5}) {52};
-  \node[font=\tiny\bfseries] at ({19 - 0.5}, {-\qfdNW - 3.5}) {1.9};
+  \node[font=\tiny] at ({19 - 0.5}, {-\qfdNW - 2.5}) {73};
+  \node[font=\tiny\bfseries] at ({19 - 0.5}, {-\qfdNW - 3.5}) {2.0};
   \node[font=\tiny] at ({20 - 0.5}, {-\qfdNW - 0.5}) {clock/trig};
   \node[font=\tiny] at ({20 - 0.5}, {-\qfdNW - 1.5}) {3};
   \node[font=\tiny] at ({20 - 0.5}, {-\qfdNW - 2.5}) {189};
-  \node[font=\tiny\bfseries] at ({20 - 0.5}, {-\qfdNW - 3.5}) {6.9};
+  \node[font=\tiny\bfseries] at ({20 - 0.5}, {-\qfdNW - 3.5}) {5.3};
+  \node[font=\tiny] at ({21 - 0.5}, {-\qfdNW - 0.5}) {1 authority};
+  \node[font=\tiny] at ({21 - 0.5}, {-\qfdNW - 1.5}) {4};
+  \node[font=\tiny] at ({21 - 0.5}, {-\qfdNW - 2.5}) {189};
+  \node[font=\tiny\bfseries] at ({21 - 0.5}, {-\qfdNW - 3.5}) {5.3};
+  \node[font=\tiny] at ({22 - 0.5}, {-\qfdNW - 0.5}) {0 on the wire};
+  \node[font=\tiny] at ({22 - 0.5}, {-\qfdNW - 1.5}) {2};
+  \node[font=\tiny] at ({22 - 0.5}, {-\qfdNW - 2.5}) {129};
+  \node[font=\tiny\bfseries] at ({22 - 0.5}, {-\qfdNW - 3.5}) {3.6};
+  \node[font=\tiny] at ({23 - 0.5}, {-\qfdNW - 0.5}) {3 min};
+  \node[font=\tiny] at ({23 - 0.5}, {-\qfdNW - 1.5}) {2};
+  \node[font=\tiny] at ({23 - 0.5}, {-\qfdNW - 2.5}) {132};
+  \node[font=\tiny\bfseries] at ({23 - 0.5}, {-\qfdNW - 3.5}) {3.7};
+  \node[font=\tiny] at ({24 - 0.5}, {-\qfdNW - 0.5}) {no pause};
+  \node[font=\tiny] at ({24 - 0.5}, {-\qfdNW - 1.5}) {3};
+  \node[font=\tiny] at ({24 - 0.5}, {-\qfdNW - 2.5}) {126};
+  \node[font=\tiny\bfseries] at ({24 - 0.5}, {-\qfdNW - 3.5}) {3.5};
 
   % --- Basement row labels ---
   \node[anchor=east, font=\scriptsize\bfseries] at (-0.15, {-\qfdNW - 0.5}) {Target};
   \node[anchor=east, font=\scriptsize\bfseries] at (-0.15, {-\qfdNW - 1.5}) {Difficulty (1--5)};
   \node[anchor=east, font=\scriptsize\bfseries] at (-0.15, {-\qfdNW - 2.5}) {Absolute weight};
   \node[anchor=east, font=\scriptsize\bfseries] at (-0.15, {-\qfdNW - 3.5}) {Relative weight \%};
-
 \end{qfdhouse}
 \end{document}
 ```
@@ -528,9 +600,17 @@ The same data as §§1–2, §5 and §6, in one picture: goals and their weights
 
 ## 1. Goals — the WHATs
 
-The player is someone who finds the period interesting and wants the game that doesn't exist —
-essentially the author. Onboarding and teaching the period are deliberately not goals: the
-player already knows what a square is for.
+The **Commander** is someone who finds the period interesting and wants the game that doesn't exist
+— essentially the author. Onboarding and teaching the period are deliberately not goals: he already
+knows what a square is for. What he does not know is *this game's* vocabulary — that Morale is said
+with the colour of the dressed edge — and that is G9, which is a different thing and weighted far
+below the seven that make a battle worth having marks in at all.
+
+G8 arrived by a route worth remembering. T3 recorded a cost — *"no adaptation; a battle is fresh
+once or twice"* — and no Goal ever claimed it, so for six milestones nothing in the cascade pulled
+against it. Tradeoffs are where this project files what it has decided not to fix, and nothing
+re-reads a tradeoff. G9 is the same shape caught deliberately: T18 and T21 both close with *nothing
+on screen teaches them*, and it now has a Goal above it rather than only a cost below.
 
 | ID  | Goal                                                                                  | Weight | Source |
 |-----|---------------------------------------------------------------------------------------|:------:|--------|
@@ -541,6 +621,8 @@ player already knows what a square is for.
 | G5  | Scenarios are authorable as data, without touching code                                |   7    | [ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | G6  | It's a link you can hand someone                                                       |   5    | [ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | G7  | The battle is good to watch — everything moves continuously, changes happen visibly, and fire reads | 8 | design session |
+| G8  | A battle is worth fighting more than once — the enemy is not the same enemy twice     |   7    | [ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
+| G9  | The game teaches its own marks — what a thing means is learned from the game, in the period's voice | 5 | T18, T21, `HelpTip.vue` |
 
 ## 2. Functions — the HOWs
 
@@ -559,7 +641,7 @@ player already knows what a square is for.
 |-----|---------------------------------------------|:---:|--------|
 | F5  | Keep Formation readable from silhouette alone |  →  | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px |
 | F6  | Hold the whole Field on one screen          |  →  | ≤1920m across, no camera controls |
-| F7  | Report every consequential event as a Dispatch, with its cause |  ↑  | every Break, Rout, Rally, Charge outcome and Order arrival, each naming why |
+| F7  | Report every consequential event as a Dispatch, with its cause |  ↑  | every Break, Rout, Rally, Charge outcome and Order arrival **in the Commander's own army**, each naming why |
 
 **Fidelity** — serves G3
 
@@ -591,8 +673,17 @@ player already knows what a square is for.
 |-----|---------------------------------------------|:---:|--------|
 | F16 | Load Scenario, Field and Roster entirely from data |  →  | zero code changes to add a battle |
 | F17 | Author a Field without hand-editing data    |  ↓  | a 250×250 Field in under an hour |
-| F18 | Replay a battle identically from Scenario and seed |  →  | bit-identical outcome |
-| F19 | Build to a static site                      |  →  | static assets, no server |
+| F18 | Replay a battle identically from Scenario and seed |  →  | bit-identical outcome **per JavaScript engine** ([ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)) |
+| F19 | Build to a static site                      |  →  | a solo battle is static assets and no server; a two-Commander battle is one process ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)) |
+
+**Opposition** — serves G8
+
+| ID  | Function                                    | Dir | Target |
+|-----|---------------------------------------------|:---:|--------|
+| F21 | Advance one battle for two Commanders       |  →  | one authority, one clock; Tempo is the slower of the two asked for; an Order accepted only from the Commander whose Army it names; round trip under one 100ms step — 0.3% of a 15s Courier ride |
+| F22 | Send each Commander only what is his        |  →  | zero enemy Reports, Ghosts, Couriers or Dispatches *on the wire* — withheld, not merely undrawn |
+| F23 | Arrange both armies blind, and start on a barrier |  →  | neither army visible to the other until both have Stood To; Deployment ends on both, or on a 3-minute clock, whichever comes first |
+| F24 | Survive a Commander going Out of Contact    |  →  | the clock never pauses; the army fights on its Standing Orders; the seat is recoverable at the same address |
 
 ## 4. Cascade — Goals → Functions → How → Components
 
@@ -615,7 +706,7 @@ player already knows what a square is for.
 - **G5** authorable as data  _W:7_
   - **F16** Scenario, Field and Roster from data — **How**: Rosters are standalone files a Scenario names, so persistence later is writing them back out → C14
   - **F17** Author a Field without hand-editing data — **How**: `height.png` (low-res, upsampled) + `ground.png` (full-res) painted in any image editor over a traced historical map; discrete objects in `scenario.json` → C14, C4 _(rejected: build a tile editor — see T5)_
-  - **F18** Identical replay from Scenario + seed — **How**: pure sim module, fixed 10Hz timestep, seeded RNG → C8
+  - **F18** Identical replay from Scenario + seed — **How**: pure sim module, fixed 10Hz timestep, seeded RNG — and one engine, because `sin`, `cos`, `hypot` and `atan2` are approximated per implementation, so the tests run on whatever the authority runs on (ADR-0014) → C8
 - **G6** a link you can hand over  _W:5_
   - **F19** Static build — **How**: Vite build to static assets, no server → build config
 - **G7** good to watch  _W:8_
@@ -623,32 +714,64 @@ player already knows what a square is for.
   - **F13** Volley as flash and Powder Smoke — **How**: discrete Volleys already give the battlefield a beat; one flash and one drifting cloud each → C11
   - **F14** Interpolate rendering between sim states — **How**: renderer draws between the last two states; interpolation never touches the sim → C10, C8
   - **F15** Sound every battle event — **How**: one sound per event type, off the same event stream that feeds Dispatches → C13
+- **G8** worth fighting more than once  _W:7_
+  - **F21** Advance one battle for two Commanders — **How**: the battle is held and stepped by a server; one seam — a session takes Orders, emits snapshots, reports the Outcome — implemented twice, local in the tab and remote over a socket, neither containing a rule (ADR-0013). The remote half is Bun — its resolver takes `sim/`'s extensionless imports directly and `Bun.serve` carries the socket, so the backend adds no build step and no dependency, and the tests move to the same engine with it (ADR-0014) → C16, C8 _(rejected: host-authoritative, lockstep peers — see T22)_
+  - **F22** Send each Commander only what is his — **How**: the snapshot is cut per Commander before it leaves, so what he may not see was never on his machine; the renderer's existing filters become the second line rather than the first → C16, C11
+  - **F23** Arrange both armies blind, and start on a barrier — **How**: Deployment sends each Commander his own army only, and ends on both having Stood To or on a 3-minute real-time clock, which is ADR-0006's argument one phase earlier → C16, C17
+  - **F24** Survive a Commander going Out of Contact — **How**: the battle outlives the tab, so silence is an army on its Standing Orders and not an ending; a seat is claimed by a token and reclaimed by it, and the Scenario clock is the only timeout → C16, C17, C2 _(rejected: treating a drop as a Break Off — see T23)_
+  - _(rejected at the Goal: a tactical AI, and a skirmish generator — both priced and refused in T3. G8 had no Function under it for six milestones because T3's cost was never promoted to a Goal.)_
+- **G9** the game teaches its own marks  _W:5_
+  - _No Function yet._ The want is named and the material is half-authored — every Scenario already carries a `summary` that is a briefing rather than a history lesson, and `HelpTip` already teaches the buttons whose label is a term rather than a verb. What has no answer is the map: T18 and T21 spent every channel a Unit has and both close with *nothing on screen teaches them*. Any Function here has to clear G2's *"with no labels or menus"*, which is why the likely answer is the Scenario's own voice and not a tooltip layer. **This row is deliberately empty and should stay visible until it isn't.**
 
 ## 5. House — Goals × Functions
 
-|  | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 | F15 | F16 | F17 | F18 | F19 | F20 |
-| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **G1** (10) | 9 | 9 | 9 | 3 | 1 | 3 | 3 |  | 1 | 1 |  | 1 | 1 |  | 1 |  |  |  |  | 1 |
-| **G2** (9) |  | 9 | 1 |  | 9 | 9 | 9 | 3 | 3 | 1 |  | 3 | 9 | 3 | 3 |  |  |  |  | 1 |
-| **G3** (9) | 3 |  | 9 | 3 |  |  | 3 | 9 | 9 | 9 | 3 | 1 |  |  |  | 3 | 3 | 9 |  | 3 |
-| **G4** (8) | 3 |  | 3 | 1 |  | 1 | 3 |  | 3 | 9 | 9 |  |  |  | 3 | 3 |  |  |  | 9 |
-| **G5** (7) |  |  | 3 |  |  | 1 | 1 | 1 |  |  | 3 |  |  |  |  | 9 | 9 | 3 | 1 | 9 |
-| **G6** (5) |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  | 1 |  |  | 9 |  |
-| **G7** (8) | 1 | 3 | 1 | 1 | 3 | 3 | 1 |  | 3 |  |  | 9 | 9 | 9 | 9 |  |  |  |  | 1 |
-| **Σ** | 149 | 195 | 233 | 73 | 115 | 155 | 177 | 115 | 166 | 172 | 120 | 118 | 163 | 99 | 133 | 119 | 90 | 102 | 52 | 189 |
-| **Rank** | 9 | 2 | 1 | 19 | 14 | 8 | 4 | 15 | 6 | 5 | 11 | 13 | 7 | 17 | 10 | 12 | 18 | 16 | 20 | 3 |
+|  | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 | F15 | F16 | F17 | F18 | F19 | F20 | F21 | F22 | F23 | F24 |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **G1** (10) | 9 | 9 | 9 | 3 | 1 | 3 | 3 |  | 1 | 1 |  | 1 | 1 |  | 1 |  |  |  |  | 1 | 3 | 3 | 1 | 1 |
+| **G2** (9) |  | 9 | 1 |  | 9 | 9 | 9 | 3 | 3 | 1 |  | 3 | 9 | 3 | 3 |  |  |  |  | 1 |  | 1 |  |  |
+| **G3** (9) | 3 |  | 9 | 3 |  |  | 3 | 9 | 9 | 9 | 3 | 1 |  |  |  | 3 | 3 | 9 |  | 3 | 3 | 3 | 3 |  |
+| **G4** (8) | 3 |  | 3 | 1 |  | 1 | 3 |  | 3 | 9 | 9 |  |  |  | 3 | 3 |  |  |  | 9 | 3 |  | 3 | 1 |
+| **G5** (7) |  |  | 3 |  |  | 1 | 1 | 1 |  |  | 3 |  |  |  |  | 9 | 9 | 3 | 1 | 9 |  |  |  |  |
+| **G6** (5) |  |  |  |  |  | 1 |  |  |  |  |  |  |  |  |  | 1 |  |  | 9 |  | 9 |  |  | 9 |
+| **G7** (8) | 1 | 3 | 1 | 1 | 3 | 3 | 1 |  | 3 |  |  | 9 | 9 | 9 | 9 |  |  |  |  | 1 |  |  | 1 |  |
+| **G8** (7) | 3 | 1 | 3 |  |  |  | 1 | 1 |  | 1 | 3 |  |  |  |  |  |  |  | 3 |  | 9 | 9 | 9 | 9 |
+| **G9** (5) |  | 3 | 1 |  | 3 | 1 | 9 |  |  | 1 |  | 3 | 1 | 1 | 3 | 3 |  |  |  |  |  |  |  |  |
+| **Σ** | 170 | 217 | 259 | 73 | 130 | 160 | 229 | 122 | 166 | 184 | 141 | 133 | 168 | 104 | 148 | 134 | 90 | 102 | 73 | 189 | 189 | 129 | 132 | 126 |
+| **Rank** | 7 | 3 | 1 | 23 | 16 | 10 | 2 | 19 | 9 | 6 | 12 | 14 | 8 | 20 | 11 | 13 | 22 | 21 | 24 | 4 | 5 | 17 | 15 | 18 |
 
-**Top engineering priorities.** Three results are worth arguing with rather than nodding at.
+**Top engineering priorities.** Four results are worth arguing with rather than nodding at.
 
-**F3 Initiative ranks first, by a distance.** It is the only function that touches five of the seven goals — it makes delay survivable (G1), it *is* the enemy's tactical competence (G3), its rule names are the causes in every Dispatch (G2), and it is authored as data (G5). That matches the intuition we kept arriving at by feel, which is mildly reassuring about both.
+**F3 Initiative ranks first again, and by more.** It was the only function touching five of seven
+goals; it now touches seven of nine. It makes delay survivable (G1), it *is* the enemy's tactical
+competence (G3), its rule names are the causes in every Dispatch (G2), it is authored as data (G5),
+and it is what a **Commander** who has gone **Out of Contact** leaves his army standing on (G8).
 
-**F20 Arrival ranks third — and it was missing entirely two hours ago.** It only exists because Rivoli was used as a concrete test. Everything above it in the ranking was obvious from the first conversation; the third most important function in the design was not, and would have been found only when the first scenario proved unauthorable.
+**F7 Dispatches-with-cause rose from fourth to second, and that is the most useful thing this
+recompute produced.** It moved for one reason: G9 marks it 9, and it is the *only* 9 G9 gives.
+Which says something nobody had said out loud — **the Dispatch feed is already the game's teacher,
+and it was built for legibility.** "12e Ligne broke: 31% down, enfiladed by the battery on the
+ridge" teaches enfilade to a Commander who has never seen it, in the period's own voice, in a
+surface that exists. So G9's first Function is very probably not a tutorial at all, and the roof
+conflict everyone would expect — a teaching layer against G2's *"no labels or menus"* — may never
+need fighting. A Dispatch is neither a label nor a menu. **Do not design the tutorial before
+measuring what the feed already teaches.**
 
-**F8 ranks fourteenth, which contradicts what I said about it.** I called Formation Geometry the crux and it is — but *not because F8 is important on its own*. F8's value is almost entirely indirect: it feeds F5, F12 and F6 through the component that implements it. The function matrix can't see that, and the component map in §7 can. This is a case where trusting the function ranking alone would send effort to the wrong place.
+**F21 ranks fifth, and the other three multiplayer functions rank 15th, 17th and 18th.** That split
+is honest and worth internalising: multiplayer is *one* broadly valuable function and three narrow
+ones. But rank measures how widely a function's value spreads across the goals, **not whether it
+can be skipped**. F23 blind Deployment ranks 15th and without it a two-Commander battle is a
+staring contest in which the man who commits last wins. Necessity and rank are different questions
+and this table only answers one of them.
+
+**F8 ranks nineteenth, which still contradicts what was said about it.** Formation Geometry is the
+crux, but *not because F8 is important on its own* — F8's value is almost entirely indirect, feeding
+F5, F12 and F6 through the component that implements it. The function matrix cannot see that and
+the component map in §7 can. Trusting the function ranking alone would send effort to the wrong
+place.
 
 ## 6. Roof — the conflicts that actually shape the design
 
-The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter.
+The full 24×24 grid is in the [annex](#annex--full-roof-grid). Ten pairs matter.
 
 **F3 Initiative × G1 the commander fantasy** — the most dangerous tension in the design, and it isn't function-versus-function at all. *The better Initiative gets, the less the player matters.* If battalions reliably do the right thing on their own, the honest question is why you're there. The resolution was **Initiative is strictly defensive** — it preserves and never advances — and it is now **Initiative is leashed**: how much a Unit may do unbidden is its Standing Order, and every step it takes on its own account is bounded in metres from its Post, the ground the player last gave it ([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). A Unit drifts a hundred metres off what it was given; it never picks something else. Choosing the ground is the act of *intent*, it is still yours, and it still costs a Courier ride.
 
@@ -659,6 +782,41 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 **F13 Powder Smoke × F5 silhouette** — smoke does not blind the *simulation*, but drawn over the field it obscures the silhouettes G2 depends on, and it is thickest exactly where the fighting is. Mitigation: capped opacity, drawn behind Unit bases. *Built, and both halves of the mitigation turned out to mean more than they said.* **Behind the bases** settles the silhouette outright: a Unit is drawn over its own smoke, so only the ground under it is veiled and F5 is not in the argument at all. **Capped** had to become exact — the bank is composited once through one filter, so the thickness is 0.268 whether one battalion is firing or ten, which is what T10's *one accumulator* means taken literally. What was left after that is not legibility but *contrast*, and it is a different Unit than expected: see §8.
 
 **F14 render interpolation × F18 deterministic replay** — not a conflict if the discipline holds, and a nasty one if it doesn't. Interpolated positions must never feed back into the simulation. One accidental read of a rendered position and replays diverge.
+
+**F22 send only what is his × F7 Dispatches with cause** — *the conflict this recompute created,
+and it did not exist until G9 was written down.* F7 rose to rank 2 because G9 marks it 9 and marks
+nothing else above 3: the Dispatch feed is already the game's teacher, in the period's voice, with
+no label and no menu. F22 halves it — and, because the rule was taken for solo too, halves it in all
+six existing battles. The half it takes is the interesting one, since what a Commander most wants
+explained is what just happened to the enemy in front of him. **Resolved as A:** F7's target now
+reads *in the Commander's own army*, and a Dispatch stays what CONTEXT says it is — a line naming
+its cause, never a notification, which is what *"12e Ligne broke"* with nothing after it would be.
+See T24, and the tension watching it.
+
+**F24 Out of Contact × F3 Initiative** — ◎, and the strongest reinforcement in the grid. F24 is only
+possible because F3 already is: an army whose Commander has gone silent is an army on its Standing
+Orders, and §9 has *already measured that run* — the four silent nominal battles, an army briefed
+above `hold ground` and nobody saying anything all afternoon, same winner, more blood. F24 asks for
+no new behaviour at all. It asks for a behaviour that was measured before anyone knew what it was
+for.
+
+**F21 two Commanders × F19 static site** — ⊗, and the only frank one. *Static assets, no server* was
+a target and is now a target with a condition on it. Resolved by the seam rather than by argument:
+one session interface, a local implementation that keeps solo a static site and a remote one that
+does not ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md), T22). The
+guard is that neither implementation may hold a rule; the day one does, there are two games.
+
+**F21 two Commanders × F18 identical replay** — ×. F18's target is *replay a battle identically from
+Scenario and seed*, and a two-Commander battle cannot be, because half its inputs are a person. The
+promise narrows to solo unless the Orders are recorded too — which is exactly the shape ADR-0009
+named for a resumable address: *a Scenario, a seed and the Orders given*. Not built, not needed yet,
+and worth knowing that the two features are the same feature seen twice.
+
+**F23 blind Deployment × F11 battle length** — ×, and caught by putting two numbers side by side
+rather than by reasoning. Castiglione's clock is 2400s, which at the default Tempo of 4 is **ten real
+minutes**; a five-minute Deployment window made the worst case a third of the session and most of it
+one Commander watching a still screen. Neither F11 nor G4 measures it — they are about the Scenario
+clock, which is untouched. Resolved by making the number smaller: three minutes.
 
 **F11 Army Break × F20 Arrival** — an army can be one Unit from Army Break with a fresh column ninety seconds off the Field edge. That's a *feature* — it's what Rivoli and Castiglione both turn on — but it means the end condition has to consider what is still on the road, or battles will end one minute before their best moment. *Sharper since ADR-0006, not softer: with Army Break at 1, a single Unit on the road is the whole of what keeps an otherwise empty army in the battle.*
 
@@ -681,42 +839,76 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 | C13 | Sound                | one sound per event type                                               | — |
 | C14 | Scenario Loader      | height.png, ground.png, scenario.json, Rosters                          | [0005](./docs/adr/0005-terrain-is-authored-as-images.md) |
 | C15 | Order Input          | selection, the click-drag grammar, Ghost placement                      | — |
+| C16 | Battle Session       | the seam — takes Orders, emits snapshots, reports the Outcome — and its two implementations, local in the tab and remote over a socket; the phase machine including the Deployment barrier and Stand To; authority over which Orders are accepted and what Tempo the clock runs at | [0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
+| C17 | Commander's View     | the cut: what one Commander is sent — his own Reports, Ghosts, Couriers and Dispatches, his own army at Deployment, and nothing of the other's. A pure function of a Battle and an Army, so it lives in `sim/` beside the snapshot it narrows | [0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
+| C18 | Battle Register      | battles in progress and their addresses; the two seats, the tokens that claim them, joining, Out of Contact, and expiring a battle nobody joined | [0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
 
 Component Σ = Σ(function Σ from §5 × strength), so priorities are carried down rather than asserted.
 
-|  | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 | C13 | C14 | C15 |
-| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| F1 | 9 |  |  |  |  |  |  | 3 |  |  |  |  |  |  | 3 |
-| F2 | 9 |  |  |  |  |  |  |  |  |  | 9 |  |  |  | 9 |
-| F3 | 3 | 9 |  |  |  |  | 3 |  |  |  |  |  |  |  |  |
-| F4 |  |  | 3 | 9 | 9 |  |  |  |  |  |  |  |  |  |  |
-| F5 |  |  | 9 | 1 |  |  |  |  | 3 | 9 |  |  |  |  | 1 |
-| F6 |  |  | 3 | 3 |  |  |  |  | 9 | 9 |  |  |  |  |  |
-| F7 |  | 9 |  |  |  |  | 3 |  |  |  |  | 9 |  |  |  |
-| F8 |  |  | 9 | 3 |  | 9 |  |  |  |  |  |  |  |  |  |
-| F9 |  | 1 | 3 |  |  | 9 |  | 3 |  |  |  |  |  |  |  |
-| F10 |  | 3 | 1 |  |  | 3 | 9 |  |  |  |  |  |  |  |  |
-| F11 |  |  |  |  |  |  | 9 | 9 |  |  |  |  |  |  |  |
-| F12 |  |  | 9 |  |  |  |  |  |  | 9 | 1 |  |  |  |  |
-| F13 |  |  |  |  |  | 3 |  |  |  |  | 9 |  |  |  |  |
-| F14 |  |  |  |  |  |  |  | 9 |  | 9 |  |  |  |  |  |
-| F15 |  |  |  |  |  |  |  |  |  |  |  |  | 9 |  |  |
-| F16 |  |  |  |  |  |  |  |  |  |  |  |  |  | 9 |  |
-| F17 |  |  |  | 3 |  |  |  |  |  |  |  |  |  | 9 |  |
-| F18 |  |  |  |  |  |  |  | 9 |  |  |  |  |  | 3 |  |
-| F20 | 1 |  |  |  | 3 |  |  | 9 |  |  |  |  |  | 3 |  |
-| **Σ** | 3984 | 4372 | 4486 | 1852 | 1224 | 3534 | 3858 | 5535 | 1740 | 4383 | 3340 | 1593 | 1197 | 2754 | 2317 |
-| **Rank** | 5 | 4 | 2 | 11 | 14 | 7 | 6 | 1 | 12 | 3 | 8 | 13 | 15 | 9 | 10 |
+|  | C1 | C2 | C3 | C4 | C5 | C6 | C7 | C8 | C9 | C10 | C11 | C12 | C13 | C14 | C15 | C16 | C17 | C18 |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| F1 | 9 |  |  |  |  |  |  | 3 |  |  |  |  |  |  | 3 |  |  |  |
+| F2 | 9 |  |  |  |  |  |  |  |  |  | 9 |  |  |  | 9 |  |  |  |
+| F3 | 3 | 9 |  |  |  |  | 3 |  |  |  |  |  |  |  |  |  |  |  |
+| F4 |  |  | 3 | 9 | 9 |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| F5 |  |  | 9 | 1 |  |  |  |  | 3 | 9 |  |  |  |  | 1 |  |  |  |
+| F6 |  |  | 3 | 3 |  |  |  |  | 9 | 9 |  |  |  |  |  |  |  |  |
+| F7 |  | 9 |  |  |  |  | 3 |  |  |  |  | 9 |  |  |  |  |  |  |
+| F8 |  |  | 9 | 3 |  | 9 |  |  |  |  |  |  |  |  |  |  |  |  |
+| F9 |  | 1 | 3 |  |  | 9 |  | 3 |  |  |  |  |  |  |  |  |  |  |
+| F10 |  | 3 | 1 |  |  | 3 | 9 |  |  |  |  |  |  |  |  |  |  |  |
+| F11 |  |  |  |  |  |  | 9 | 9 |  |  |  |  |  |  |  |  |  |  |
+| F12 |  |  | 9 |  |  |  |  |  |  | 9 | 1 |  |  |  |  |  |  |  |
+| F13 |  |  |  |  |  | 3 |  |  |  |  | 9 |  |  |  |  |  |  |  |
+| F14 |  |  |  |  |  |  |  | 9 |  | 9 |  |  |  |  |  |  |  |  |
+| F15 |  |  |  |  |  |  |  |  |  |  |  |  | 9 |  |  |  |  |  |
+| F16 |  |  |  |  |  |  |  |  |  |  |  |  |  | 9 |  |  |  |  |
+| F17 |  |  |  | 3 |  |  |  |  |  |  |  |  |  | 9 |  |  |  |  |
+| F18 |  |  |  |  |  |  |  | 9 |  |  |  |  |  | 3 |  |  |  |  |
+| F19 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |  |  |
+| F20 | 1 |  |  |  | 3 |  |  | 9 |  |  |  |  |  | 3 |  |  |  |  |
+| F21 |  |  |  |  |  |  |  | 3 |  |  |  |  |  |  |  | 9 |  | 1 |
+| F22 |  |  |  |  |  |  |  |  |  |  | 1 |  |  |  |  | 3 | 9 |  |
+| F23 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 | 9 | 1 |
+| F24 |  | 3 |  |  |  |  |  |  |  |  |  |  |  |  |  | 3 |  | 9 |
+| **Σ** | 4449 | 5488 | 4846 | 1903 | 1224 | 3648 | 4389 | 6399 | 1830 | 4743 | 3727 | 2061 | 1332 | 2889 | 2593 | 3081 | 2349 | 1455 |
+| **Rank** | 5 | 2 | 3 | 14 | 18 | 8 | 6 | 1 | 15 | 4 | 7 | 13 | 17 | 10 | 11 | 9 | 12 | 16 |
 
 **Where the engineering effort goes.**
 
-**C8 Battle Clock ranks first, which is a genuinely useful surprise.** It sounds like plumbing. It is in fact the only component touching all four of the highest-leverage things in the design at once: it schedules Arrivals (F20, rank 3), it owns the fixed timestep that makes replay possible (F18) and the interpolation that makes the game watchable (F14), and it holds the end conditions (F11). Nothing in the session suggested building it first — the ranking did.
+**C8 Battle Clock ranks first again.** It sounds like plumbing. It is in fact the only component
+touching four of the highest-leverage things in the design at once: it schedules Arrivals (F20), it
+owns the fixed timestep that makes replay possible (F18) and the interpolation that makes the game
+watchable (F14), and it holds the end conditions (F11). Nothing in any session suggested building
+it first — the ranking did.
 
-**C3 Formation Geometry ranks second, vindicating the claim F8 alone couldn't support.** Its value is aggregated across F5, F8 and F12: silhouette, geometry-derived combat and the morph are the same slot layouts read three ways. Build it first anyway, C8 notwithstanding, because C6 and C10 are both meaningless without it.
+**C2 Initiative Rules rose from fourth to second, and F24 is a real part of why.** F3 and F7 both
+climbed above it, and then **Out of Contact** was added — a Commander who drops leaves his army
+standing on C2 and nothing else. The component that lets an army fight when nobody is commanding it
+is now the second most valuable thing in the design, which is a strange sentence for a game about
+being a commander and is exactly what ADR-0007's leash is holding at bay.
 
-**C5 Routing ranks fourteenth**, which is worth internalising: pathfinding is the classic thing to sink three weeks into, and by this ranking it earns about as much attention as the sound effects. String-pull an A* and move on.
+**C3 Formation Geometry ranks third, still vindicating the claim F8 alone couldn't support.** Its
+value aggregates across F5, F8 and F12 — silhouette, geometry-derived combat and the morph are the
+same slot layouts read three ways. Build it first anyway, C8 notwithstanding, because C6 and C10 are
+both meaningless without it.
 
-**The ranking disagrees with the natural build order in one place.** C14 Scenario Loader ranks ninth, but nothing can be tested against Castiglione or Rivoli until it exists. Ranking measures value, not sequencing.
+**C16 Battle Session ranks ninth, which is the multiplayer work priced honestly.** It is not a
+headline component. It carries one important function and three narrow ones, and the three narrow
+ones are cheap because C17 is a pure function and C18 is a map with an expiry sweep.
+
+**C18 Battle Register ranks sixteenth, which settles the question of whether to fold it into C16.**
+Folded, the pair would score 4536 and rank fifth — four places above where the session actually
+belongs, with "which browser holds the French seat" inflating the rank of "what Tempo the clock runs
+at". Keeping it separate is what makes C16's ninth place true.
+
+**C5 Routing now ranks last of eighteen**, which is worth internalising: pathfinding is the classic
+thing to sink three weeks into, and by this ranking it earns less attention than the sound effects.
+String-pull an A* and move on.
+
+**The ranking disagrees with the natural build order in one place.** C14 Scenario Loader ranks
+tenth, but nothing can be tested against Castiglione or Rivoli until it exists. Ranking measures
+value, not sequencing.
 
 ### What the map says about a Unit (C10)
 
@@ -758,6 +950,10 @@ now spoken for — which is the cost recorded as T18.
 | 4 | F10 Morale | Break at 15–30% casualties; 0 Strength is a bug | Castiglione | Add global Morale scalars. If per-Formation constants are needed, F8 has failed — record it. |
 | 5 | F11 battle length | 20–40 min at Tempo 1 | Castiglione | Raise default Tempo, then shorten the Scenario clock. Both are data. |
 | 6 | F6 Field on one screen | ≤1920m, 60fps | Rivoli — the largest Field in the campaign | Add zoom and pan, and accept that G2's silhouette guarantee weakens with it (T8). |
+| 7 | F21 two Commanders | one authority, one clock; round trip under one 100ms step | a two-Commander Castiglione, both browsers on one machine and then on two | An Order applies on the step it arrives — a Courier ride is 15–115s, so a late round trip is beneath the mechanic's own resolution. The failure that matters is the process not staying up, and the fallback is that multiplayer is unavailable while solo is untouched. That is precisely what the seam was bought for. |
+| 8 | F22 the cut | zero enemy Reports, Ghosts, Couriers or Dispatches on the wire | a headless test over `load-headless.ts`, asserting the cut against a built Battle | There is no partial credit and nothing to tune: a leak is not a slowdown. If the cut is wrong, blind Deployment and the Report rule are both simply gone. This is the one row whose fallback is *fix it*. |
+| 9 | F23 Deployment window | both Stood To, or 3 minutes | Rivoli — 13 Units, the largest army anyone has to arrange | Raise to four minutes. If four still binds, the arranging grammar is what is slow and the clock is not the thing to change. |
+| 10 | F24 Out of Contact | the clock never pauses; the seat is recoverable at the same address | pulling the plug mid-Castiglione and rejoining from the same browser | A drop becomes a Break Off — T23's rejected option, honest as a fallback because it is at least a rule the glossary already holds. |
 | 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. *Both rungs are now spent and neither went where this row expected. The base outline's edges carry the Arm, Grade and Morale channels (§7), and the glyph carries **Disorder** ([ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)) — spent on the one read a Unit has that no silhouette could ever give, rather than on labelling the Formation the silhouette already names. So the ladder is gone and the fallback for a silhouette that does not read is a new one.* |
 | 8 | F4 routing | under 10ms on 250×250 | Rivoli — gorges are the worst case | Precompute a flow field per Crossing. Cheap, and it makes funnelling exact. |
 | 9 | F14 interpolation | zero judder at 10Hz sim / 60fps render | any scenario | Raise the sim to 20Hz. Costs determinism nothing; costs CPU almost nothing at 40 bodies. |
@@ -1090,6 +1286,11 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 | T21 | The glyph spent on Disorder, over a Formation glyph or a fourth channel | the one read on a Unit that no silhouette, hue or edge could ever have carried — and it decides whether the Unit can make square or go at anybody, so it is the read the player most needs before he picks a Unit up | the last rung of §8 rank 7's fallback ladder is gone, so a silhouette that fails at 0.7px/m now has no answer written down; a fifth read has nowhere at all to go; and the mark is learned rather than labelled, like the other four | [0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md) |
 | T17 | A Headquarters that can be harried and ridden over, against one that can be captured | *where do I stand* becomes a decision the player makes all afternoon; ADR-0002's other half — it can be shot at — is finally built, and off the beaten ground C6 already draws | a flat surcharge compresses the distance gradient F1 rests on, worst for the Orders with the shortest way to go; the enemy pays nothing for any of it until its own Orders are couriered | [0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md) |
 | T20 | Fatigue bought by the pace, over a cost per action | one law covers a flank march, a Rout, a gallop and a battery limbering up, so Pursuit costs what running costs without a rule of its own; Formation reaches Fatigue through its speed and never through a table, so F8 survives the easiest place to break it | a Formation that is slow because it is hard to hold together — a line over broken ground — reads as restful; nothing is saved, so it is an afternoon's arithmetic and cannot carry into a campaign | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md) |
+| T22 | Server-authoritative over host-authoritative and lockstep | blind Deployment and the Report rule enforceable against *both* Commanders rather than one; a battle that outlives the tab, so Out of Contact is survivable; no silent desync | F19 splits in two; a process to deploy and keep alive; two implementations of one seam, and a rule inside either of them is two games | [0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
+| T23 | A drop is Out of Contact, not a Break Off | a router no longer costs twenty-five minutes; and no timeout logic at all, because the Scenario clock already is the timeout | an army fights on with nobody commanding it, so C2 carries more than it was built to; and the other Commander is told, which is information he would not otherwise have | [0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md) |
+| T24 | Reports and Dispatches are the Commander's own army's — in solo too | one rule across both games instead of two; and T11's refusal of a countable bar finally enforced, since a selected enemy Unit no longer hands over an exact man-count | F7's *every consequential event* becomes every one of yours, and the half it drops is the interesting half — a rule taken for G8 and charged to G9 | — |
+| T25 | Tempo asked for, not set | neither Commander can impose the pace of the afternoon on the other, for the price of one `Math.min` | wall-clock length stops being knowable in advance, and a Commander who is losing can hold the other at ×1 for the full half hour | — |
+| T26 | Bun for the server, and the tests moved with it | the backend adds no build step and no dependency — extensionless imports resolve and the socket is built in; and the authority and the baseline stay on one engine | tests no longer share an engine with a Chrome player's solo battle, and §8's measured numbers have to be re-taken under `bun test` rather than carried over | [0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
 
 ### Tensions being watched (unresolved by design)
@@ -1105,7 +1306,17 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   which is period-true — frontal assaults on steady lines failed — but it leaves the attack column
   earning its place on speed and on being a poor target rather than on carrying positions.
   **Trigger:** a Castiglione where the column is never the right way to attack.
-- **Command friction is the player's alone.** A Headquarters that is harried or ridden over costs the enemy nothing, because the Plan applies its Orders where they land instead of couriering them — so the whole of ADR-0008 is a rule only one army obeys, drawn only for the army that obeys it. **Trigger:** the first enemy commanded through Couriers rather than through an authored Plan, at which point the rule is already written and the enemy Headquarters wants drawing.
+- **Command friction is the player's alone.** *Resolved by
+  [ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md).* A Headquarters
+  that was harried or ridden over cost the enemy nothing, because the Plan applies its Orders where
+  they land instead of couriering them — so the whole of ADR-0008 was a rule only one army obeyed,
+  drawn only for the army that obeyed it. The trigger written here was *the first enemy commanded
+  through Couriers rather than through an authored Plan, at which point the rule is already written
+  and the enemy Headquarters wants drawing*, and that is exactly what arrived: a second Commander
+  couriers his Orders from a Headquarters that can be harried, ridden over and aimed at, and it is
+  the one piece of his command apparatus the other can see. What is *not* symmetric and never will
+  be is the solo battle, where the Plan still pays nothing — so this closes for G8 and stays open
+  for every battle fought against a script.
 - **Fatigue against a thirty-minute clock.** Bought by the pace, so infantry at 0.8–1.4 m/s tires slowly by design and cavalry at the gallop tires fast. **Trigger:** a Castiglione where no Unit is ever winded, in which case the rule is decoration for two Arms out of three — or one where a battalion is blown before the first Volley, which is an afternoon spent watching men who cannot fight.
 - **A Pursuit costs all three of its prices.** *Resolved by
   [ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md).* The run-in
@@ -1120,9 +1331,72 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   firefight. Left as the honest first version rather than two rules of the same shape stacked on the
   same afternoon before either is measured. **Trigger:** a Unit visibly re-forming in the middle of a
   fight it could not have dressed in.
+- **Three engines, and only two can agree.** The simulation runs in the tests, on the server and in
+  the player's own tab. ADR-0014 aligns the first two, which leaves a solo battle in Chrome running
+  on an engine no test covers. **Trigger:** solo play being where the bugs actually come from, at
+  which point the alignment should flip and the ADR be revisited rather than worked around.
+- **The feed teaches, and the cut halves it.** T24 takes enemy Dispatches away in every battle, and
+  §5 says the feed is the only surface G9 scores 9 on. The version not built is a **causeless line**
+  — *what* for both armies, *why* for yours — which buys back half the lessons for one rule. Left
+  unbuilt because it would design G9's answer on the strength of a matrix cell assigned the same
+  afternoon, and because a Dispatch with no cause is what CONTEXT's `_Avoid_` list calls a
+  notification. **Trigger:** the first measurement of what the feed actually teaches. If it is the
+  main teacher, this is the first thing to reconsider.
+- **Two implementations of one seam.** The local session and the remote one both talk to
+  `src/sim/`, and the only thing keeping them one game is that neither may hold a rule.
+  **Trigger:** the first behaviour that exists in one and not the other — at which point
+  ADR-0013 has been broken rather than extended, and should be superseded rather than quietly
+  stretched.
+- **A battle now outlives the tab that opened it.** T13 says *no save — no serialisation of
+  simulation state at all*, and that is still true: the state was never written down, it simply
+  lives in a process. **Trigger:** wanting a battle to outlive the *server*, at which point T13 is
+  properly dead — and the design for it is already written down, in ADR-0009's *a Scenario, a seed
+  and the Orders given*.
+- **G9 has a Goal and no Function.** Deliberate, and the row should stay visible. G8 sat unclaimed
+  for six milestones because T3 recorded its cost and no Goal ever asked for it; this is the same
+  shape caught on purpose rather than by luck. **Trigger:** measuring what the Dispatch feed and the
+  Scenario `summary` already teach — because the answer may be that most of G9 is built and nobody
+  had noticed.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
+
+- **F18 has never been true without naming an engine.** Its target reads *bit-identical outcome*,
+  and `sin`, `cos`, `hypot` and `atan2` are implementation-approximated — 42 call sites in `sim/`.
+  Solo play already simulates in the player's own browser, so a Safari player has been on JSC and
+  potentially off §8's numbers for six milestones. It never bit because one person on one browser
+  was both the player and the test harness. Target amended to *per JavaScript engine*
+  ([ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)).
+- **F19's target was absolute and is now conditional.** *Static assets, no server* described the
+  whole product; it describes solo play. Amended rather than deleted, because the solo half is what
+  keeps G6's link a link to a file and not to infrastructure.
+- **F19 had no row in the function → component map at all.** Its component was "build config", so it
+  was silently dropped from §7 and contributed nothing to any component's Σ. It now points at C16,
+  which is the honest answer to *what builds the thing F19 describes*.
+- **Solo play was leaking an exact enemy man-count, which T11 had explicitly refused.**
+  `useBattle.ts:642` allows an enemy Unit to be selected "to read it, never to order it about", and
+  `TheBattle.vue:328` renders the full card merely `disabled` — so a selected enemy battalion handed
+  over its Strength in men, its Fatigue and its aim. T11 gave up the countable bar on purpose and
+  then a panel counted it down perfectly, for the wrong army. Closed by T24, in solo as well as in a
+  two-Commander battle.
+- **The Deployment window was five minutes against a ten-minute battle.** Castiglione's clock is
+  2400s and `useBattle.ts:123` defaults Tempo to 4. Nothing in F11 or G4 catches it, because both
+  measure the Scenario clock and the Scenario clock is untouched. Found by putting two numbers
+  beside each other in §8; fixed by making one of them three.
+- **Enemy Couriers were drawn, and had never once been exercised.** `BattleView` filters Ghosts by
+  army (`:1085`) and draws only its own Headquarters (`:1600`), but walks *every* Courier
+  (`:1569`) — safe for six milestones only because the Plan applies its Orders where they land and
+  has never put a rider on the Field. A second Commander would have made the enemy's Orders visible
+  the first time anyone played.
+- **The teaching material G9 asks for was already authored.** Every `scenario.json` carries a
+  `summary`, and Rivoli's is 130 words of Alvinczi coming down off Monte Baldo divided by torrent
+  gullies. It is a briefing, not a history lesson — exactly what G9 wants — and it is read once on
+  the menu and never reaches the Field.
+- **"Player" and "Commander" are the same person and CONTEXT now only allows one of them.**
+  `CONTEXT.md` has been swept (15 uses; only the two `_Avoid_` entries remain). `DESIGN.md` §1 has
+  been corrected and the rest of it, along with `README.md`, has not. Recorded rather than fixed,
+  because a blanket rename across 118KB of prose is a change to make deliberately and read
+  afterwards, not a side effect of a design session.
 
 - **"Soldier" meant two different things.** Defined as "one man in a Unit", then used as "one drawn figure per five men" — so `unit.soldiers.length` would never have been a Unit's Strength. Renamed to **Figure**; Strength counts men only.
 - **"Rigid men" read as popping Formations.** Figures snapping to slots, taken literally, means a battalion holds its line for forty seconds and then jumps into a square — violating G7. Resolved: Figures are rigid *relative to* their slots; the slot layout itself morphs (F12).
@@ -1452,28 +1726,32 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 
 Symbols: `◎` strong reinforcement · `○` mild reinforcement · `×` mild conflict · `⊗` strong conflict.
 
-|  | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 | F15 | F16 | F17 | F18 | F19 | F20 |
-| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
-| **F1** | — | ◎ | ◎ |  |  |  |  |  |  |  | × |  |  |  | ○ |  |  |  |  |  |
-| **F2** |  | — | ○ |  |  |  |  |  |  |  | ○ |  | × |  |  |  |  |  |  |  |
-| **F3** |  |  | — |  |  |  | ◎ |  |  |  | ○ |  |  |  |  |  |  |  |  |  |
-| **F4** |  |  |  | — |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ○ |
-| **F5** |  |  |  |  | — | × |  |  |  |  |  | ◎ | × |  |  |  |  |  |  |  |
-| **F6** |  |  |  |  |  | — |  |  |  |  |  |  | × | ○ |  |  |  |  |  |  |
-| **F7** |  |  |  |  |  |  | — | × |  |  |  |  |  |  |  |  |  |  |  |  |
-| **F8** |  |  |  |  |  |  |  | — | ◎ | × | × |  |  |  |  |  |  | ◎ |  |  |
-| **F9** |  |  |  |  |  |  |  |  | — |  |  |  | ◎ |  | ◎ |  |  |  |  |  |
-| **F10** |  |  |  |  |  |  |  |  |  | — | ◎ |  |  |  |  |  |  |  |  |  |
-| **F11** |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |  |  |  |  | × |
-| **F12** |  |  |  |  |  |  |  |  |  |  |  | — |  | ◎ |  |  |  |  |  |  |
-| **F13** |  |  |  |  |  |  |  |  |  |  |  |  | — | ○ |  |  |  |  |  |  |
-| **F14** |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  | × |  |  |
-| **F15** |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |  |
-| **F16** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ◎ |  |  | ◎ |
-| **F17** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ○ |  |  |
-| **F18** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |
-| **F19** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |
-| **F20** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |
+|  | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14 | F15 | F16 | F17 | F18 | F19 | F20 | F21 | F22 | F23 | F24 |
+| :-- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: | :-: |
+| **F1** | — | ◎ | ◎ |  |  |  |  |  |  |  | × |  |  |  | ○ |  |  |  |  |  | ○ |  |  |  |
+| **F2** |  | — | ○ |  |  |  |  |  |  |  | ○ |  | × |  |  |  |  |  |  |  |  |  |  |  |
+| **F3** |  |  | — |  |  |  | ◎ |  |  |  | ○ |  |  |  |  |  |  |  |  |  |  |  |  | ◎ |
+| **F4** |  |  |  | — |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ○ |  |  |  |  |
+| **F5** |  |  |  |  | — | × |  |  |  |  |  | ◎ | × |  |  |  |  |  |  |  |  |  |  |  |
+| **F6** |  |  |  |  |  | — |  |  |  |  |  |  | × | ○ |  |  |  |  |  |  |  |  |  |  |
+| **F7** |  |  |  |  |  |  | — | × |  |  |  |  |  |  |  |  |  |  |  |  |  | ⊗ |  |  |
+| **F8** |  |  |  |  |  |  |  | — | ◎ | × | × |  |  |  |  |  |  | ◎ |  |  |  |  |  |  |
+| **F9** |  |  |  |  |  |  |  |  | — |  |  |  | ◎ |  | ◎ |  |  |  |  |  |  |  |  |  |
+| **F10** |  |  |  |  |  |  |  |  |  | — | ◎ |  |  |  |  |  |  |  |  |  |  |  |  |  |
+| **F11** |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |  |  |  |  | × |  |  | × | ○ |
+| **F12** |  |  |  |  |  |  |  |  |  |  |  | — |  | ◎ |  |  |  |  |  |  |  |  |  |  |
+| **F13** |  |  |  |  |  |  |  |  |  |  |  |  | — | ○ |  |  |  |  |  |  |  |  |  |  |
+| **F14** |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  | × |  |  |  |  |  |  |
+| **F15** |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |  |  |  |  |  |
+| **F16** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ◎ |  |  | ◎ |  |  |  |  |
+| **F17** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ○ |  |  |  |  |  |  |
+| **F18** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  | × |  |  |  |
+| **F19** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  | ⊗ |  |  |  |
+| **F20** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |  |  |  |
+| **F21** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ◎ | ◎ | ◎ |
+| **F22** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — | ◎ |  |
+| **F23** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |  |
+| **F24** |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  | — |
 
 ---
 
