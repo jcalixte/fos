@@ -142,7 +142,22 @@ and that is exactly the minute horse tends to arrive in. On the map it takes the
 mark a Unit had left (DESIGN §8 rank 7, T21) — because Disorder has no silhouette, no colour and no
 edge of its own, and the silhouette already says what Formation a Unit is in.
 
-Not built yet: Concealment, Powder Smoke, sound.
+Powder Smoke, which is the first thing built that changes nothing. One cloud per Volley, born at
+the muzzles rather than on the men, drifting on one breeze and gone in forty-five seconds — and
+inert, so the simulation never learns the Field is full of it (T10). What it is really about is the
+one rule the design wrote down in advance as dangerous: smoke is thickest exactly where the fighting
+is, and that is where the silhouettes have to read. The mitigation was *capped opacity, drawn behind
+Unit bases*, and building it turned both halves into numbers. Behind the bases means a Unit is never
+drawn through its own smoke, so only the ground under it is veiled. Capped means capped: the whole
+bank is composited once through one filter, so ten battalions firing into the same hundred metres
+come out at the same 0.268 as one does. And the colour is the part the measure decided rather than
+the eye — real powder white takes the Austrians, who are near-white themselves, to 1.72 against the
+ground they stand on, under the tone the settings keep on file as the one to argue against. Counting
+a Unit's keyline as well as its body, smoke *sharpens* an elite battalion and a line one, because
+dark ink gains what a pale body loses; the single Unit it costs is a conscript in the white army,
+which by design has almost no keyline to gain by. There is exactly one in the six Rosters authored.
+
+Not built yet: Concealment, sound.
 
 ## Layout
 

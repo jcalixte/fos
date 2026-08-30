@@ -654,7 +654,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 
 **F1 courier delay × F11 battle length** — a 1500m Order takes ~115 seconds. In a 20-minute battle that is roughly ten order-cycles to your far flank, and fewer once you count thinking time. More delay is more fiction and fewer decisions. Unresolved; both numbers are tuned against Castiglione.
 
-**F13 Powder Smoke × F5 silhouette** — smoke does not blind the *simulation*, but drawn over the field it obscures the silhouettes G2 depends on, and it is thickest exactly where the fighting is. Mitigation: capped opacity, drawn behind Unit bases. Watch it.
+**F13 Powder Smoke × F5 silhouette** — smoke does not blind the *simulation*, but drawn over the field it obscures the silhouettes G2 depends on, and it is thickest exactly where the fighting is. Mitigation: capped opacity, drawn behind Unit bases. *Built, and both halves of the mitigation turned out to mean more than they said.* **Behind the bases** settles the silhouette outright: a Unit is drawn over its own smoke, so only the ground under it is veiled and F5 is not in the argument at all. **Capped** had to become exact — the bank is composited once through one filter, so the thickness is 0.268 whether one battalion is firing or ten, which is what T10's *one accumulator* means taken literally. What was left after that is not legibility but *contrast*, and it is a different Unit than expected: see §8.
 
 **F14 render interpolation × F18 deterministic replay** — not a conflict if the discipline holds, and a nasty one if it doesn't. Interpolated positions must never feed back into the simulation. One accidental read of a rendered position and replays diverge.
 
@@ -773,6 +773,7 @@ On the fixtures, where a rule is watched in isolation:
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
 | — | C7 Disorder: two causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts` |
+| — | F13 one flash and one drifting cloud per Volley | one cloud, born at the muzzles, capped at 0.268 however many fire | the plate, `/plate`, with the toggle |
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
@@ -1012,6 +1013,35 @@ and the Austrians from 6.9% to 24.1%, with the same winner on the same ending. B
 more and neither wins differently, which is the shape a rule ought to have that costs troops their
 shape and never their nerve.
 
+**Powder Smoke costs one Unit in the campaign, and it is not the one the roof was worried about.**
+F13 × F5 was written as a legibility problem — smoke drawn over the silhouettes G2 depends on — and
+drawing it behind the Unit bases retires that half completely: a Unit is painted over its own smoke,
+so what a bank veils is the ground and never the shape standing on it. What is left is *contrast*,
+and measuring it turns the tension inside out. A Unit is found by its body **or** by its keyline,
+whichever the eye catches first, and the keyline is dark ink — so a pale veil sharpens the keyline by
+as much as it flattens the body. Worst case over every paper tone on offer, an elite battalion goes
+from 4.71 against the ground to 6.05 under a full bank and a line battalion from 3.13 to 3.66. Smoke
+makes almost every Unit on the Field *easier* to see.
+
+The exception is exact and it is a Grade channel working as designed. A conscript's keyline is
+alpha 0.3 — the faint edge *is* how Grade is drawn (§7) — so a conscript has nothing but its body to
+be found by, and in the white army that body is `#e3e7ef` against a whitening ground: 2.27 bare,
+1.84 under the cap. **Every one of the six authored Rosters was checked and there is exactly one
+such battalion**, in Castiglione's Austrians. Recorded rather than fixed, because the fix is a
+conscript keyline that stops saying conscript.
+
+**The colour was decided by the measure and not by the period.** Real powder white (`#f2f2f0`) puts
+that battalion at 1.72 — under the 1.88 `settings.ts` keeps on file as the paper tone to argue
+against — so the smoke is `#dcdcd6`, which is as white as the white army can afford. The cost is
+0.10 of the bank's own visibility against open ground, 1.27 rather than 1.37, and smoke is the one
+mark on this map that also reads by moving.
+
+**Smoke had to be aged on battle time, and that is a Tempo bug caught before it was written.** A
+Flash and a Clash burn down on the wall clock, which is right for sub-second marks. Tempo defaults
+to **4**, so a bank on the wall clock would be four times as thick at the Tempo the game is played at
+as at the Tempo every number above is measured at — and thickness is the whole of the roof's warning.
+On battle time a bank is the same bank at any Tempo, and it stops when the battle is paused.
+
 **The rule was too eager once, and the measure is what said so.** Written as the two shapes merely
 touching, it fired on a mob streaming twenty metres in front of a line without a man of it coming
 through, and it flipped Rivoli taken Austrian outright. Asked instead as the two being *in among
@@ -1042,7 +1072,7 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 | T7 | Whole-battalion Open Order over detached skirmishers | "one Unit, one Formation" holds | no screen-plus-main-body; a battalion skirmishes entirely or not at all | — |
 | T8 | Fixed camera over zoom and pan | zero camera work; forces legibility at the hardest scale first | Field capped at ~1920m, so Austerlitz and Leipzig need named sub-actions or a different game | — |
 | T9 | Terrain-only Concealment over fog of war | no scouting, ghosts or report decay; one uncertainty layer instead of two | no intelligence to gather; every ambush is readable off the map by a careful player | — |
-| T10 | Powder Smoke drawn but inert | legibility preserved; one accumulator instead of an occlusion field | the firefight-stalemate dynamic isn't modelled — the dial exists and starts at zero | — |
+| T10 | Powder Smoke drawn but inert | legibility preserved, and measured rather than asserted: behind the bases the silhouette is never in the argument, and *one accumulator* taken literally makes the cap exact at 0.268 however many battalions fire into the same ground | the firefight-stalemate dynamic isn't modelled — and there is no dial, because inert means the sim never sees the smoke: turning it on is moving the rule into C6, not changing a number | — |
 | T11 | Morale as the health bar, not casualties | the period's actual dynamic; Pursuit and Rally become real decisions | harder to tune; no legible bar the player can count down | — |
 | T12 | Unit sized by a Frontage band, not a historical title | one model across every army and campaign | an Austrian cavalry regiment is four Units, which reads oddly on a roster | [0001](./docs/adr/0001-unit-is-always-a-battalion.md) |
 | T13 | No save | no serialisation of simulation state at all | a 40-minute battle is all-or-nothing | — |
@@ -1059,8 +1089,8 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 - **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Measured, and not tripped.** Now that Rosters carry a rung, the four silent nominal runs are the run this line asks for: an army briefed above `hold ground` and a player who says nothing all afternoon. The winner is the same in all four as it was with every Unit at `hold-ground`, and the leash is spent to the metre and never past it — 100m, 250m and 300m at the three rungs. What a brief buys is not the battle but a harder one: Rivoli's briefed Austrians take the same result for 58.6% gone instead of 27.6%. *Also measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.* **Trigger to reopen:** a briefed army that starts *winning* battles the player sits out, rather than merely bleeding for them.
 - **Courier delay versus battle length.** Both tuned against Castiglione, in opposite directions. **Trigger:** when a 20-minute battle allows fewer than about three order-cycles to the far flank.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
-- **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.
-- **Smoke as a blinding mechanic.** Deliberately not built; the dial sits at zero. **Trigger:** if firefights resolve faster and more decisively than the period suggests they should.
+- **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Built and measured, and it is not a silhouette problem.** Behind the bases, a Unit is drawn over its own smoke and F5 never enters it; counting the keyline as well as the body, a bank makes an elite battalion and a line battalion *easier* to find. The one Unit it costs is a white conscript, whose Grade is drawn as having almost no keyline — one battalion in the six Rosters authored. **Trigger:** a Roster that fields conscripts in the white army in numbers, at which point the Grade channel and not the smoke is what wants revisiting.
+- **Smoke as a blinding mechanic.** Deliberately not built. There is no dial to turn, and building the drawn half made that sharper rather than softer: the clouds are renderer state that the simulation cannot see at all, so blinding is not a scalar going up from zero but the rule moving into C6 and being measured from scratch. **Trigger:** if firefights resolve faster and more decisively than the period suggests they should.
 - **The bayonet charge is weak, and the attack column weakest of all.** A charge in line takes 33
   men and 0.26 Morale off a line; the same battalion charging in attack column takes 11 and 0.09,
   because a third of the frontage meets. Against fresh infantry an infantry charge does nothing,
