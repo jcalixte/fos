@@ -775,20 +775,21 @@ On the fixtures, where a rule is watched in isolation:
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
-authored Plan is watched once against an army doing nothing. Taken at `c91b09c`; take them again
-rather than trusting this table, which is what it is for.
+authored Plan is watched once against an army doing nothing, and every Unit stands at the rung its
+Roster gave it. Take them again rather than trusting this table, which is what it is for.
 
 | Rank | Target | Castiglione | Rivoli |
 |------|--------|-------------|--------|
 | 5 | F11 20–40 min | 40:00, by Key Ground both ways | 40:00, by condition both ways |
-| 5 | F11 dead clock | 0:10 and 0:08 | 0:00 and 0:14 |
+| 5 | F11 dead clock | 0:10 and 0:08 | 0:23 and 0:02 |
 | 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
 | 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
-| 4 | F10 Break at 15–30% | **16.0–30.4%**, medians 18.9% and 22.8% | **15.1–33.4%**, medians 20.7% and 21.3% |
-| 4 | F10 Breaks outside the band | 2 of 7, and each says why | 2 of 15, and each says why |
-| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 29 men |
+| 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **13.0–44.3%**, medians 18.3% and 18.8% |
+| 4 | F10 Breaks outside the band | 2 of 11, and each says why | 4 of 26, and each says why |
+| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 61 men |
 | 8 | F4 routing under 5ms | — | 0.16–1.09ms through the gorge; **4.4–4.8ms corner to corner** |
-| 2 | F3 rule list under ~20 | 11 rules; 3 and 5 fire | 11 rules; 5 and 6 fire |
+| 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 fire both ways |
+| 2 | F3 the Latitude leash, in metres from the Post | close-up 100m; stand-off 250m; follow-up 300m | close-up 100m; stand-off 250m; follow-up 300m |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
@@ -912,49 +913,79 @@ attack column stops being a fat enough target for §6's line-against-column exch
 about thirteen the tail comes back. The Dragoner falls from 57.4% to 30.2% and the 1er Hussards from
 43.6% to 30.4%, and the single Volleys that decided them from 54% and 36% of the Unit to 24% and 23%.
 
-**The four Breaks still outside the band are two shapes, two to a battle, and each says which on the
-line that reports it.** Two are a small mounted Unit taking a whole battalion's Volley — a quarter of
-a two-hundred-and-eighty-man regiment at a stroke, with nothing at all regained. That is not a Morale
+**The six Breaks outside the band are three shapes, and each says which on the line that reports
+it.** Two are a small mounted Unit taking a whole battalion's Volley — a quarter or a third of a
+two-hundred-and-eighty-man regiment at a stroke, with nothing at all regained. That is not a Morale
 rule deciding anything: `shots` scales with the Unit firing while the overlap reads the target's
 width and never its size, so the fire a Unit draws does not know how many men it has to absorb it
-with. Both now sit within half a point of the band rather than twenty points outside it, so what is
-left is a shape to watch and no longer a number to chase. The other two are the opposite case — the
-1er/5e and the 14e Légère, both broken past the half-hour under fire so sporadic that the worst
-Volley either saw took 4% of it, both having steadied in the gaps. That is
-[ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md) working rather than failing: a
-battalion shot at once every two minutes is mostly out of the fight and ought to mend. What it costs
-is a Unit that fought all afternoon sitting a few points over the band.
+with. Two are the opposite case — the 1er/5e and the 14e Légère, both broken past the half-hour
+under fire so sporadic that the worst Volley either saw took 4% of it, both having steadied in the
+gaps. That is [ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md) working rather than
+failing: a battalion shot at once every two minutes is mostly out of the fight and ought to mend.
+What it costs is a Unit that fought all afternoon sitting a few points over the band.
 
-**Five of the eleven Initiative rules never fire in any of the four runs.** Firing: broke and
-running, deployed with the enemy too close to stay on the march, took march column to cover the
-ground, limbered up, rallied, and — on Rivoli taken Austrian, for eighteen seconds — squeezed into
-march column for the Crossing. Silent: formed square, countercharged, gave ground rather than be
-closed with, closed up to bring them under its fire, followed up as they gave way. T14 accepts that
-the list is order-sensitive and warns that a silent rule is either dead or shadowed by one above
-it, and nearly half the list is still silent on the battles it is supposed to be exercised by.
+**The third shape appeared with the briefed Rosters, and it is the flank rule doing its job.** The
+other two miss high; this one misses low. The 2e/75e Broke at 13.0% of itself and the
+Kavalleriebatterie at 14.9%, both with no Fatigue on them, no lowered Ceiling under them, and every
+Morale point they lost coming on a step that cost them men — so neither shock nor mending explains
+either. What does is *where the fire came from*: weighted by the men it killed, the 2e/75e was shot
+0.98 off its Face and the battery 0.77, on the `1 - cos` scale `flanking` prices shock on, where 1
+is square on the flank. Fire from the flank is meant to cost more nerve than the men in it —
+`flanking` exists because Units broke from being flanked long before the casualties justified it —
+so a battalion shot in the flank all afternoon Breaks below a band that counts casualties, and
+should. **It is a shape the design could not have seen before now:** a flank is something somebody
+has to manoeuvre to find, and until Rosters carried a rung nobody manoeuvred. Every Unit stood
+where its Plan posted it, facing where it was pointed.
 
-Two of those are worth separating from the rest. **Nothing ever formed square or countercharged**,
-which is the mechanic §0 already says the campaign under-exercises and tests against purpose-built
-fixtures instead — so that is the design working as written, not a gap. **The Crossing rule was
-silent on Rivoli** — whose whole point is a defile a battalion has to file up — until ADR-0011
-changed who was still standing where, and now fires there for eighteen seconds. It was the benign
-reading all along: every Unit that goes up the Adige road
-is authored into the travelling Formation before it sets foot on the Field — IR 10 Jordis and the
-Dragoner in march column, the Kavalleriebatterie limbered, and Lusignan's two the same — so the
+The three are not interchangeable and the budget run does not treat them as one. Twelve of the
+thirty-one Breaks *inside* the band were also flanked past the same bound, so read as a blanket
+excuse the flank clause would forgive nearly anything. It is asserted against the direction of the
+miss instead: a big Volley and a Unit that steadied explain a Break that came late, and being shot
+off the Face explains one that came early, and only that.
+
+**Two of the eleven Initiative rules never fire in any of the four runs**, down from five. Firing
+everywhere: broke and running, deployed with the enemy too close to stay on the march, took march
+column to cover the ground, closed up to bring them under its fire. Firing on three runs of the
+four: limbered up, rallied, followed up as they gave way, gave ground rather than be closed with.
+Firing once, on Rivoli taken Austrian, for eighteen seconds: squeezed into march column for the
+Crossing. Silent everywhere: formed square, countercharged.
+
+Those last two are the mechanic §0 already says the campaign under-exercises and tests against
+purpose-built fixtures instead, so that is the design working as written and not a gap. **The
+Crossing rule is silent for a reason that is also not a gap:** every Unit that goes up the Adige
+road is authored into the travelling Formation before it sets foot on the Field — IR 10 Jordis and
+the Dragoner in march column, the Kavalleriebatterie limbered, and Lusignan's two the same — so the
 rule's first guard finds the Unit already in the Formation it would have called for. Not shadowed:
 the rule fires on the bridge fixture, once, with the enemy inside ENGAGEMENT_RANGE, which is the
 case it was written for (`crossing.test.ts`). A silent rule here means the Scenario never posed the
 question, not that the list cannot answer it.
 
-**The Latitude leash is unexercised by either battle, and the cause is authoring rather than the
-rule list.** The three rules that let a Unit take ground on its own account — gave ground, closed
-up, followed up — are all in the silent list, so in four full battles no Unit ever chose its own
-ground: the measured Shift from the Post is not a hundred metres or five hundred, it is *never*.
-Each is gated on the Unit's rung, every Unit is built at `defaultStanding()`, and a Standing Order
-can only be set from the player's own panel — no Roster carries one and no Plan issues one, though
-`standing` is an Order body a Plan could carry today. So the three rules cannot fire on any nominal
-run, and no measurement of those runs will ever say anything about the bound. All three fire in
-their own tests. **The bound itself is accepted rather than pending measurement** (§9).
+**The Latitude leash is measured, and it is spent exactly to the metre.** The three rules that let
+a Unit take ground on its own account — gave ground, closed up, followed up — were all silent for
+as long as the rung could only be set from the player's own panel: every Unit was built at
+`defaultStanding()`, no Roster carried a brief, and the measured Shift from the Post was not a
+hundred metres or five hundred but *never*. A Roster entry now carries `standing`, which is
+ADR-0007's *free at Deployment* spent by the author instead of by the player, and the bound stops
+being a thing taken on trust. Across the four runs the farthest ground any Unit took on its own
+account is 100m at `close-up`, 250m at `stand-off` and 300m at `follow-up` — each rung's leash,
+reached and never passed. The bound was accepted rather than measured (§9); it is now both.
+
+**What a brief costs is the part the runs argue about.** Briefing an army above `hold ground` does
+not win it the battle: the winner is unchanged in all four runs and Castiglione is barely moved,
+because its defending Austrians mostly hold. What changes is the bill. Rivoli's Austrians, briefed
+to close up and follow up as they come off Monte Baldo and up the gorge, go from 27.6% gone to
+58.6% — an attacking army that walks the last hundred metres into a defended plateau on its own
+account pays for the ground it takes. The French holding that plateau go the other way, from 21.3%
+gone to nothing at all. This is the ladder having a price, and the price falls on whoever is
+attacking.
+
+**Rank 2's other half moves for the first time.** *Never idle under threat* is measured as its
+failure — Unit-seconds spent under fire with no answer — and briefing the Rosters takes the four
+runs from 20,421 such seconds to 15,297, a quarter of them gone, with Rivoli taken French nearly
+halved (7,496 to 3,912). The target still cannot pass or fail as written, for the reason given
+below: a Unit at `hold-ground` standing under fire it cannot answer is obeying its brief. But the
+number now moves when the brief moves, which is the first evidence that it measures the brief and
+not the rule list.
 
 **Two of this section's own targets cannot be checked as written.** Rank 2's *never idle under
 threat* predates ADR-0007: at `hold-ground` a Unit standing under fire it cannot answer is obeying
@@ -993,7 +1024,7 @@ the open diagonal is the cost.
 
 ### Tensions being watched (unresolved by design)
 
-- **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Accepted, and no longer waiting on a playtest:** the ladder and the Shift bound are taken as right, so the `follow up` run this line used to call for is not owed. *Measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.* **Trigger to reopen:** an army briefed above `hold ground` fighting much the same battle whether the player issues Orders or not — which is a thing to watch in play, not a measurement to schedule.
+- **Initiative versus player agency.** Held at bay by the leash: what a Unit may do unbidden is one rung of its Standing Order, and every rung is spent in metres from the Post. **Measured, and not tripped.** Now that Rosters carry a rung, the four silent nominal runs are the run this line asks for: an army briefed above `hold ground` and a player who says nothing all afternoon. The winner is the same in all four as it was with every Unit at `hold-ground`, and the leash is spent to the metre and never past it — 100m, 250m and 300m at the three rungs. What a brief buys is not the battle but a harder one: Rivoli's briefed Austrians take the same result for 58.6% gone instead of 27.6%. *Also measured on the fixture before the ladder existed and not tripped: with no Orders the battle does not resolve at all — thirty minutes, no crossing, no Army Break, and the bridge held by nobody.* **Trigger to reopen:** a briefed army that starts *winning* battles the player sits out, rather than merely bleeding for them.
 - **Courier delay versus battle length.** Both tuned against Castiglione, in opposite directions. **Trigger:** when a 20-minute battle allows fewer than about three order-cycles to the far flank.
 - **Geometry purity versus tunability.** Global scalars only, so far. **Trigger:** the first time a target can only be hit with a *per-Formation* constant — at which point F8 is dead and should be struck rather than quietly fudged.
 - **Powder Smoke versus silhouette legibility.** Capped opacity, drawn behind Unit bases. **Trigger:** when smoke makes the decisive point of the Field unreadable.

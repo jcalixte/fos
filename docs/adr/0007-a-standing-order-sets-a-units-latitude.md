@@ -79,6 +79,28 @@ distrust the player.
 **Every Unit deploys at hold ground, fire at will**, which is exactly what a Unit did before this
 existed. Scenarios authored before it play identically until somebody moves the dial.
 
+**Amended: a Roster entry may carry the rung, and the nominal battles now do.** *Free at
+Deployment* was written as a freedom for the player, and left as only that it made the ladder
+unreachable by anything the design measures itself on: every Unit was built at `defaultStanding()`,
+a rung could be set from no other place than the player's own panel, and the three rules that spend
+a leash could not fire on any authored battle. So four full battles said nothing at all about the
+bound this ADR rests on — the measured Shift from the Post was not a hundred metres or five
+hundred, it was *never*.
+
+An optional `standing` on a Roster entry is the same freedom spent an hour earlier, by whoever
+wrote the Roster rather than by whoever takes the army. It changes nothing about who may revise it:
+the player still gets it free until the clock starts, and a Roster that says nothing still gets
+`hold ground`. What it changes is that a Scenario can now brief the army the player does *not*
+take, which is the only way the enemy was ever going to have a brief at all — its Plan issues
+Orders and has never issued a rung.
+
+**Authoring a rung is bounded by the Key Ground.** A Unit that ends its Plan standing on a piece
+holds it by being the last uncontested Unit there, and every rung above `hold ground` has a leash
+longer than any piece is wide — 100m at `close up` against radii of 34 to 80. So a Unit posted on
+Key Ground is briefed to hold it, and the rungs above go to the Units either side. That is not a
+rule the simulation enforces; it is a thing the author has to know, and it is written here because
+the first four Rosters all needed it.
+
 **Amended: hold fire is removed, and a Standing Order is the Latitude.** The flag was inert and
 could only cost the player. Firing charges the firer nothing — no ammunition, no Fatigue, no
 Morale, no smoke, and nothing is concealed, so a Volley at long range is free and there is no

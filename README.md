@@ -65,14 +65,23 @@ guard has a Plan that crosses and goes for the hamlet. A Scenario carries a Plan
 fires only the one the player has not taken — command it, and its Plan is dropped.
 
 The Standing Order, which is the brief a Unit carries rather than an Order it carries out. One
-rung of a ladder — stand off, hold ground, close up, follow up — and whether it is to hold its
-fire. Above holding ground a Unit may give ground rather than be closed with, walk far enough
-forward to bring an enemy under its fire, or take the ground an enemy who has given way has left;
-and every one of those is bounded in metres from its Post, which is the ground the player last
-gave it. So a battalion drifts a hundred metres off what it was given and can never choose
-somewhere else, which is what keeps a well-briefed army from commanding itself
-([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). It is free at Deployment
-and costs a Courier after, and it is the one Order that arrives without disturbing the march.
+rung of a ladder — stand off, hold ground, close up, follow up. Above holding ground a Unit may
+give ground rather than be closed with, walk far enough forward to bring an enemy under its fire,
+or take the ground an enemy who has given way has left; and every one of those is bounded in metres
+from its Post, which is the ground the player last gave it. So a battalion drifts a hundred metres
+off what it was given and can never choose somewhere else, which is what keeps a well-briefed army
+from commanding itself ([ADR-0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md)). It
+is free at Deployment and costs a Courier after, and it is the one Order that arrives without
+disturbing the march.
+
+A Roster carries the rung too, which is that same freedom spent by whoever wrote the Roster rather
+than by whoever takes the army. It is how the enemy gets a brief at all — a Plan issues Orders and
+has never issued a rung — and it is what lets the design measure its own leash: with every Unit
+built at hold ground, the three rules that spend one could not fire on any authored battle, and
+four full battles said nothing about the bound. Briefed, they say it exactly: a hundred metres at
+close up, two hundred and fifty at stand off, three hundred at follow up, reached and never passed.
+What a brief buys is not the battle — the winner is the same in all four silent runs — but a
+harder one, and the bill falls on whoever is attacking (DESIGN §8).
 
 The Headquarters, which stops being a spot on the map and becomes a place that can be lost. It
 rides: drag it during the battle and the staff walks there at its own pace, and until it is
