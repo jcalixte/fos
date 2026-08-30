@@ -8,7 +8,7 @@ import { concede, isOver } from "@/sim/battle"
 import { BattleRunner } from "@/sim/runner"
 import { isRiding, rideTo, sendOrder } from "@/sim/headquarters"
 import { canCharge, chargeable } from "@/sim/charge"
-import { allows, canFire, FIGHTING_FORMATION, unitFootprint } from "@/sim/formation"
+import { allows, canFire, FIGHTING_FORMATION, spanAlong, unitFootprint } from "@/sim/formation"
 import type {
   Dispatch,
   FormationName,
@@ -569,6 +569,11 @@ export function useBattle() {
     const unit = deployable()
     if (!unit) return
     unit.facing = facing
+    // Wheeling swings the Footprint across the zone's corner, so the same
+    // re-clamp forming up needs: a line standing a few metres off the top edge
+    // is 3.6m deep facing east and 144m deep facing north, and turning it would
+    // otherwise post it outside its own zone.
+    clampIntoZone(unit, unit.position)
     resync()
   }
 
@@ -876,19 +881,25 @@ export function useBattle() {
    * Formation, and a battalion legally placed in one would hang out of the zone
    * in the other if the margin were not recomputed.
    *
-   * Known simplification: the margin is the larger of the two dimensions, so it
-   * ignores facing and reserves a square. Conservative, never wrong, and it
-   * costs a battalion a few metres of a zone it has hundreds of.
+   * Facing decides it too, so the margin is the Footprint's real span on each
+   * axis and not the larger of its two dimensions. Reserving a square was
+   * conservative on the axis nobody cares about and dear on the one that
+   * decides the battle: a line is a few metres deep, and at Castiglione a
+   * square margin held the 5e 80m off the edge it was meant to crowd — 22 times
+   * its own depth, and a third of the lateral room the whole zone has. The
+   * consequence is that a battalion gains ground as it is wheeled, which is
+   * what the Field already shows: what stops it is the ground it covers.
    */
   function clampIntoZone(unit: Unit, point: Vec2): void {
     const zone = viewState.deploymentZone
     if (!zone) return
     const [zx, zy, zw, zh] = zone
     const shape = unitFootprint(unit)
-    const half = Math.max(shape.width, shape.depth) / 2
+    const halfX = spanAlong(shape, unit.facing, { x: 1, y: 0 }) / 2
+    const halfY = spanAlong(shape, unit.facing, { x: 0, y: 1 }) / 2
     unit.position = {
-      x: Math.max(zx + half, Math.min(zx + zw - half, point.x)),
-      y: Math.max(zy + half, Math.min(zy + zh - half, point.y)),
+      x: Math.max(zx + halfX, Math.min(zx + zw - halfX, point.x)),
+      y: Math.max(zy + halfY, Math.min(zy + zh - halfY, point.y)),
     }
     // Arranging the army is how a Unit is given its ground before there is
     // anybody to ride an Order to it, so the Post goes where the hand puts it.
