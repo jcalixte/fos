@@ -5,7 +5,14 @@ import TopBar from "@/components/TopBar.vue"
 import { loadCatalogue, scenarioPath } from "@/scenario/catalogue"
 import { loadScenario } from "@/scenario/loader"
 import { BattleView, type FieldStyle } from "@/render/BattleView"
-import { ALARMS, type PlateOptions, plateField, plateSnapshot, plateView } from "@/render/plate"
+import {
+  ALARMS,
+  type PlateOptions,
+  plateField,
+  plateSnapshot,
+  plateView,
+  plateVolleys,
+} from "@/render/plate"
 import { PAPERS, STAFF_MAP_DEFAULTS, type StaffMapOptions } from "@/render/staffmap"
 
 /**
@@ -56,6 +63,7 @@ const options = reactive<PlateOptions>({
   headquarters: "steady",
   alarm: "orange",
   fireZones: false,
+  smoke: true,
   arming: false,
   selected: true,
   deployment: false,
@@ -81,10 +89,27 @@ async function loadGround(id: string): Promise<void> {
   await rebuild()
 }
 
+/**
+ * The plate's own battle clock, in seconds, at Tempo 1.
+ *
+ * It exists for Powder Smoke and nothing else. A cloud ages and drifts on
+ * battle time rather than on the wall clock, so a plate frozen at one instant
+ * would show a bank that never thins and never moves — which is the one thing
+ * about smoke that cannot be judged from a still.
+ */
+let clock = 0
+let clockLast = 0
+
 function paint(): void {
   const v = view.value
   if (!v) return
-  v.draw(snapshot, snapshot, 1, plateView(snapshot, options))
+  const now = performance.now()
+  const elapsed = clockLast === 0 ? 0 : Math.min(0.5, (now - clockLast) / 1000)
+  clockLast = now
+  const was = clock
+  clock += elapsed
+  const step = { ...snapshot, time: clock, volleys: plateVolleys(was, clock) }
+  v.draw(step, step, 1, plateView(snapshot, options))
 }
 
 onMounted(async () => {
@@ -185,6 +210,10 @@ onBeforeUnmount(() => {
         <label class="flex items-center gap-1.5">
           <input v-model="options.fireZones" type="checkbox" class="checkbox checkbox-xs" />
           beaten ground
+        </label>
+        <label class="flex items-center gap-1.5">
+          <input v-model="options.smoke" type="checkbox" class="checkbox checkbox-xs" />
+          smoke
         </label>
         <label class="flex items-center gap-1.5">
           <input v-model="options.arming" type="checkbox" class="checkbox checkbox-xs" />

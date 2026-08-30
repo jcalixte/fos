@@ -280,18 +280,9 @@ export function plateSnapshot(): BattleSnapshot {
     ghosts: [
       { unitId: units[0].id, position: { x: 130, y: 430 }, facing: SOUTH, formation: "line" },
     ],
-    volleys: [
-      {
-        id: "plate-volley",
-        at: 600,
-        unitId: units[20].id,
-        targetId: units[21].id,
-        from: { x: 700, y: 560 },
-        direction: SOUTH,
-        width: 120,
-        casualties: 12,
-      },
-    ],
+    // Empty, and filled by `plateVolleys` on the plate's own clock: a Volley
+    // is an event and a fixed one would flash for ever and smoke exactly once.
+    volleys: [],
     contacts: [
       {
         id: "plate-contact",
@@ -307,6 +298,69 @@ export function plateSnapshot(): BattleSnapshot {
       },
     ],
   }
+}
+
+/**
+ * Where the plate keeps firing, so what a reader looks at is a *bank* of Powder
+ * Smoke and not one cloud.
+ *
+ * One cloud says nothing about the thing that has to be judged. The roof's
+ * warning (F13 x F5) is about smoke where the fighting is thickest, and the
+ * only honest picture of that is several battalions on their own reload clocks
+ * laying it over the same ground for minutes — which no still frame and no
+ * single Volley can show.
+ *
+ * The line stands upwind of Band 3 on purpose. That band is Arm by Grade by
+ * Morale for both armies, so the drift carries the smoke across the exact Unit
+ * SMOKE_CAP is a note about: a white conscript, which under a bank has only its
+ * body left to be found by.
+ */
+const PLATE_FIRE = [
+  // Four battalions abreast, each on the period's own musket clock, staggered
+  // so they are never all firing in the same second.
+  // Offsets are small so the first clouds are up within seconds; the reloads
+  // are the period's own, so the bank reaches its steady thickness on the same
+  // clock a firefight does and no faster.
+  { at: { x: 300, y: 650 }, width: 140, reload: 22, offset: 0.5 },
+  { at: { x: 620, y: 650 }, width: 140, reload: 24, offset: 3 },
+  { at: { x: 940, y: 650 }, width: 140, reload: 21, offset: 6 },
+  { at: { x: 1260, y: 650 }, width: 140, reload: 23, offset: 9 },
+  // A battery: narrow, and half as often, which is what a gun's clock is.
+  { at: { x: 1620, y: 650 }, width: 26, reload: 45, offset: 4 },
+  // And one on its own, well clear of the rest, because a lone cloud at the
+  // bottom of the cap is a different judgement from a bank at the top of it.
+  { at: { x: 1450, y: 1090 }, width: 140, reload: 34, offset: 12 },
+]
+
+/**
+ * The Volleys due between two battle times, which is what a snapshot's
+ * `volleys` means: fired in this step and nowhere else.
+ *
+ * Ids carry the discharge number so every cloud is a new one — a repeated id is
+ * a Volley the renderer has already smoked and will not smoke again.
+ */
+export function plateVolleys(from: number, to: number): BattleSnapshot["volleys"] {
+  const due: BattleSnapshot["volleys"] = []
+  for (const [source, fire] of PLATE_FIRE.entries()) {
+    // Discharges land at `offset + n * reload`; emit the ones falling in
+    // (from, to]. Floored at zero so a source's first Volley is its offset and
+    // not a discharge from before the plate was opened.
+    const first = Math.max(0, Math.floor((from - fire.offset) / fire.reload) + 1)
+    const last = Math.floor((to - fire.offset) / fire.reload)
+    for (let n = first; n <= last; n++) {
+      due.push({
+        id: `plate-volley-${source}-${n}`,
+        at: fire.offset + n * fire.reload,
+        unitId: "plate-firing",
+        targetId: "plate-target",
+        from: { ...fire.at },
+        direction: SOUTH,
+        width: fire.width,
+        casualties: 0,
+      })
+    }
+  }
+  return due
 }
 
 /**
@@ -336,6 +390,7 @@ export interface PlateOptions {
   headquarters: "steady" | "harried" | "riding"
   alarm: AlarmName
   fireZones: boolean
+  smoke: boolean
   arming: boolean
   selected: boolean
   deployment: boolean
@@ -363,6 +418,7 @@ export function plateView(snapshot: BattleSnapshot, options: PlateOptions): View
     placing: null,
     armyColours: { blue: 0x2f4d8f, white: 0xe3e7ef },
     fireZones: options.fireZones,
+    smoke: options.smoke,
     alarm: ALARMS[options.alarm] ?? ALARMS.orange,
     arming: options.arming,
   }
