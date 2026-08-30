@@ -1,4 +1,5 @@
 import { beginCharge, CHARGE_RANGE, chargersOf } from "./charge"
+import { isDisordered } from "./disorder"
 import { aim } from "./fighting"
 import { cellAt, cellIndex, crossingWidth, inBounds, isCrossing } from "./field"
 import {
@@ -628,7 +629,13 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     // is following it has to keep reading where it went.
     unit.shift = action.march ?? null
     if (unit.suspendedBy === rule.name) return
-    const reformed = action.formation ? beginChange(unit, action.formation) : false
+    // A Unit whose ranks are not its own re-forms them before it re-forms
+    // anything else, whatever rule fired. The rule is not held against it: with
+    // nothing done the list falls through, so the Order is never suspended by
+    // an act the Unit could not perform, and the rule fires for real the moment
+    // it has its shape back.
+    const drill = action.formation
+    const reformed = drill !== undefined && !isDisordered(unit) ? beginChange(unit, drill) : false
     const gone = action.charge !== undefined ? beginCharge(battle, unit, action.charge) : false
     // A rule that only re-forms the Unit has done nothing if the Unit is already
     // standing that way, and must not claim the Order. A rule that changes what

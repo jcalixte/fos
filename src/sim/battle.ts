@@ -11,7 +11,9 @@ import {
   baseSpeed,
   beginChange,
   frontage,
+  gapToPoint,
   intendedFormation,
+  mobRadius,
   traverseRate,
   unitFootprint,
 } from "./formation"
@@ -27,6 +29,7 @@ import {
   rideDown,
   struckSide,
 } from "./charge"
+import { disarrange, isDisordered, reform } from "./disorder"
 import { isBlown, paceLeft, weary } from "./fatigue"
 import { resolveFire } from "./fighting"
 import { advanceHeadquarters } from "./headquarters"
@@ -45,6 +48,7 @@ import {
   describeFormation,
   type ArmyId,
   type Battle,
+  type FormationName,
   type Outcome,
   type Unit,
   type UnitId,
@@ -248,6 +252,13 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     endCharge(battle, unit, `${unit.name} is blown, and would not go at ${target.name}`)
     return
   }
+  // And a Unit that is still a crowd has nothing to go with. The same shape as
+  // the line above and for the same reason — the Order dies at the Unit with a
+  // Dispatch saying why, rather than walking a mob up to be ridden over.
+  if (!unit.charging && isDisordered(unit)) {
+    endCharge(battle, unit, `${unit.name} is in disorder, and would not go at ${target.name}`)
+    return
+  }
   unit.charging ??= {
     targetId: target.id,
     launchedAt: battle.time,
@@ -292,7 +303,7 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     // and nothing else (ADR-0010), so a Pursuit is bought in the run-in and
     // paid for in the walk home — which is the one of its three costs that
     // nothing in the simulation has to remember to charge.
-    if (gap <= CONTACT_RANGE) rideDown(unit, target, dt)
+    if (gap <= CONTACT_RANGE) rideDown(battle, unit, target, dt)
     const closing = Math.min(chargeSpeed(unit.arm), Math.max(0, gap) / dt)
     runOn(battle, unit, bearing(unit.position, target.position), closing, dt, true)
     return
@@ -336,6 +347,22 @@ function shiftGround(battle: Battle, unit: Unit, dt: number): void {
   )
 }
 
+/**
+ * Take up a Formation under Orders, and say whether the drill began. The one
+ * place a live Order reaches C3's drill, and therefore the one place Disorder
+ * has to be asked: a Unit whose ranks are not its own cannot change Formation,
+ * whoever told it to.
+ *
+ * The Order is not put down when the answer is no. It stands, the Unit stands
+ * with it, and the standing is what re-forms it — so a battalion ordered into
+ * square while it is still a crowd dresses its ranks and then makes square,
+ * late, which is exactly what it would have done.
+ */
+function formUp(unit: Unit, to: FormationName): boolean {
+  if (isDisordered(unit)) return false
+  return beginChange(unit, to)
+}
+
 function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   const live = unit.order
   if (!live) return
@@ -354,7 +381,7 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   if (body.kind === "form") {
     unit.route = []
     if (intendedFormation(unit) !== body.formation) {
-      beginChange(unit, body.formation)
+      formUp(unit, body.formation)
     }
     return
   }
@@ -412,7 +439,7 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   }
   unit.facing = body.arrivalFacing
   if (intendedFormation(unit) !== body.arrivalFormation) {
-    beginChange(unit, body.arrivalFormation)
+    formUp(unit, body.arrivalFormation)
     return
   }
   unit.order = null
@@ -544,12 +571,62 @@ export function step(battle: Battle): void {
       // the step — and whether it marched at all is what says if it shot.
       resolveFire(battle, unit, STEP, distance(was, unit.position) < 0.001)
     }
-    weary(battle, unit, askedOf(battle, unit, distance(was, unit.position)), STEP)
+    // One number, asked of three things: what the step cost the Unit's legs,
+    // what it gave back to them, and whether it left the Unit standing still
+    // long enough to dress its ranks. A Unit mends its wind and its shape on
+    // the same terms because both are mended by the same thing.
+    const asked = askedOf(battle, unit, distance(was, unit.position))
+    weary(battle, unit, asked, STEP)
+    reform(battle, unit, asked, STEP)
     recover(battle, unit, STEP)
   }
+  trampledThrough(battle)
   clearTheGone(battle)
   holdKeyGround(battle)
   decide(battle)
+}
+
+/**
+ * Mobs running through formed Units, and what that does to them: CONTEXT's
+ * second buyer of Disorder, and the one that is nothing to do with a Pursuit.
+ *
+ * A mob is a disc and not a block — it has no Formation left to have a Footprint
+ * by — so *crossing* is asked as the two of them being in among each other: the
+ * crowd standing over the Unit's centre, or its own centre on the Unit's
+ * Footprint. Either way round, because a battalion in line is a hundred and
+ * forty metres of front against a forty-seven metre crowd and a battery is
+ * smaller than one, so neither shape can be the one that has to contain the
+ * other.
+ *
+ * Deliberately not the discs merely touching, which was the first way it was
+ * written and fired on a mob streaming past twenty metres in front of a line
+ * without a man of it ever coming through. Disorder is what a Rout costs the
+ * troops it runs *over*; making it what a Rout costs everybody it runs *near*
+ * would be an ambient tax on standing anywhere behind a fight.
+ *
+ * Either army's mob, and no clause distinguishing them. Men streaming back
+ * through a line do not present their colours first, and a battalion that has
+ * had a beaten enemy come through it at the run is in the same state as one that
+ * has had its own.
+ *
+ * After the march and not during it, because both of them moved this step and
+ * the question is where they ended up. Refreshed for as long as the mob is in
+ * among them, so what a Rout costs the line it runs through is the time it
+ * takes to get past.
+ */
+function trampledThrough(battle: Battle): void {
+  const mobs = battle.units.filter(isRouting)
+  if (mobs.length === 0) return
+  for (const mob of mobs) {
+    const radius = mobRadius(mob.arm, mob.strength)
+    for (const unit of battle.units) {
+      if (unit === mob || isRouting(unit)) continue
+      const over = distance(unit.position, mob.position) <= radius
+      const through = gapToPoint(unitFootprint(unit), unit.position, unit.facing, mob.position) <= 0
+      if (!over && !through) continue
+      disarrange(battle, unit, `${mob.name} came back through it`)
+    }
+  }
 }
 
 /**

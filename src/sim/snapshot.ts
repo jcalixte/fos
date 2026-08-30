@@ -1,4 +1,5 @@
 import { unitSpeed } from "./battle"
+import { isDisordered } from "./disorder"
 import { describeFatigue, type FatigueWord } from "./fatigue"
 import { dictatedUnits } from "./headquarters"
 import { aim } from "./fighting"
@@ -56,6 +57,16 @@ export interface UnitSnapshot {
    * word — a Unit reading blown will not be let go at anybody.
    */
   fatigue: FatigueWord
+  /**
+   * True while its ranks are not its own: it will not change Formation and it
+   * will not go at anybody until it has re-formed.
+   *
+   * A flag and not a word, unlike Morale and Fatigue beside it, because Disorder
+   * is not a ladder — a Unit is Ordered or it is not. What T11 keeps off the
+   * screen is a figure the player could count down, and there is none here to
+   * keep.
+   */
+  disordered: boolean
   /** True while it is Routing: out of command, and running. */
   routing: boolean
   /** The Unit it is committed to a Charge on, by id, or null. */
@@ -131,6 +142,7 @@ export function snapshot(battle: Battle): BattleSnapshot {
       shifting: unit.shift !== null,
       morale: describeMorale(unit),
       fatigue: describeFatigue(unit),
+      disordered: isDisordered(unit),
       routing: unit.routing !== null,
       charging: unit.charging?.targetId ?? null,
       aiming: aim(battle, unit)?.target.id ?? null,

@@ -108,6 +108,17 @@ export interface Unit {
    * charges again.
    */
   blown: boolean
+  /**
+   * Seconds of re-forming the Unit still owes before its ranks are its own
+   * again, 0 when it is Ordered. A state and not a scale: a Unit is either
+   * Ordered or in Disorder, and this is only how long the way out of it is.
+   *
+   * Counted in seconds rather than kept as a flag with a clock beside it
+   * because the way out is a drill, and a drill is a length of time the Unit
+   * has to be standing still for — which is the whole of what Disorder costs
+   * a Unit that has ridden a mob down half a kilometre into the enemy's rear.
+   */
+  disorder: number
   /** Set once the Unit has Broken. A Routing Unit is deaf to Orders. */
   routing: Rout | null
   /** The Charge it is committed to, once an Order has let it go. */

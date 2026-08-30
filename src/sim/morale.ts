@@ -1,3 +1,4 @@
+import { ORDERED, orderLeft } from "./disorder"
 import { cellAt, cellIndex, inBounds, passable } from "./field"
 import { fireLeft, nerveLeft } from "./fatigue"
 import { backing, TRAVELLING_FORMATION } from "./formation"
@@ -25,12 +26,8 @@ import { angleDelta, bearing, distance } from "./vec"
  * Fatigue is C7's too and lives beside this in `fatigue.ts`, the way the Charge
  * lives beside the Volley: it is bought by the pace rather than by anything
  * done to the Unit, and everything in here that Grade steadies, it unsteadies.
- *
- * Not built yet: Disorder. A Rout stands in for it in the meantime by putting
- * the Unit in its travelling Formation, which is legible and wrong in the
- * Unit's favour. It is also the one price of a Pursuit that goes uncharged: C6
- * takes the pursuer's wind and his position and cannot take his ranks, so a
- * regiment that has spent a minute among a mob comes back tidier than it should.
+ * Disorder is the third of them and lives in `disorder.ts` — the nerve, the
+ * legs and the ranks, counted apart because they are spent apart.
  */
 
 /** Morale, and the Ceiling on it, that a Unit starts a battle with. */
@@ -213,9 +210,13 @@ export function moraleRung(word: MoraleWord): number {
  * it is — never a multiplier on the Volley itself. Fatigue is folded in at the
  * same point and for the same reason: a blown battalion is slow with the
  * cartridge and heavy with the musket, and neither is a fact about the Volley.
+ *
+ * Disorder is folded in at the same point and, for the third time, for the same
+ * reason: a Unit whose files are mixed has no dressed rank to level along, and
+ * that is a fact about the men and not about the discharge.
  */
 export function fireEffect(unit: Unit): number {
-  return (0.4 + 0.6 * clamp(unit.morale, 0, 1)) * fireLeft(unit)
+  return (0.4 + 0.6 * clamp(unit.morale, 0, 1)) * fireLeft(unit) * orderLeft(unit)
 }
 
 /** How much worse the shock is for coming from off the Face. */
@@ -322,6 +323,11 @@ export function breakUnit(battle: Battle, unit: Unit): void {
   unit.routing = { heading: away, brokeAt: battle.time }
   unit.morale = 0
   unit.route = []
+  // A mob has no ranks left to have lost, so whatever Disorder it was carrying
+  // is spent. What it costs to be a Unit again is the Rally's own drill, at a
+  // Ceiling it will not get back — a dearer bill than this one, and charged
+  // instead of it rather than on top.
+  unit.disorder = ORDERED
   // Whatever it was committed to, it is not committed to it any more.
   unit.charging = null
   unit.formation = TRAVELLING_FORMATION[unit.arm]

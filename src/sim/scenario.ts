@@ -1,3 +1,4 @@
+import { ORDERED } from "./disorder"
 import { makeField } from "./field"
 import { FRESH } from "./fatigue"
 import { FULL_MORALE, unitWeight } from "./morale"
@@ -124,6 +125,7 @@ export function entryToUnit(entry: RosterEntry, army: string): Unit {
     settling: 0,
     fatigue: FRESH,
     blown: false,
+    disorder: ORDERED,
     routing: null,
     charging: null,
   }

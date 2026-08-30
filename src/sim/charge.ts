@@ -1,3 +1,4 @@
+import { disarrange, isDisordered } from "./disorder"
 import { isBlown } from "./fatigue"
 import { ENGAGED_RANKS, faces, frontage, grid, spanAlong, unitFootprint } from "./formation"
 import { breakUnit, hasBroken, isRouting, ROUT_SPEED, shake, stiffening } from "./morale"
@@ -259,6 +260,12 @@ export function beginCharge(battle: Battle, unit: Unit, targetId: UnitId): boole
   // which is horse ridden over, and the price of having been let go twice
   // already.
   if (isBlown(unit)) return false
+  // Neither will a regiment that is not a regiment yet. A Charge is the one act
+  // that is nothing but keeping formed while going fast, so a Unit whose ranks
+  // are still its officers' problem has nothing to go with — and the countercharge
+  // reaches this too, which is the sharpest thing Disorder does: horse loose
+  // among a mob is horse that will stand to receive whatever comes next.
+  if (isDisordered(unit)) return false
   unit.charging = { targetId, launchedAt: battle.time, recoiling: false, pursuing: false }
   unit.route = []
   return true
@@ -301,11 +308,20 @@ const RIDDEN_DOWN = 1 / 150
  * the Rally goes. Nothing here denies one in so many words: the sabre simply
  * puts Morale down a great deal faster than standing anywhere puts it back, so
  * a Unit that has been ridden down is under the floor for the rest of the day.
+ *
+ * What it costs the regiment doing it is its own shape, which is CONTEXT's
+ * third price of a Pursuit and was owed from the day the Pursuit was built.
  */
-export function rideDown(unit: Unit, target: Unit, dt: number): void {
+export function rideDown(battle: Battle, unit: Unit, target: Unit, dt: number): void {
   const taken = target.strength * RIDDEN_DOWN * dt
   target.strength = Math.max(0, target.strength - taken)
   shake(target, taken, unit.position)
+  // And it costs the pursuer his ranks, every step he is among them. This is
+  // the third of a Pursuit's three prices and the last one to be charged: the
+  // wind and the position were always paid by the ground the ride covered, and
+  // the shape was not paid at all. Refreshed rather than accumulated, so what
+  // the length of the ride buys is a later start on the clock home.
+  disarrange(battle, unit, `loose among ${target.name}`)
 }
 
 /**
