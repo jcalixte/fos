@@ -12,7 +12,7 @@
 import { writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
-import { encodePng } from "./png.mjs"
+import { encodePng } from "../src/scenario/png.mjs"
 
 const here = dirname(fileURLToPath(import.meta.url))
 const out = join(here, "..", "public", "scenarios", "bridge-march")

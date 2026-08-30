@@ -4,11 +4,10 @@ import { STAFF_MAP_DEFAULTS } from "@/render/staffmap"
 import { loadSettings } from "@/settings"
 import { loadScenario } from "@/scenario/loader"
 import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
-import { concede, isOver } from "@/sim/battle"
-import { BattleRunner } from "@/sim/runner"
-import { isRiding, rideTo, sendOrder } from "@/sim/headquarters"
+import type { BattleSession, Command } from "@/session"
+import { LocalSession } from "@/session/local"
 import { canCharge, chargeable } from "@/sim/charge"
-import { allows, canFire, FIGHTING_FORMATION, spanAlong, unitFootprint } from "@/sim/formation"
+import { canFire, FIGHTING_FORMATION } from "@/sim/formation"
 import type {
   Dispatch,
   FormationName,
@@ -16,12 +15,11 @@ import type {
   Latitude,
   OrderBody,
   Outcome,
-  Unit,
   Vec2,
 } from "@/sim/types"
-import { armyReturns, type ArmyReturn } from "@/sim/return"
-import type { UnitSnapshot } from "@/sim/snapshot"
-import { takeCommand, type ScenarioFile } from "@/sim/scenario"
+import type { ArmyReturn } from "@/sim/return"
+import type { HeadquartersSnapshot, UnitSnapshot } from "@/sim/snapshot"
+import type { ScenarioFile } from "@/sim/scenario"
 import { bearing, distance } from "@/sim/vec"
 
 /**
@@ -160,7 +158,12 @@ function blankViewState(): ViewState {
 
 export function useBattle() {
   const view = shallowRef<BattleView | null>(null)
-  const runner = shallowRef<BattleRunner | null>(null)
+  /**
+   * The battle, behind C16's seam. Which implementation it is — the whole
+   * simulation in this tab, or a socket to a process holding it — is not
+   * something anything below is allowed to find out (ADR-0013).
+   */
+  const session = shallowRef<BattleSession | null>(null)
   /** The decoded Scenario, kept for the half of it an Army is read out of. */
   let scenario: ScenarioFile | null = null
   /** The name the URL knows this battle by, so it can be remembered. */
@@ -266,6 +269,9 @@ export function useBattle() {
     try {
       const loaded = await loadScenario(scenarioPath(id))
       if (load !== loads) return
+      // The Field, the Key Ground and the clock are the Scenario, not the
+      // battle: fixed data the screen has to have to draw anything at all, and
+      // read here once. Everything that *happens* comes through the session.
       const battle = loaded.battle
       scenario = loaded.file
       ui.armies = loaded.file.armies.map((army) => ({
@@ -294,15 +300,15 @@ export function useBattle() {
       v.setField(battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
       view.value = v
 
-      const r = markRaw(new BattleRunner(battle, null))
-      r.tempo = ui.tempo
-      runner.value = r
+      const s = markRaw(new LocalSession(loaded)) as BattleSession
+      s.send({ kind: "tempo", tempo: ui.tempo })
+      session.value = s
 
       viewState.armyColours = armyColours(battle)
-      viewState.keyGround = battle.keyGround
 
       ui.phase = "command"
-      ui.units = r.current.units
+      ui.units = s.current.units
+      viewState.keyGround = s.current.keyGround
       last = performance.now()
       frame = requestAnimationFrame(tick)
       if (army) commandArmy(army)
@@ -326,7 +332,7 @@ export function useBattle() {
     frame = 0
     view.value?.destroy()
     view.value = null
-    runner.value = null
+    session.value = null
     scenario = null
     battleId = ""
     Object.assign(ui, blankUi())
@@ -335,47 +341,43 @@ export function useBattle() {
 
   function tick(now: number): void {
     frame = requestAnimationFrame(tick)
-    const r = runner.value
+    const s = session.value
     const v = view.value
-    if (!r || !v) return
-    r.advance((now - last) / 1000)
+    if (!s || !v) return
+    s.advance((now - last) / 1000)
     last = now
     viewState.selected = ui.selected
     // It moves now, so the screen's copy is a frame old at best if it is not
     // re-read here (ADR-0008).
     readHeadquarters()
-    v.draw(r.previous, r.current, r.alpha, viewState)
+    v.draw(s.previous, s.current, s.alpha, viewState)
 
     // The screen runs at 60fps; the panels have no business re-rendering there.
     if (now - uiClock < 100) return
     uiClock = now
-    ui.time = r.battle.time
-    ui.units = r.current.units
-    ui.ordersInFlight = r.current.couriers.length
-    ui.running = r.running
-    const hq = headquarters()
-    if (hq) {
-      ui.headquarters.riding = isRiding(hq)
-      ui.headquarters.harried = hq.harried
-      ui.headquarters.surcharge = hq.surcharge
-      ui.headquarters.dictated = hq.dictated.length
+    ui.time = s.current.time
+    ui.units = s.current.units
+    ui.ordersInFlight = s.current.couriers.length
+    ui.running = s.running
+    ui.tempo = s.tempo
+    viewState.keyGround = s.current.keyGround
+    readStaff()
+    if (ui.dispatches.length !== s.current.dispatches.length) {
+      ui.dispatches = s.current.dispatches
     }
-    if (ui.dispatches.length !== r.current.dispatches.length) {
-      ui.dispatches = r.current.dispatches
-    }
-    if (isOver(r.battle) && ui.phase === "battle") finish(r)
+    if (s.outcome && ui.phase === "battle") finish(s)
   }
 
   /** Close the battle down and read what it came to. */
-  function finish(r: BattleRunner): void {
-    if (!r.battle.outcome) return
+  function finish(s: BattleSession): void {
+    const outcome = s.outcome
+    if (!outcome) return
     ui.phase = "over"
-    ui.verdict = readVerdict(r.battle.outcome)
-    ui.returns = armyReturns(r.battle)
-    ui.keyGround = r.battle.outcome.keyGround
-    ui.decidedBy = r.battle.outcome.by
+    ui.verdict = readVerdict(outcome)
+    ui.returns = s.returns()
+    ui.keyGround = outcome.keyGround
+    ui.decidedBy = outcome.by
     ui.running = false
-    r.running = false
   }
 
   /**
@@ -391,7 +393,7 @@ export function useBattle() {
    * A Unit the player has never spoken to falls back to what it is standing in,
    * or to its Arm's fighting Formation when that cannot fight.
    */
-  function arrivalFormation(unit: UnitSnapshot | Unit | null): FormationName {
+  function arrivalFormation(unit: UnitSnapshot | null): FormationName {
     if (!unit) return "line"
     const asked = ui.ordered[unit.id]
     if (asked) return asked
@@ -416,8 +418,8 @@ export function useBattle() {
    * the Plan stops being authored intent, because you are the intent now.
    */
   function commandArmy(armyId: string): void {
-    const r = runner.value
-    if (!r || !scenario || ui.phase !== "command") return
+    const s = session.value
+    if (!s || !scenario || ui.phase !== "command") return
     const mine = scenario.armies.find((a) => a.id === armyId)
     if (!mine) return
     ui.playerArmy = mine.id
@@ -425,28 +427,33 @@ export function useBattle() {
     // From here the battle is only ever seen through one Commander's eyes: what
     // the other army's Units have left in their legs, what they are laid on and
     // what they have been told stop being taken at all (C17).
-    r.forArmy = mine.id
-    ui.units = r.current.units
+    s.send({ kind: "take-army", army: mine.id })
+    ui.units = s.current.units
     readHeadquarters()
+    // Drawn from the Scenario, which the screen has anyway. The session holds
+    // the same rectangle and is what actually keeps a Unit inside it.
     viewState.deploymentZone = mine.deploymentZone ?? null
-    takeCommand(r.battle, mine.id)
     ui.phase = "deployment"
     rememberBattle({ battle: battleId, army: mine.id })
   }
 
   function beginBattle(): void {
-    const r = runner.value
-    if (!r) return
+    const s = session.value
+    if (!s) return
     ui.phase = "battle"
     viewState.deploymentZone = null
-    r.running = true
+    s.send({ kind: "stand-to" })
   }
 
   function setTempo(tempo: number): void {
-    const r = runner.value
-    if (!r) return
-    r.tempo = tempo
-    ui.tempo = tempo
+    const s = session.value
+    if (!s) return
+    // Asked for and not set. Under two Commanders both ask and the battle runs
+    // at the slower of the two, so what comes back is not always what was said
+    // — which is why `tick` reads it back off the session every frame instead
+    // of trusting the button that was pressed.
+    s.send({ kind: "tempo", tempo })
+    ui.tempo = s.tempo
   }
 
   function toggleFireZones(): void {
@@ -464,18 +471,18 @@ export function useBattle() {
   }
 
   function breakOff(): void {
-    const r = runner.value
-    if (!r || ui.phase !== "battle") return
+    const s = session.value
+    if (!s || ui.phase !== "battle") return
     ui.conceding = false
-    concede(r.battle, ui.playerArmy)
-    finish(r)
+    s.send({ kind: "concede" })
+    finish(s)
   }
 
   function togglePause(): void {
-    const r = runner.value
-    if (!r || ui.phase !== "battle") return
-    r.running = !r.running
-    ui.running = r.running
+    const s = session.value
+    if (!s || ui.phase !== "battle") return
+    s.send({ kind: "pause", on: s.running })
+    ui.running = s.running
   }
 
   /** The selected Unit, when it is one you may actually command. */
@@ -538,12 +545,10 @@ export function useBattle() {
     })
   }
 
-  /** The selected Unit in the Battle itself, when it is yours to arrange. */
-  function deployable(): Unit | null {
-    const r = runner.value
-    if (!r || ui.phase !== "deployment" || !ui.selected) return null
-    const unit = r.battle.units.find((u) => u.id === ui.selected)
-    return unit && unit.army === ui.playerArmy ? unit : null
+  /** The selected Unit, when the army is being arranged and it is yours. */
+  function deployable(): UnitSnapshot | null {
+    if (ui.phase !== "deployment") return null
+    return commandable()
   }
 
   /**
@@ -558,28 +563,18 @@ export function useBattle() {
    */
   function deployFormation(formation: FormationName): void {
     const unit = deployable()
-    if (!unit || !allows(unit.arm, formation) || unit.formation === formation) return
+    // Nothing said is nothing remembered: pressing the button for the Formation
+    // a battalion is already standing in is not the player asking for anything.
+    if (!unit || unit.formation === formation) return
     remember(unit.id, formation)
-    unit.formation = formation
-    // Nothing has stepped yet, so there is no change under way to abandon —
-    // cleared rather than trusted, because a half-formed battalion at
-    // Deployment would be a bug somewhere else and this must not carry it.
-    unit.changing = null
-    clampIntoZone(unit, unit.position)
-    resync()
+    say({ kind: "form-up", unitId: unit.id, formation })
   }
 
   /** Face a Unit at Deployment. Instant, for the same reason forming up is. */
   function deployFacing(facing: number): void {
     const unit = deployable()
     if (!unit) return
-    unit.facing = facing
-    // Wheeling swings the Footprint across the zone's corner, so the same
-    // re-clamp forming up needs: a line standing a few metres off the top edge
-    // is 3.6m deep facing east and 144m deep facing north, and turning it would
-    // otherwise post it outside its own zone.
-    clampIntoZone(unit, unit.position)
-    resync()
+    say({ kind: "face", unitId: unit.id, facing })
   }
 
   /**
@@ -610,18 +605,42 @@ export function useBattle() {
     if (ui.phase === "deployment") {
       const unit = deployable()
       if (!unit) return
-      unit.standing = latitude
-      resync()
+      say({ kind: "brief", unitId: unit.id, latitude })
       return
     }
     order({ kind: "standing", latitude })
   }
 
-  /** The player's own Headquarters, which is where his Orders come from. */
-  function headquarters() {
-    const r = runner.value
-    if (!r) return null
-    return r.battle.armies.find((a) => a.id === ui.playerArmy)?.headquarters ?? null
+  /**
+   * Say something to the battle, and take a fresh reading of it. Arranging the
+   * army and issuing an Order both change what is on the Field between two
+   * steps, so nothing else would take a snapshot until the next one.
+   */
+  function say(command: Command): void {
+    const s = session.value
+    if (!s) return
+    s.send(command)
+    ui.units = s.current.units
+    // Only when it has actually grown. A placement drag says this sixty times
+    // a second and none of them puts a line in the feed.
+    if (ui.dispatches.length !== s.current.dispatches.length) {
+      ui.dispatches = s.current.dispatches
+    }
+  }
+
+  /** The Commander's own staff, as the session last reported it. */
+  function staff(): HeadquartersSnapshot | null {
+    return session.value?.current.headquarters.find((hq) => hq.report !== null) ?? null
+  }
+
+  /** What the bar across the top says about the staff (ADR-0008). */
+  function readStaff(): void {
+    const report = staff()?.report
+    if (!report) return
+    ui.headquarters.riding = report.destination !== null
+    ui.headquarters.harried = report.harried
+    ui.headquarters.surcharge = report.surcharge
+    ui.headquarters.dictated = report.dictated
   }
 
   /**
@@ -630,9 +649,9 @@ export function useBattle() {
    * mark he is aiming at is drawn before he has committed to it.
    */
   function readHeadquarters(): void {
-    const r = runner.value
-    if (!r) return
-    viewState.headquarters = r.current.headquarters.map((hq) => ({
+    const s = session.value
+    if (!s) return
+    viewState.headquarters = s.current.headquarters.map((hq) => ({
       army: hq.army,
       position: hq.position,
       mine: hq.report !== null,
@@ -648,35 +667,24 @@ export function useBattle() {
     return viewState.headquarters.find((hq) => hq.mine) ?? null
   }
 
-  /** True if a rider took it. False is nothing said, and nothing remembered. */
+  /** True if it was said. False is nothing said, and nothing remembered. */
   function order(body: OrderBody): boolean {
-    const r = runner.value
-    if (!r || !ui.selected || ui.phase !== "battle") return false
-    // An enemy Unit can be selected to read it, never to order it about.
+    if (!ui.selected || ui.phase !== "battle") return false
+    // An enemy Unit can be selected to read it, never to order it about. The
+    // session refuses one too — this is what stops the button being offered.
     if (!commandable()) return false
-    const hq = headquarters()
-    if (!hq) return false
     // A rider takes it, or the staff is in the saddle and it is dictated for
     // when there is a table again. Either way it was said and is remembered —
     // the Field and the panel both show which of the two he got.
-    sendOrder(r.battle, hq, ui.selected, body)
+    say({ kind: "order", unitId: ui.selected, body })
     if (body.kind === "move") remember(ui.selected, body.arrivalFormation)
     if (body.kind === "form") remember(ui.selected, body.formation)
-    r.resnap()
-    ui.dispatches = r.current.dispatches
     return true
   }
 
   /** Metres, from a pointer event. */
   function fieldPoint(event: PointerEvent | MouseEvent): Vec2 {
     return view.value?.toField(event.clientX, event.clientY) ?? { x: 0, y: 0 }
-  }
-
-  function inZone(point: Vec2): boolean {
-    const zone = viewState.deploymentZone
-    if (!zone) return false
-    const [x, y, w, h] = zone
-    return point.x >= x && point.y >= y && point.x <= x + w && point.y <= y + h
   }
 
   let dragFrom: Vec2 | null = null
@@ -718,8 +726,7 @@ export function useBattle() {
 
   function onPointerDown(event: PointerEvent): void {
     const v = view.value
-    const r = runner.value
-    if (!v || !r) return
+    if (!v || !session.value) return
     ;(event.target as HTMLElement).setPointerCapture?.(event.pointerId)
     const point = fieldPoint(event)
 
@@ -870,86 +877,26 @@ export function useBattle() {
 
   /** Deployment only: arranging the army inside its zone before the clock runs. */
   function movePlaced(point: Vec2): void {
-    const r = runner.value
     const placing = viewState.placing
-    if (!r || !placing) return
+    if (!placing) return
     if (placing.id === "__hq") {
-      const hq = headquarters()
-      if (hq && inZone(point)) {
-        hq.position = { ...point }
-        readHeadquarters()
-      }
+      say({ kind: "post-headquarters", at: point })
+      readHeadquarters()
       return
     }
-    const unit = r.battle.units.find((u) => u.id === placing.id)
-    if (!unit) return
-    clampIntoZone(unit, point)
-    resync()
-  }
-
-  /**
-   * Hold a Unit inside its zone. A Unit is placed by its centre, so its whole
-   * Footprint has to fit — and the Footprint is read fresh every time, because
-   * Formation decides it. A 720-man battalion measures 144m by 3.6m in line and
-   * 2.8m by 162m in march column, so the margin it needs moves with the
-   * Formation, and a battalion legally placed in one would hang out of the zone
-   * in the other if the margin were not recomputed.
-   *
-   * Facing decides it too, so the margin is the Footprint's real span on each
-   * axis and not the larger of its two dimensions. Reserving a square was
-   * conservative on the axis nobody cares about and dear on the one that
-   * decides the battle: a line is a few metres deep, and at Castiglione a
-   * square margin held the 5e 80m off the edge it was meant to crowd — 22 times
-   * its own depth, and a third of the lateral room the whole zone has. The
-   * consequence is that a battalion gains ground as it is wheeled, which is
-   * what the Field already shows: what stops it is the ground it covers.
-   */
-  function clampIntoZone(unit: Unit, point: Vec2): void {
-    const zone = viewState.deploymentZone
-    if (!zone) return
-    const [zx, zy, zw, zh] = zone
-    const shape = unitFootprint(unit)
-    const halfX = spanAlong(shape, unit.facing, { x: 1, y: 0 }) / 2
-    const halfY = spanAlong(shape, unit.facing, { x: 0, y: 1 }) / 2
-    unit.position = {
-      x: Math.max(zx + halfX, Math.min(zx + zw - halfX, point.x)),
-      y: Math.max(zy + halfY, Math.min(zy + zh - halfY, point.y)),
-    }
-    // Arranging the army is how a Unit is given its ground before there is
-    // anybody to ride an Order to it, so the Post goes where the hand puts it.
-    // Left behind, a Unit deployed across the zone would open the battle with
-    // its whole Latitude already spent.
-    unit.post = { ...unit.position }
-  }
-
-  /**
-   * Re-read the screen's copy after arranging the Battle by hand. Deployment
-   * mutates Units directly rather than sending Orders, so nothing steps and
-   * nothing would otherwise take a new snapshot. Both snapshots are set to the
-   * same one: with the clock stopped there is nothing to interpolate between,
-   * and leaving `previous` behind would slide the Unit back every frame.
-   */
-  function resync(): void {
-    const r = runner.value
-    if (!r) return
-    r.resnap()
-    r.previous = r.current
-    ui.units = r.current.units
+    say({ kind: "place", unitId: placing.id, at: point })
   }
 
   function onPointerUp(event: PointerEvent): void {
     if (sending) {
-      const r = runner.value
       const to = sending.at
-      const hq = headquarters()
+      const hq = staff()
       sending = null
       // A press on the Headquarters that went nowhere is not a ride. It costs
       // the whole army's command until the staff is established again, so it is
       // the one gesture that must never happen by accident.
-      if (r && hq && distance(hq.position, to) >= COMMIT_THRESHOLD) rideTo(r.battle, hq, to)
-      r?.resnap()
+      if (hq && distance(hq.position, to) >= COMMIT_THRESHOLD) say({ kind: "ride", at: to })
       readHeadquarters()
-      ui.dispatches = r ? r.current.dispatches : ui.dispatches
       return
     }
     if (viewState.placing) {

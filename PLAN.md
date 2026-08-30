@@ -43,18 +43,21 @@ Delete this file when it is done. It is scaffolding, not documentation.
       Plans firing. Tests moved out of `tsconfig.app.json` and into the scripts project, which is
       where the things Bun runs are type-checked.
 
-## Phase 2 — the seam (C16) — still no network
+## Phase 2 — the seam (C16) — still no network, done
 
-Pure refactor. Behaviour identical before and after.
-
-- [ ] `src/session/` — the interface: takes Orders, emits `BattleSnapshot`s, reports the Outcome.
-- [ ] `LocalSession` wrapping `BattleRunner`.
-- [ ] `useBattle` talks to the interface and never learns which it has.
-- [ ] Move `scripts/load-headless.ts` + `png.mjs` to `src/scenario/disk.ts`, so `scenario/` holds
-      `build.ts` (shared), `loader.ts` (canvas) and `disk.ts` (node), and `scripts/` stops being the
-      home of production code.
-- **Done when:** every existing battle plays exactly as before and nothing outside `session/` knows
-  what a `BattleRunner` is.
+- [x] `src/session/index.ts` — `BattleSession`: emits `previous`/`current`/`alpha`, reports
+      `running`, `tempo`, `outcome` and `returns()`, and takes one closed `Command` union. A union
+      and not a method per verb, because on the far side of the wire it *is* a message.
+- [x] `LocalSession` wraps `BattleRunner` and holds no rule — every Command turns into a call on
+      `src/sim/`. The one exception is holding a Unit inside its Deployment zone, which is the
+      Scenario's rectangle against the Unit's own Footprint and is documented as such.
+- [x] `useBattle` never names a `BattleRunner` or touches a `Battle`. Verified by grep across
+      `composables/`, `views/`, `components/` and `render/`.
+- [x] Key Ground holders and the staff's own state (surcharge, dictated) moved into the snapshot —
+      they were read off the live Battle and there is no live Battle on the client any more.
+- [x] `scripts/load-headless.ts` → `src/scenario/disk.ts`, `png.mjs` beside it. `scripts/` is for
+      things that are run; the server and the tests both *import* the disk loader.
+- [x] Played end to end in a browser: arrange, form up, brief, Stand To, Order, Tempo, pause.
 
 ## Phase 3 — the server (C16 remote, C18)
 

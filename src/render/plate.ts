@@ -282,6 +282,9 @@ export function plateSnapshot(): BattleSnapshot {
     // is a panel and not something the Field draws.
     headquarters: [],
     dispatches: [],
+    // The plate draws Key Ground off the View State, which is where the page
+    // puts a held piece and an unheld one side by side.
+    keyGround: [],
     // A rider on the road, and one still held at the tables.
     couriers: [
       {

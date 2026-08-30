@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import { loadScenarioFromDisk } from "../../scripts/load-headless"
+import { loadScenarioFromDisk } from "../scenario/disk"
 import { step } from "./battle"
 import { ENEMY_COURIERS, snapshot, STRENGTH_STEP } from "./snapshot"
 import type { Battle } from "./types"

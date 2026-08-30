@@ -13,9 +13,9 @@
     "paths": { "@/*": ["./src/*"] }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
-  // The tests are not part of what ships to a browser. They run under Bun
-  // beside the scripts (ADR-0014) and are type-checked there, against Node's
-  // types and with `allowJs` for the PNG decoder a headless Scenario load
-  // needs — none of which this project has any business carrying.
-  "exclude": ["src/**/*.test.ts"]
+  // Neither the tests nor the disk half of the Scenario loader is part of what
+  // ships to a browser. They run under Bun beside the scripts (ADR-0014) and
+  // are type-checked there, against Node's types and with `allowJs` for the PNG
+  // decoder — none of which this project has any business carrying.
+  "exclude": ["src/**/*.test.ts", "src/scenario/disk.ts"]
 }

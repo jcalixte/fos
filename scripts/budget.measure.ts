@@ -10,7 +10,7 @@ import { route } from "../src/sim/routing"
 import { takeCommand } from "../src/sim/scenario"
 import type { Arm, Battle, Unit, Vec2 } from "../src/sim/types"
 import { bearing, distance } from "../src/sim/vec"
-import { loadScenarioFromDisk } from "./load-headless"
+import { loadScenarioFromDisk } from "@/scenario/disk"
 
 /**
  * DESIGN section 8's budget, measured on the battles section 8 says to measure

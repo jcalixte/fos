@@ -1,10 +1,17 @@
 import { readFileSync } from "node:fs"
 import { join } from "node:path"
-import { buildScenario, type LoadedScenario } from "../src/scenario/build"
-import type { Roster, ScenarioFile } from "../src/sim/scenario"
+import { buildScenario, type LoadedScenario } from "./build"
+import type { Roster, ScenarioFile } from "@/sim/scenario"
 import { decodePng } from "./png.mjs"
 
 /**
+ * C14 Scenario Loader, the half of it that needs a filesystem.
+ *
+ * Beside `build.ts`, which is the arithmetic both ways round, and `loader.ts`,
+ * which is the same job with `fetch` and a canvas. Not in `scripts/`, which is
+ * for things that are run and not for things that are imported: the server and
+ * the tests both load Scenarios this way, and neither is a script.
+ *
  * Load an authored Scenario off the disk, with no browser anywhere.
  *
  * The measurements DESIGN section 8 asks for are watched on Castiglione and

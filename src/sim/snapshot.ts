@@ -11,6 +11,7 @@ import type {
   Contact,
   Dispatch,
   FormationName,
+  HeldGround,
   Latitude,
   Unit,
   Vec2,
@@ -168,12 +169,23 @@ export interface HeadquartersSnapshot {
   army: ArmyId
   position: Vec2
   /**
-   * What the staff knows about itself: the ground it is riding to, and whether
-   * the enemy is up to it. Null on the other Commander's, the way a Unit's
-   * Report is — where his staff is going is his own business, even though the
-   * staff itself is now on your map.
+   * What the staff knows about itself. Null on the other Commander's, the way a
+   * Unit's Report is — how slow his riders are getting away, and what he has
+   * dictated to an aide, are his own business even though the staff itself is
+   * now on your map.
    */
-  report: { destination: Vec2 | null; harried: boolean } | null
+  report: HeadquartersReport | null
+}
+
+export interface HeadquartersReport {
+  /** Ground it is riding to, or null while it stands. Nothing leaves it riding. */
+  destination: Vec2 | null
+  /** True while an enemy is near enough, or shooting, to slow every Order down. */
+  harried: boolean
+  /** Seconds every Order waits at the table before its rider sets off. */
+  surcharge: number
+  /** Orders said in the saddle, with no rider under them and nothing on the road. */
+  dictated: number
 }
 
 /**
@@ -193,6 +205,12 @@ export interface BattleSnapshot {
   couriers: CourierSnapshot[]
   ghosts: Ghost[]
   headquarters: HeadquartersSnapshot[]
+  /**
+   * Every piece of Key Ground and the army standing on it. Uncut: who holds the
+   * ground is what the battle is decided on and it is on the Field for anybody
+   * to look at (F11).
+   */
+  keyGround: HeldGround[]
   /** Fired in the step this snapshot was taken of, and nowhere else. */
   volleys: VolleySnapshot[]
   /** Struck in the step this snapshot was taken of, and nowhere else. */
@@ -308,12 +326,15 @@ export function snapshot(battle: Battle, forArmy: ArmyId | null): BattleSnapshot
                       ? { ...army.headquarters.destination }
                       : null,
                     harried: army.headquarters.harried,
+                    surcharge: army.headquarters.surcharge,
+                    dictated: army.headquarters.dictated.length,
                   }
                 : null,
             },
           ]
         : [],
     ),
+    keyGround: battle.keyGround.map((ground) => ({ ...ground, position: { ...ground.position } })),
     volleys: battle.volleys.map(({ casualties: _casualties, ...v }) => ({
       ...v,
       from: { ...v.from },
