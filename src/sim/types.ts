@@ -327,6 +327,16 @@ export interface Dispatch {
   /** Battle time, in seconds. */
   at: number
   unitId: UnitId | null
+  /**
+   * Whose feed it belongs in. Null for the one thing both Commanders are told —
+   * how the battle ended.
+   *
+   * Carried on the Dispatch rather than read back off `unitId`, because the
+   * Headquarters says half of these and has no Unit, and because under two
+   * Commanders the cut has to be a filter on what is sent rather than a lookup
+   * the sender is trusted to do right (F22).
+   */
+  army: ArmyId | null
   text: string
 }
 

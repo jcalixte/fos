@@ -21,21 +21,27 @@ Delete this file when it is done. It is scaffolding, not documentation.
 - [x] Budget re-run both ways. **Nothing about a battle moved** — only stopwatches. Recorded in
       DESIGN §8 and in ADR-0014, which now says its own concern is a precaution and not a fix.
 
-## Phase 1 — the cut (C17, F22, T24) — solo only
+## Phase 1 — the cut (C17, F22, T24) — solo only, done
 
-A rule the solo game should already have obeyed. Ships on its own, no server.
-
-- [ ] `snapshot(battle, forArmy)` in `src/sim/snapshot.ts` — pure, one signature for both games.
-- [ ] Withhold the enemy's **Report**: exact Strength, Fatigue, aim. Keep what the map already
-      shows — Arm, Grade, Formation, Morale, Disorder.
-- [ ] Filter **Dispatches** to the Commander's own army.
-- [ ] Draw the enemy **Headquarters** (`BattleView.ts:1600` currently draws only its own). This is
-      what makes **Harried** and **Overrun** aimable, and closes DESIGN §9's oldest tension.
-- [ ] Enemy **Couriers** behind a dial that starts at nothing — a constant, *not* in `settings.ts`,
-      which is looks-only and per-Commander.
-- [ ] Headless tests over `load-headless.ts` asserting the cut on a built Battle.
-- **Done when:** a solo Castiglione shows no enemy Report and no enemy Dispatch, and the enemy
-  Headquarters is on the Field.
+- [x] `snapshot(battle, forArmy)` — one signature for both games, `forArmy` required and nullable so
+      that naming an army is a decision somebody took rather than a default nobody noticed.
+- [x] The **Report** is a nested `report`, null on the other army's Units, rather than a handful of
+      blanked fields — a leak is then a type error instead of a missed line. It is wider than the
+      plan said: Fatigue, aim and pace, and also `standing`, `briefedTo`, `hasOrder`, `dictated`,
+      `shifting` and `suspendedBy`, all of which say what a Unit has been *told*.
+- [x] **Strength is rounded, not withheld** — a Footprint is built out of it. Sent at the Field's own
+      resolution, ten men, which is one Figure. Recorded in DESIGN §10 with the reasoning.
+- [x] Per-Volley and per-Contact casualties are off the wire: a stream of them adds back up to the
+      exact Strength the rounding takes out.
+- [x] `Dispatch` carries an `army`, so the feed is a filter and not a lookup. Null on the one
+      Dispatch both Commanders get: how the battle ended.
+- [x] Both **Headquarters** on the Field — filled for your own, hollow for his, because one army is
+      white and hue alone will not tell two marks apart.
+- [x] Enemy **Couriers** and Ghosts filtered, the Couriers behind `ENEMY_COURIERS`, a constant that
+      starts at `false`.
+- [x] `src/sim/cut.test.ts` — ten assertions over a five-minute headless Castiglione with both
+      Plans firing. Tests moved out of `tsconfig.app.json` and into the scripts project, which is
+      where the things Bun runs are type-checked.
 
 ## Phase 2 — the seam (C16) — still no network
 

@@ -1,6 +1,6 @@
 import { isOver, step, STEP } from "./battle"
 import { snapshot, type BattleSnapshot } from "./snapshot"
-import type { Battle } from "./types"
+import type { ArmyId, Battle } from "./types"
 
 /**
  * Drives the fixed 10Hz clock off real time and keeps the last two states for
@@ -19,11 +19,44 @@ export class BattleRunner {
   /** How far between `previous` and `current` the screen should draw. */
   alpha = 1
   private carry = 0
+  private cutFor: ArmyId | null
 
-  constructor(battle: Battle) {
+  /**
+   * `forArmy` is who the snapshots are cut for (C17). It is settable because a
+   * battle is loaded before an Army is taken — the Field is on the screen while
+   * the offer is still being read, and at that moment there is no Commander to
+   * cut for.
+   */
+  constructor(battle: Battle, forArmy: ArmyId | null) {
     this.battle = battle
-    this.current = snapshot(battle)
+    this.cutFor = forArmy
+    this.current = snapshot(battle, forArmy)
     this.previous = this.current
+  }
+
+  get forArmy(): ArmyId | null {
+    return this.cutFor
+  }
+
+  /** Take an Army, and re-cut what the screen is holding. */
+  set forArmy(forArmy: ArmyId | null) {
+    this.cutFor = forArmy
+    this.resnap()
+    this.previous = this.current
+  }
+
+  /**
+   * Take a snapshot of a Battle that changed without a step: an Order said,
+   * a staff sent riding, a Unit moved by hand at Deployment.
+   *
+   * `previous` is left where it was, so a snapshot taken mid-step does not
+   * collapse the interpolation the frame is in the middle of (F14). A caller
+   * with the clock stopped — Deployment — sets it after, because there is
+   * nothing to interpolate between there and leaving it behind would slide
+   * every Unit back to where it was for a frame.
+   */
+  resnap(): void {
+    this.current = snapshot(this.battle, this.cutFor)
   }
 
   /** Advance by `seconds` of wall clock. Steps are always exactly STEP long. */
@@ -42,7 +75,7 @@ export class BattleRunner {
     while (this.carry >= STEP && steps < 40) {
       this.previous = this.current
       step(this.battle)
-      this.current = snapshot(this.battle)
+      this.current = snapshot(this.battle, this.cutFor)
       this.carry -= STEP
       steps++
     }

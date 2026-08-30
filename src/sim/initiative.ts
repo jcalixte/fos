@@ -648,6 +648,7 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      army: unit.army,
       text: `${unit.name} ${rule.name}`,
     })
     return

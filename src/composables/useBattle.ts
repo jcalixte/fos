@@ -1,5 +1,5 @@
 import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
-import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
+import { armyColours, BattleView, type HeadquartersView, type ViewState } from "@/render/BattleView"
 import { STAFF_MAP_DEFAULTS } from "@/render/staffmap"
 import { loadSettings } from "@/settings"
 import { loadScenario } from "@/scenario/loader"
@@ -20,7 +20,7 @@ import type {
   Vec2,
 } from "@/sim/types"
 import { armyReturns, type ArmyReturn } from "@/sim/return"
-import { snapshot, type UnitSnapshot } from "@/sim/snapshot"
+import type { UnitSnapshot } from "@/sim/snapshot"
 import { takeCommand, type ScenarioFile } from "@/sim/scenario"
 import { bearing, distance } from "@/sim/vec"
 
@@ -147,7 +147,7 @@ function blankViewState(): ViewState {
   return {
     selected: null,
     playerArmy: "",
-    headquarters: null,
+    headquarters: [],
     keyGround: [],
     deploymentZone: null,
     drag: null,
@@ -294,7 +294,7 @@ export function useBattle() {
       v.setField(battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
       view.value = v
 
-      const r = markRaw(new BattleRunner(battle))
+      const r = markRaw(new BattleRunner(battle, null))
       r.tempo = ui.tempo
       runner.value = r
 
@@ -360,8 +360,8 @@ export function useBattle() {
       ui.headquarters.surcharge = hq.surcharge
       ui.headquarters.dictated = hq.dictated.length
     }
-    if (ui.dispatches.length !== r.battle.dispatches.length) {
-      ui.dispatches = [...r.battle.dispatches]
+    if (ui.dispatches.length !== r.current.dispatches.length) {
+      ui.dispatches = r.current.dispatches
     }
     if (isOver(r.battle) && ui.phase === "battle") finish(r)
   }
@@ -422,6 +422,11 @@ export function useBattle() {
     if (!mine) return
     ui.playerArmy = mine.id
     viewState.playerArmy = mine.id
+    // From here the battle is only ever seen through one Commander's eyes: what
+    // the other army's Units have left in their legs, what they are laid on and
+    // what they have been told stop being taken at all (C17).
+    r.forArmy = mine.id
+    ui.units = r.current.units
     readHeadquarters()
     viewState.deploymentZone = mine.deploymentZone ?? null
     takeCommand(r.battle, mine.id)
@@ -625,14 +630,22 @@ export function useBattle() {
    * mark he is aiming at is drawn before he has committed to it.
    */
   function readHeadquarters(): void {
-    const hq = headquarters()
-    viewState.headquarters = hq
-      ? {
-          position: hq.position,
-          destination: sending?.at ?? hq.destination,
-          harried: hq.harried,
-        }
-      : null
+    const r = runner.value
+    if (!r) return
+    viewState.headquarters = r.current.headquarters.map((hq) => ({
+      army: hq.army,
+      position: hq.position,
+      mine: hq.report !== null,
+      // The ride the player is still dragging out, drawn before he has
+      // committed to it. Only his own has one to draw.
+      destination: hq.report ? (sending?.at ?? hq.report.destination) : null,
+      harried: hq.report?.harried ?? false,
+    }))
+  }
+
+  /** The Commander's own staff, as the Field is drawing it. */
+  function ownHeadquartersView(): HeadquartersView | null {
+    return viewState.headquarters.find((hq) => hq.mine) ?? null
   }
 
   /** True if a rider took it. False is nothing said, and nothing remembered. */
@@ -649,7 +662,8 @@ export function useBattle() {
     sendOrder(r.battle, hq, ui.selected, body)
     if (body.kind === "move") remember(ui.selected, body.arrivalFormation)
     if (body.kind === "form") remember(ui.selected, body.formation)
-    ui.dispatches = [...r.battle.dispatches]
+    r.resnap()
+    ui.dispatches = r.current.dispatches
     return true
   }
 
@@ -710,7 +724,7 @@ export function useBattle() {
     const point = fieldPoint(event)
 
     if (ui.phase === "deployment") {
-      const hq = viewState.headquarters
+      const hq = ownHeadquartersView()
       if (hq && distance(point, hq.position) < HEADQUARTERS_GRAB) {
         viewState.placing = { id: "__hq", at: point }
         return
@@ -770,7 +784,7 @@ export function useBattle() {
     // Take hold of the Headquarters and drag it where the staff is to go. After
     // arming, which is a gesture the player asked for two presses ago, and
     // before selection: the marker is small, and pressing it is unambiguous.
-    const hq = viewState.headquarters
+    const hq = ownHeadquartersView()
     if (hq && ui.phase === "battle" && distance(point, hq.position) < HEADQUARTERS_GRAB) {
       sending = { at: point }
       dragFrom = null
@@ -918,7 +932,7 @@ export function useBattle() {
   function resync(): void {
     const r = runner.value
     if (!r) return
-    r.current = snapshot(r.battle)
+    r.resnap()
     r.previous = r.current
     ui.units = r.current.units
   }
@@ -933,8 +947,9 @@ export function useBattle() {
       // the whole army's command until the staff is established again, so it is
       // the one gesture that must never happen by accident.
       if (r && hq && distance(hq.position, to) >= COMMIT_THRESHOLD) rideTo(r.battle, hq, to)
+      r?.resnap()
       readHeadquarters()
-      ui.dispatches = r ? [...r.battle.dispatches] : ui.dispatches
+      ui.dispatches = r ? r.current.dispatches : ui.dispatches
       return
     }
     if (viewState.placing) {

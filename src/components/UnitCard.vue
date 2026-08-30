@@ -35,6 +35,14 @@ const emit = defineEmits<{
   halt: []
 }>()
 
+/**
+ * What a Commander is told about his own Units and no others (C17). Null on the
+ * enemy's card, and everything read off it goes quiet rather than guessing: the
+ * card is the Report, and a Report about the other army is the thing F22 exists
+ * to keep off this machine.
+ */
+const report = computed(() => props.unit.report)
+
 const options = computed(() => formationsFor(props.unit.arm))
 const width = computed(() =>
   Math.round(frontage(props.unit.arm, props.unit.formation, props.unit.strength)),
@@ -55,7 +63,7 @@ const rides = computed(() => canPursue(props.unit.arm))
  * and disabled rather than hidden, because the reason is the point — a charge
  * button that quietly vanished would read as the app losing the Unit.
  */
-const blown = computed(() => props.unit.fatigue === "blown")
+const blown = computed(() => report.value?.fatigue === "blown")
 
 /**
  * In disorder: its ranks are not its own, so it will not change Formation and
@@ -83,9 +91,9 @@ const orderable = computed(() => !props.deploying)
  * it and nothing else on screen says so — a battalion crawling through a village
  * looks exactly like a battalion dawdling.
  */
-const pace = computed(() => Math.round(props.unit.speed * 60))
+const pace = computed(() => Math.round((report.value?.speed ?? 0) * 60))
 const hobbled = computed(
-  () => props.unit.speed < baseSpeed(props.unit.arm, props.unit.formation) - 0.001,
+  () => (report.value?.speed ?? 0) < baseSpeed(props.unit.arm, props.unit.formation) - 0.001,
 )
 
 /** Seconds this Unit would still need to be in the Formation it is taking up. */
@@ -151,9 +159,9 @@ function formTip(option: FormationName): string {
  * never. The dash on the filled rung says the brief he can see is on its way out.
  */
 function rungClass(option: Latitude): string {
-  const carried = props.unit.standing === option
-  const asked = props.unit.briefedTo === option
-  if (carried && (asked || props.unit.briefedTo === null)) return "btn-primary"
+  const carried = report.value?.standing === option
+  const asked = report.value?.briefedTo === option
+  if (carried && (asked || report.value?.briefedTo == null)) return "btn-primary"
   if (carried) return "btn-primary btn-dash"
   if (asked) return "btn-primary btn-outline"
   return "btn-ghost"
@@ -162,7 +170,7 @@ function rungClass(option: Latitude): string {
 /** What the rung permits, and then what it is doing on the road, if it is. */
 function rungTip(option: Latitude): string {
   const what = explain(option)
-  if (props.unit.briefedTo !== option || props.unit.standing === option) return what
+  if (report.value?.briefedTo !== option || report.value.standing === option) return what
   return `${what}\n\nalready asked for — it holds this the moment the Order reaches it`
 }
 </script>
@@ -178,16 +186,32 @@ function rungTip(option: Latitude): string {
         <div class="min-w-56">
           <p class="text-sm font-semibold">{{ unit.name }}</p>
           <p class="text-xs text-base-content/60">
-            {{ unit.arm }} · {{ gradeName }} · {{ unit.strength }} men ·
+            {{ unit.arm }} · {{ gradeName }}
+            <!-- The head count to the man is a Report. The enemy's block covers
+                 the ground it covers and that is on the map; how many men are
+                 standing in it is what his own returns say and yours do not.
+
+                 Every optional piece on this line carries its separator in
+                 front of it rather than behind. A trailing one is eaten: the
+                 whitespace between the close tag and the next element is a
+                 whitespace-only node with a newline in it, which the template
+                 compiler drops, and the line comes out as "560 men ·150m". -->
+            <template v-if="report"> · {{ unit.strength }} men</template>
             <!-- A mob has no front to measure. It is held in its travelling
                  Formation underneath so that a Rally has something to come back
                  to, and reading that Formation's Frontage out loud told the
                  player a running crowd was 3m wide. -->
+            ·
             <span v-if="unit.routing">no front, a mob</span>
             <span v-else>{{ width }}m frontage</span>
-            ·
-            <span v-if="pace === 0">does not move</span>
-            <span v-else :class="hobbled ? 'text-warning' : ''">{{ pace }}m a minute</span>
+            <!-- Pace is a Report and not a map read: the ground and the
+                 Formation are both on screen, but the number is divided by what
+                 the Unit has left in its legs. -->
+            <template v-if="report">
+              ·
+              <span v-if="pace === 0">does not move</span>
+              <span v-else :class="hobbled ? 'text-warning' : ''">{{ pace }}m a minute</span>
+            </template>
             ·
             <!-- Morale in words. T11 gave up the bar the player could count
                  down on purpose; how a battalion is holding up is the reading. -->
@@ -195,9 +219,9 @@ function rungTip(option: Latitude): string {
             <!-- Fatigue in words beside Morale, and silent while the Unit is
                  fresh: the two are spent apart and read apart, and a battalion
                  with its wind still in it has nothing to say here. -->
-            <template v-if="unit.fatigue !== 'fresh'">
+            <template v-if="report && report.fatigue !== 'fresh'">
               ·
-              <span :class="blown ? 'text-error' : 'text-warning'">{{ unit.fatigue }}</span>
+              <span :class="blown ? 'text-error' : 'text-warning'">{{ report.fatigue }}</span>
             </template>
             <!-- And the third of C7's three, said the same way and silent while
                  the Unit is Ordered. It is on the map as the glyph across the
@@ -224,11 +248,13 @@ function rungTip(option: Latitude): string {
           <span v-else-if="busy" class="text-warning">
             taking up {{ label(unit.changingTo!) }} — {{ remaining }}s
           </span>
-          <span v-else-if="unit.suspendedBy" class="text-warning">
-            {{ unit.suspendedBy }}
+          <!-- The Initiative rule holding its Order is the reason it is doing
+               what it is doing, which is his staff's word and not your glass. -->
+          <span v-else-if="report?.suspendedBy" class="text-warning">
+            {{ report.suspendedBy }}
           </span>
           <span v-else class="text-base-content/60">
-            in {{ label(unit.formation) }}{{ unit.hasOrder ? ", under orders" : "" }}
+            in {{ label(unit.formation) }}{{ report?.hasOrder ? ", under orders" : "" }}
           </span>
         </p>
 
@@ -237,7 +263,7 @@ function rungTip(option: Latitude): string {
              card the player pressed a button on and the Field answers him with
              a Ghost that has nothing riding at it. It says why rather than
              what: there is no table, so there is no rider. -->
-        <p v-if="unit.dictated" class="text-xs text-warning">
+        <p v-if="report?.dictated" class="text-xs text-warning">
           dictated in the saddle — there is no table to write it at, so no rider has it yet
         </p>
       </div>
@@ -323,7 +349,12 @@ function rungTip(option: Latitude): string {
           </HelpTip>
         </div>
 
-        <div class="flex items-center gap-2">
+        <!-- Hidden on the other army's card, where every rung would be unlit and
+             none of them pressable: what a battalion has been told it may do
+             unbidden is a Report, and a row that can neither be read nor pressed
+             reads as something broken. The Form row above stays, because that
+             one still says something true — the Formation is on the map. -->
+        <div v-if="report" class="flex items-center gap-2">
           <span class="text-xs tracking-wide text-base-content/50 uppercase">Standing</span>
           <HelpTip v-for="option in rungs" :key="`rung-${option}`" :tip="rungTip(option)">
             <button

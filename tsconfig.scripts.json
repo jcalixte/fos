@@ -14,5 +14,5 @@
     "noFallthroughCasesInSwitch": true,
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["scripts/**/*.ts", "scripts/**/*.mjs"]
+  "include": ["scripts/**/*.ts", "scripts/**/*.mjs", "src/**/*.test.ts"]
 }

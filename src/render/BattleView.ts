@@ -51,7 +51,13 @@ export type FieldStyle = "staff" | "shaded"
  */
 const QUARTER_TURN = Math.PI / 2
 
-/** Men one Figure stands for. A Figure is not a man and never counts as one. */
+/**
+ * Men one Figure stands for. A Figure is not a man and never counts as one.
+ *
+ * Also the resolution the other army's Strength is sent at
+ * (`STRENGTH_STEP` in the snapshot), so that cutting the exact head count costs
+ * this drawing nothing — if this number moves, that one follows it.
+ */
 const MEN_PER_FIGURE = 10
 
 /** Floor on a Figure's size, so a line never collapses into a smear (F5). */
@@ -226,20 +232,31 @@ interface LocalRect {
 }
 
 /**
- * The player's own Headquarters, as the Field draws it: where it stands, the
- * ground it is riding to while it is on the move, and whether the enemy is
- * harrying it (ADR-0008).
+ * A Headquarters as the Field draws it: where it stands, the ground it is
+ * riding to while it is on the move, and whether the enemy is harrying it
+ * (ADR-0008).
+ *
+ * Both armies' are drawn. The other Commander's is a mark and a ring and
+ * nothing else — where his staff stands is on the Field, and it has to be, or
+ * Harried and Overrun are a rule one army obeys and the other is exempt from.
+ * The ride and the harrying are his Report and are not here to draw.
  */
 export interface HeadquartersView {
+  army: string
   position: Vec2
+  /** Whose it is: the Commander's own staff, or the ground he is riding at. */
+  mine: boolean
+  /** Own only; null on the enemy's, where the ride is not something to see. */
   destination: Vec2 | null
+  /** Own only; false on the enemy's, for the same reason. */
   harried: boolean
 }
 
 export interface ViewState {
   selected: string | null
   playerArmy: string
-  headquarters: HeadquartersView | null
+  /** Every Headquarters on the Field — the Commander's own, and the enemy's. */
+  headquarters: HeadquartersView[]
   keyGround: HeldGround[]
   deploymentZone: [number, number, number, number] | null
   /** The Order being drawn but not yet issued, shown as it will arrive. */
@@ -1030,8 +1047,11 @@ export class BattleView {
     const mpp = this.metresPerPixel()
     for (const unit of units) {
       if (!view.fireZones && unit.id !== view.selected) continue
-      if (!unit.aiming) continue
-      const target = units.find((u) => u.id === unit.aiming)
+      // Own Units only, and not because of the filter: where an enemy's next
+      // Volley falls is his Report and never reaches this machine (F22).
+      const aiming = unit.report?.aiming
+      if (!aiming) continue
+      const target = units.find((u) => u.id === aiming)
       if (!target) continue
       const selected = unit.id === view.selected
       const style = {
@@ -1082,6 +1102,10 @@ export class BattleView {
     const line = 1.5 * this.metresPerPixel()
     for (const ghost of current.ghosts) {
       const unit = current.units.find((u) => u.id === ghost.unitId)
+      // The army check is the second line and no longer the first: an enemy
+      // Ghost is cut out of the snapshot before it gets here (C17). It stays
+      // because a filter that never fires is the cheapest test there is of one
+      // that has to (ADR-0013).
       if (!unit || unit.army !== view.playerArmy) continue
       const shape = footprint(unit.arm, ghost.formation, unit.strength)
       g.moveTo(unit.position.x, unit.position.y)
@@ -1596,11 +1620,11 @@ export class BattleView {
       g.circle(at.x, at.y, 3.5 * mpp).fill({ color: 0xf5e6a8, alpha: 0.95 })
     }
 
-    if (view.headquarters) {
-      // Only his own army's, because only his own Headquarters is drawn — and
-      // only his own dictates anything.
-      const dictated = units.filter((u) => u.dictated && u.army === view.playerArmy)
-      this.drawHeadquarters(g, view.headquarters, mpp, dictated, view.alarm ?? ALARM)
+    for (const hq of view.headquarters) {
+      // Only his own army's notebook, because only his own has one he can read.
+      const dictated = hq.mine ? units.filter((u) => u.report?.dictated) : []
+      const ink = hq.mine ? 0xf5e6a8 : (view.armyColours[hq.army] ?? 0xf5e6a8)
+      this.drawHeadquarters(g, hq, mpp, dictated, view.alarm ?? ALARM, ink)
     }
 
     if (view.drag) {
@@ -1635,10 +1659,11 @@ export class BattleView {
     mpp: number,
     dictated: UnitSnapshot[],
     alarm: number,
+    ink: number,
   ): void {
     const { x, y } = hq.position
     const r = 7 * mpp
-    const colour = hq.harried ? alarm : 0xf5e6a8
+    const colour = hq.harried ? alarm : ink
     if (hq.destination) {
       const to = hq.destination
       g.moveTo(x, y).lineTo(to.x, to.y).stroke({ width: mpp, color: colour, alpha: 0.45 })
@@ -1654,7 +1679,13 @@ export class BattleView {
       color: colour,
       alpha: hq.harried ? 0.4 : 0.18,
     })
-    g.poly([x, y - r * 1.6, x + r, y + r, x - r, y + r]).fill({ color: colour, alpha: 0.95 })
+    // Filled is the Commander's own staff and hollow is the other's. Hue alone
+    // will not carry it: one of the two armies is white and the own mark is
+    // cream, so the two would be the same mark at this size — and mistaking the
+    // enemy's tables for your own is a mistake with a Courier ride behind it.
+    const mark = [x, y - r * 1.6, x + r, y + r, x - r, y + r]
+    if (hq.mine) g.poly(mark).fill({ color: colour, alpha: 0.95 })
+    else g.poly(mark).stroke({ width: mpp * 1.6, color: colour, alpha: 0.95 })
     g.circle(x, y, r * 2.2).stroke({ width: mpp, color: colour, alpha: hq.harried ? 0.8 : 0.4 })
     // A second ring, and only while it is harried: one ring changing colour is
     // not a state change a player catches out of the corner of his eye.

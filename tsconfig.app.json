@@ -2,7 +2,7 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "types": ["vite/client", "@types/bun"],
+    "types": ["vite/client"],
     "allowArbitraryExtensions": true,
 
     /* Linting */
@@ -12,5 +12,10 @@
     "noFallthroughCasesInSwitch": true,
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue"],
+  // The tests are not part of what ships to a browser. They run under Bun
+  // beside the scripts (ADR-0014) and are type-checked there, against Node's
+  // types and with `allowJs` for the PNG decoder a headless Scenario load
+  // needs — none of which this project has any business carrying.
+  "exclude": ["src/**/*.test.ts"]
 }

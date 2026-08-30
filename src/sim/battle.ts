@@ -162,6 +162,7 @@ function advanceFormationChange(battle: Battle, unit: Unit, dt: number): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    army: unit.army,
     text: `${unit.name} is in ${describeFormation(settled)}`,
   })
 }
@@ -292,6 +293,7 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      army: unit.army,
       text: `${unit.name} is riding ${target.name} down`,
     })
   }
@@ -446,6 +448,7 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    army: unit.army,
     text: `${unit.name} is in position, ${describeFormation(body.arrivalFormation)}`,
   })
 }
@@ -475,6 +478,7 @@ function releaseArrivals(battle: Battle): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      army: unit.army,
       text: `${unit.name} came onto the Field`,
     })
   }
@@ -527,6 +531,7 @@ function clearTheGone(battle: Battle): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      army: unit.army,
       text:
         unit.strength <= 0
           ? `${unit.name} was destroyed where it stood`
@@ -721,7 +726,9 @@ function endBattle(battle: Battle, by: Outcome["by"], winner: ArmyId | null, tex
     winner,
     keyGround: battle.keyGround.map((g) => ({ name: g.name, holder: g.holder })),
   }
-  battle.dispatches.push({ at: battle.time, unitId: null, text })
+  // How it ended is the one Dispatch both Commanders are told, so it belongs
+  // to neither army (F22).
+  battle.dispatches.push({ at: battle.time, unitId: null, army: null, text })
 }
 
 /**

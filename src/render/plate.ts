@@ -4,7 +4,7 @@ import { HARRIED_RANGE } from "@/sim/headquarters"
 import { MORALE_WORDS } from "@/sim/morale"
 import { makeField } from "@/sim/field"
 import type { Arm, Field, Grade, Ground, Vec2 } from "@/sim/types"
-import type { BattleSnapshot, UnitSnapshot } from "@/sim/snapshot"
+import type { BattleSnapshot, UnitReport, UnitSnapshot } from "@/sim/snapshot"
 import type { HeadquartersView, ViewState } from "./BattleView"
 
 /**
@@ -151,8 +151,21 @@ const SOUTH = Math.PI / 2
 
 let serial = 0
 
-function unit(over: Partial<UnitSnapshot> & { army: string; position: Vec2 }): UnitSnapshot {
+/**
+ * A Unit for the plate. The Report is spelled separately from the rest, because
+ * on a real Field it arrives separately: every plate Unit carries one, since the
+ * plate is a drawing of everything the renderer can be asked to draw and half of
+ * that is only ever drawn about a Commander's own army (C17).
+ */
+type PlateUnit = Partial<Omit<UnitSnapshot, "report">> & {
+  army: string
+  position: Vec2
+  report?: Partial<UnitReport>
+}
+
+function unit(over: PlateUnit): UnitSnapshot {
   const arm = over.arm ?? "infantry"
+  const { report, ...rest } = over
   return {
     id: `plate-${serial++}`,
     name: "plate",
@@ -163,22 +176,25 @@ function unit(over: Partial<UnitSnapshot> & { army: string; position: Vec2 }): U
     formation: arm === "artillery" ? "in-battery" : "line",
     changingTo: null,
     changeProgress: 0,
-    suspendedBy: null,
-    hasOrder: false,
-    standing: "hold-ground",
-    briefedTo: null,
-    dictated: false,
-    shifting: false,
     morale: "steady",
-    fatigue: "fresh",
     disordered: false,
     routing: false,
     charging: null,
-    aiming: null,
     recoiling: false,
     pursuing: false,
-    speed: 0,
-    ...over,
+    ...rest,
+    report: {
+      suspendedBy: null,
+      hasOrder: false,
+      standing: "hold-ground",
+      briefedTo: null,
+      dictated: false,
+      shifting: false,
+      fatigue: "fresh",
+      aiming: null,
+      speed: 0,
+      ...report,
+    },
   }
 }
 
@@ -214,17 +230,17 @@ export function plateSnapshot(): BattleSnapshot {
 
   // Band 2 — the states a Unit passes through, which a battle reaches late and
   // rarely and never all at once.
-  const states: Partial<UnitSnapshot>[] = [
-    { hasOrder: true },
-    { dictated: true },
-    { shifting: true },
+  const states: Omit<PlateUnit, "army" | "position">[] = [
+    { report: { hasOrder: true } },
+    { report: { dictated: true } },
+    { report: { shifting: true } },
     { formation: "line", changingTo: "square", changeProgress: 0.5 },
     { routing: true, morale: "on the point of breaking" },
     { charging: "plate-0", arm: "cavalry" },
     { charging: "plate-0", recoiling: true, arm: "cavalry" },
     { charging: "plate-0", pursuing: true, arm: "cavalry" },
-    { aiming: "plate-0" },
-    { strength: 90, fatigue: "blown" },
+    { report: { aiming: "plate-0" } },
+    { strength: 90, report: { fatigue: "blown" } },
     // In line, which is the hardest case for the glyph: a battalion in line is
     // the thinnest thing on the Field, so a mark that reads across this one
     // reads across everything.
@@ -260,6 +276,12 @@ export function plateSnapshot(): BattleSnapshot {
   return {
     time: 600,
     units,
+    // Empty, both of them. The staffs the plate draws are built by hand in
+    // `plateView`, because the page wants all three of a Headquarters' states
+    // at once and a snapshot only ever carries the one it is in; and the feed
+    // is a panel and not something the Field draws.
+    headquarters: [],
+    dispatches: [],
     // A rider on the road, and one still held at the tables.
     couriers: [
       {
@@ -292,8 +314,6 @@ export function plateSnapshot(): BattleSnapshot {
         where: { x: 1050, y: 600 },
         side: 0,
         width: 60,
-        casualties: 8,
-        targetCasualties: 30,
         outcome: "broke",
       },
     ],
@@ -356,7 +376,6 @@ export function plateVolleys(from: number, to: number): BattleSnapshot["volleys"
         from: { ...fire.at },
         direction: SOUTH,
         width: fire.width,
-        casualties: 0,
       })
     }
   }
@@ -398,17 +417,27 @@ export interface PlateOptions {
 
 export function plateView(snapshot: BattleSnapshot, options: PlateOptions): ViewState {
   const hq: HeadquartersView = {
+    army: "blue",
     // Open ground, and deliberately not the village: the first draft put the
     // tables inside it, where a mark that vanishes cannot be told from a mark
     // standing on a hundred roofs.
     position: { x: 1650, y: 200 },
+    mine: true,
     destination: options.headquarters === "riding" ? { x: 1280, y: 440 } : null,
     harried: options.headquarters === "harried",
+  }
+  /** The other Commander's staff: a mark to ride at, in his own colour. */
+  const theirs: HeadquartersView = {
+    army: "white",
+    position: { x: 260, y: 1180 },
+    mine: false,
+    destination: null,
+    harried: false,
   }
   return {
     selected: options.selected ? (snapshot.units[12]?.id ?? null) : null,
     playerArmy: "blue",
-    headquarters: hq,
+    headquarters: [hq, theirs],
     keyGround: [
       { name: "held", position: { x: 1700, y: 900 }, radius: 72, holder: "blue" },
       { name: "open", position: { x: 1700, y: 1080 }, radius: 72, holder: null },

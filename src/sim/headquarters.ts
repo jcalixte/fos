@@ -158,6 +158,7 @@ function dictate(
   battle.dispatches.push({
     at: battle.time,
     unitId,
+    army: headquarters.army,
     text:
       held >= 0
         ? `The Order for ${named(battle, unitId)} is dictated again in the saddle, over the one already written`
@@ -209,6 +210,7 @@ export function rideTo(battle: Battle, headquarters: Headquarters, to: Vec2): vo
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
+    army: headquarters.army,
     text: "The Headquarters is riding for new ground; nothing said from here on leaves it until it is established",
   })
 }
@@ -294,6 +296,7 @@ function harry(
     battle.dispatches.push({
       at: battle.time,
       unitId: null,
+      army: headquarters.army,
       text: firing
         ? `The Headquarters is under fire from ${firing.name}: every Order is ${HARRIED_SURCHARGE} seconds later leaving the table`
         : `There is an enemy up to the Headquarters: every Order is ${HARRIED_SURCHARGE} seconds later leaving the table`,
@@ -306,6 +309,7 @@ function harry(
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
+    army: headquarters.army,
     text: "The Headquarters is clear of the enemy, and its riders are getting away again",
   })
 }
@@ -327,6 +331,7 @@ function overrun(battle: Battle, headquarters: Headquarters, enemy: Unit): void 
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
+    army: headquarters.army,
     text: spent
       ? `The Headquarters has been ridden over again by ${enemy.name}; the staff is away, and there is nothing left of it to lose`
       : `The Headquarters has been ridden over by ${enemy.name}; the staff is away, and every Order after this is later for it`,
@@ -400,6 +405,7 @@ function settle(battle: Battle, headquarters: Headquarters, shortOf: Vec2 | null
   battle.dispatches.push({
     at: battle.time,
     unitId: null,
+    army: headquarters.army,
     text:
       dictated.length === 0
         ? `${where}, and its riders can set off again`

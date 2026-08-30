@@ -1334,9 +1334,18 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   through Couriers rather than through an authored Plan, at which point the rule is already written
   and the enemy Headquarters wants drawing*, and that is exactly what arrived: a second Commander
   couriers his Orders from a Headquarters that can be harried, ridden over and aimed at, and it is
-  the one piece of his command apparatus the other can see. What is *not* symmetric and never will
-  be is the solo battle, where the Plan still pays nothing — so this closes for G8 and stays open
-  for every battle fought against a script.
+  the one piece of his command apparatus the other can see. **The staff is now drawn** — both of
+  them, filled for your own and hollow for his, because one of the two armies is white and hue alone
+  would not tell the marks apart. What is *not* symmetric and never will be is the solo battle,
+  where `firePlan` applies its Orders where they land, so the enemy staff can be harried and ridden
+  over and the script goes on commanding exactly as fast. **Drawing it made the asymmetry visible
+  instead of merely present, and turned it into a decoy:** against a Plan, a mark that looks like
+  the most valuable ground on the Field is worth nothing to take, and a player who spends his horse
+  on it has spent them. Left drawn rather than hidden in solo, because a Field that shows one thing
+  in one game and another in the other is the split ADR-0013 exists to prevent, and because the mark
+  is honest — it is where his staff is. So this closes for G8 and stays open for every battle fought
+  against a script. **Trigger:** a solo player riding at the mark and finding out the hard way, at
+  which point the answer is to courier the Plan's Orders rather than to stop drawing the staff.
 - **Fatigue against a thirty-minute clock.** Bought by the pace, so infantry at 0.8–1.4 m/s tires slowly by design and cavalry at the gallop tires fast. **Trigger:** a Castiglione where no Unit is ever winded, in which case the rule is decoration for two Arms out of three — or one where a battalion is blown before the first Volley, which is an afternoon spent watching men who cannot fight.
 - **A Pursuit costs all three of its prices.** *Resolved by
   [ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md).* The run-in
@@ -1397,8 +1406,22 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   `useBattle.ts:642` allows an enemy Unit to be selected "to read it, never to order it about", and
   `TheBattle.vue:328` renders the full card merely `disabled` — so a selected enemy battalion handed
   over its Strength in men, its Fatigue and its aim. T11 gave up the countable bar on purpose and
-  then a panel counted it down perfectly, for the wrong army. Closed by T24, in solo as well as in a
-  two-Commander battle.
+  then a panel counted it down perfectly, for the wrong army. **Built**, by T24, in solo as well as
+  in a two-Commander battle: a `UnitSnapshot` now carries a `report` that is null on the other
+  army's Units, and the card prints men, pace, Fatigue, the Initiative rule holding it and its brief
+  only when there is one.
+
+  Two things came out of building it that the rule as written did not say. **Strength could not
+  simply be withheld** — a Unit's Footprint is built out of it, so cutting it leaves the enemy with
+  no ground to stand on. It is sent at the resolution the Field itself shows: rounded to ten men,
+  which is what one Figure stands for, so the drawing is unchanged and a battalion's front moves by
+  under a metre in a hundred and forty. The head count to the man is what a Return is for. And **the
+  Report had to be wider than *"Strength, Fatigue, aim"*** to mean anything: what a Unit has been
+  briefed to, whether it is under Orders, and the name of the Initiative rule holding it are all his
+  staff's word rather than your glass, and leaving them on the wire would have been a larger leak
+  than the head count. Per-Volley casualties went the same way — a stream of them adds back up to
+  the exact Strength the rounding had just taken out, so a `VolleySnapshot` carries the flash and no
+  butcher's bill.
 - **The Deployment window was five minutes against a ten-minute battle.** Castiglione's clock is
   2400s and `useBattle.ts:123` defaults Tempo to 4. Nothing in F11 or G4 catches it, because both
   measure the Scenario clock and the Scenario clock is untouched. Found by putting two numbers
@@ -1407,7 +1430,10 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   army (`:1085`) and draws only its own Headquarters (`:1600`), but walks *every* Courier
   (`:1569`) — safe for six milestones only because the Plan applies its Orders where they land and
   has never put a rider on the Field. A second Commander would have made the enemy's Orders visible
-  the first time anyone played.
+  the first time anyone played. **Fixed** with the rest of the cut: the other army's riders are
+  filtered out of the snapshot behind a constant that starts at nothing. Watching where a rider goes
+  is watching a Commander think, and F2's promise that every pending Order is on the Field is a
+  promise about your own.
 - **The teaching material G9 asks for was already authored.** Every `scenario.json` carries a
   `summary`, and Rivoli's is 130 words of Alvinczi coming down off Monte Baldo divided by torrent
   gullies. It is a briefing, not a history lesson — exactly what G9 wants — and it is read once on

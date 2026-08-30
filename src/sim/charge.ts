@@ -281,7 +281,7 @@ export function endCharge(battle: Battle, unit: Unit, text: string): void {
   // standing in an empty field waiting for a rider that is not coming.
   if (unit.order?.order.body.kind === "charge") unit.order = null
   unit.route = []
-  battle.dispatches.push({ at: battle.time, unitId: unit.id, text })
+  battle.dispatches.push({ at: battle.time, unitId: unit.id, army: unit.army, text })
 }
 
 /**
@@ -384,6 +384,7 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
       battle.dispatches.push({
         at: battle.time,
         unitId: unit.id,
+        army: unit.army,
         text: `${how}, and rode on after it`,
       })
       return
@@ -395,6 +396,7 @@ export function resolveContact(battle: Battle, unit: Unit, target: Unit): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    army: unit.army,
     text: `${target.name} held its ${describeSide(side)}, and ${unit.name} was thrown back`,
   })
 }

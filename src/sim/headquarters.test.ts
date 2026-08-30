@@ -207,11 +207,11 @@ describe("a staff in the saddle", () => {
     expect(ghost?.position).toEqual({ x: 700, y: 200 })
     // And the Unit says so on its own card, so a Ghost with nothing riding at
     // it is never left to be read as an Order the app has mislaid.
-    expect(snapshot(battle).units[0].dictated).toBe(true)
+    expect(snapshot(battle, target.army).units[0].report?.dictated).toBe(true)
 
     run(battle, 200 / HEADQUARTERS_SPEED + 1)
     expect(hq.dictated).toHaveLength(0)
-    expect(snapshot(battle).units[0].dictated).toBe(false)
+    expect(snapshot(battle, target.army).units[0].report?.dictated).toBe(false)
     expect(battle.couriers).toHaveLength(1)
     // From the ground the staff ended up on, not the ground it dictated from.
     expect(battle.couriers[0].origin.x).toBeCloseTo(300, 0)

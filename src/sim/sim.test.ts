@@ -922,13 +922,13 @@ describe("C2 Initiative — the Standing Order", () => {
     // Nothing about the Unit has changed and nothing will until the rider gets
     // there, so what the player pressed has to be readable off the brief in
     // flight or it is readable nowhere at all.
-    const riding = snapshot(battle).units.find((u) => u.id === unit.id)!
-    expect(riding.standing).toBe(defaultStanding())
-    expect(riding.briefedTo).toBe("close-up")
+    const riding = snapshot(battle, unit.army).units.find((u) => u.id === unit.id)!
+    expect(riding.report?.standing).toBe(defaultStanding())
+    expect(riding.report?.briefedTo).toBe("close-up")
     for (let i = 0; i < 600 && battle.couriers.length > 0; i++) step(battle)
-    const held = snapshot(battle).units.find((u) => u.id === unit.id)!
-    expect(held.standing).toBe("close-up")
-    expect(held.briefedTo).toBeNull()
+    const held = snapshot(battle, unit.army).units.find((u) => u.id === unit.id)!
+    expect(held.report?.standing).toBe("close-up")
+    expect(held.report?.briefedTo).toBeNull()
   })
 
   it("does not give ground from the enemy the player has just let it go at", () => {
@@ -1485,7 +1485,8 @@ describe("C6 Fighting", () => {
 
   it("tells the screen what it is aiming at", () => {
     const { battle, shooter, enemy } = facingOff(60)
-    const aimingOf = (id: string) => snapshot(battle).units.find((u) => u.id === id)!.aiming
+    const aimingOf = (id: string) =>
+      snapshot(battle, shooter.army).units.find((u) => u.id === id)!.report?.aiming ?? null
     expect(aimingOf(shooter.id)).toBe(enemy.id)
     // In march column it has nothing in its sights, because it has no fire.
     shooter.formation = "march-column"
