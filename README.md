@@ -188,4 +188,5 @@ Not built yet: Concealment, sound.
   - [0011 — Morale comes back out of the fight](./docs/adr/0011-morale-comes-back-out-of-the-fight.md)
   - [0012 — Disorder is what a mob costs the troops it runs over](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)
   - [0013 — A battle with two Commanders lives on a server](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)
+  - [0014 — One JavaScript engine for the simulation, and it is the server's](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)
 <!-- docs:end -->
