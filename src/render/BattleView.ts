@@ -1,4 +1,5 @@
 import {
+  AlphaFilter,
   Application,
   CanvasSource,
   Container,
@@ -249,6 +250,12 @@ export interface ViewState {
   /** Show every Unit's beaten ground. Off, only the selected Unit shows its own. */
   fireZones: boolean
   /**
+   * Draw Powder Smoke. Optional and on by default — it exists so the plate can
+   * show the same ground with and without it, which is the only way the roof's
+   * F13 x F5 tension can actually be judged.
+   */
+  smoke?: boolean
+  /**
    * A Charge is armed and waiting to be aimed. Every enemy that may be charged
    * is outlined while it is, because the thing the player is about to pick is a
    * Unit and not a point on the ground — the only Order in the game of which
@@ -326,7 +333,8 @@ interface Flash {
   born: number
 }
 
-/** How long a flash and its smoke stay on screen, in milliseconds. */
+/** How long a flash stays on screen, in milliseconds. Its smoke outlives it by
+ * two orders of magnitude and is aged on a different clock — see SMOKE_LIFE. */
 const FLASH_MS = 420
 
 /**
@@ -348,6 +356,121 @@ interface Clash {
 /** Longer than a flash: a Contact is the loudest thing that happens. */
 const CLASH_MS = 750
 
+/**
+ * A cloud of Powder Smoke. Renderer-only, like a Flash and a Clash, and for a
+ * stronger reason than either: T10 keeps smoke **drawn but inert**, so nothing
+ * here may ever be read back. The simulation does not know the Field is full of
+ * it, and the day it does the rule moves into C6 and stops living in this file.
+ */
+interface Puff {
+  /** The muzzles, in metres — out in front of the Face, not on the men. */
+  at: Vec2
+  /** Along the Face, unit length: the axis a discharge is spread on. */
+  across: Vec2
+  /** Metres of Face that fired. */
+  width: number
+  /** Battle time it was fired at, in seconds. */
+  born: number
+  /** Stable per-cloud jitter, so a bank is ragged and never boils. */
+  seed: number
+}
+
+/**
+ * How long a cloud lasts, in **battle** seconds — and that is the whole of why
+ * it is not a Flash.
+ *
+ * A Flash and a Clash burn down on the wall clock because they are sub-second
+ * marks that would flicker on anything else. Smoke cannot: Tempo defaults to 4,
+ * so a bank aged on the wall clock would be four times as thick at the Tempo
+ * the game is played at as at the Tempo it is measured at — and thickness is
+ * exactly what the roof warns about (F13 x F5). On battle time a bank is the
+ * same bank at any Tempo.
+ *
+ * Forty-five seconds is about two musket reloads (F9's 20-25s) and one gun's,
+ * so a battalion in a steady firefight keeps two clouds up and a battery one,
+ * and the ground clears inside a minute of the firing stopping.
+ */
+const SMOKE_LIFE = 45
+
+/**
+ * Where a cloud is born, in metres in front of the Face. Smoke comes out of the
+ * muzzles and not out of the men — which is also the one thing keeping a
+ * battalion out of its own cloud, and SMOKE_CAP records the single Unit in the
+ * campaign for which that matters.
+ */
+const SMOKE_MUZZLE = 18
+
+/** A cloud's radius at birth and at its death, in metres. */
+const SMOKE_RADIUS = [11, 34] as const
+
+/**
+ * The breeze, as a unit vector and a speed in metres per second. One direction
+ * for the whole Field and the whole campaign: weather is not something a
+ * Scenario carries (G5), and smoke is the only thing on the map that would read
+ * it if it did.
+ *
+ * 1.2 m/s carries a cloud 54m over its life — far enough to read as drift, near
+ * enough that the smoke never leaves the Unit that made it.
+ */
+const SMOKE_BREEZE: Vec2 = { x: 0.866, y: 0.5 }
+const SMOKE_DRIFT = 1.2
+
+/**
+ * What the smoke may never be thicker than, and what colour it is. Both are
+ * measured and not picked: this is the roof's own warning (F13 x F5) and it
+ * does not survive being eyeballed.
+ *
+ * **The cap is exact rather than hoped for.** Every cloud is drawn into one
+ * Container and composited once through an AlphaFilter, so ten battalions
+ * firing into the same hundred metres come out at 0.268 and so does one. That
+ * is T10's "one accumulator" taken literally — without it, capping means
+ * choosing a per-cloud alpha low enough that a *plausible* stack stays legible,
+ * which is not a cap at all.
+ *
+ * **White is what powder smoke is, and it is the one colour this map cannot
+ * have.** Over the open wash at this cap, true white (#f2f2f0) takes the
+ * Austrians — who are #e3e7ef — to 1.72 against the ground they stand on,
+ * under the 1.88 `settings.ts` keeps on file as the tone to argue against.
+ * #dcdcd6 is as white as the white army can afford.
+ *
+ * What it costs, worst case over every paper tone on offer, counting a Unit's
+ * keyline as well as its body — the keyline is dark ink, so smoke *sharpens* it
+ * by as much as it flattens the body:
+ *
+ * | Grade     | bare | under the cap |
+ * |-----------|-----:|--------------:|
+ * | elite     | 4.71 |          6.05 |
+ * | line      | 3.13 |          3.66 |
+ * | conscript | 2.27 |          1.84 |
+ *
+ * So smoke makes every Unit easier to find but one. A conscript has almost no
+ * keyline *by design* — the faint edge is what its Grade is drawn as — so a
+ * conscript in the white army has only its body left, and smoke takes a fifth
+ * of it. There is exactly one such battalion in the six Rosters authored, in
+ * Castiglione's Austrians, and SMOKE_MUZZLE keeps it out of its own cloud.
+ * Recorded rather than fixed: the alternative is a Grade channel that stops
+ * saying anything.
+ */
+const SMOKE_CAP = 0.268
+const SMOKE_COLOUR = 0xdcdcd6
+
+/**
+ * A single cloud's share of the cap, before the group is composited. Not 1:
+ * with the cap exact, this is the only thing left that lets a firefight read
+ * thicker than a volley. One cloud lands at 0.16 of the way to the ground,
+ * two overlapping at 0.23, three at 0.25 — so density says how much is being
+ * fired here, and stops saying it before it can hide anything.
+ */
+const PUFF_ALPHA = 0.6
+
+/**
+ * A backstop on live clouds, oldest dropped first. Fire rate times SMOKE_LIFE
+ * puts a full Rivoli at about eighty, so this is never reached in a battle and
+ * is here so a pathological one costs frames instead of the tab. Stated because
+ * a cap that silently drops what it cannot draw reads as having drawn it.
+ */
+const SMOKE_MAX = 160
+
 interface UnitVisual {
   container: Container
   /** Body and keyline, under the Figures: what the Unit is, and how good it is. */
@@ -362,6 +485,26 @@ interface UnitVisual {
   trim: Graphics
   /** What the drawing was last built for, so it is rebuilt only when it changes. */
   builtFor: string
+}
+
+/**
+ * A stable number from a Volley's id, so a cloud's raggedness is decided once
+ * and never per frame. Renderer-only: nothing seeded here reaches the
+ * simulation, whose own randomness is C8's and is not this.
+ */
+function hashId(id: string): number {
+  let h = 2166136261
+  for (let i = 0; i < id.length; i++) {
+    h ^= id.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return (h >>> 0) / 4294967296
+}
+
+/** A repeatable 0..1 from a cloud's seed and a disc's place in it. */
+function jitter(seed: number, i: number): number {
+  const x = Math.sin(seed * 127.1 + i * 311.7) * 43758.5453
+  return x - Math.floor(x)
 }
 
 /** Interpolate one Unit between the last two simulation states. */
@@ -400,6 +543,15 @@ export class BattleView {
   private flashed = new Set<string>()
   private clashes: Clash[] = []
   private clashed = new Set<string>()
+  /**
+   * Under the Units and over the beaten ground, in a Container of its own
+   * because the cap is a *group* alpha: the whole bank is drawn, then
+   * composited once. See SMOKE_CAP.
+   */
+  private smokeLayer = new Container()
+  private smoke = new Graphics()
+  private puffs: Puff[] = []
+  private smoked = new Set<string>()
 
   async mount(host: HTMLElement): Promise<void> {
     this.host = host
@@ -427,7 +579,26 @@ export class BattleView {
       artillery: figureTexture("artillery"),
     }
     this.app.stage.addChild(this.world)
-    this.world.addChild(this.overlay, this.fireLayer, this.ghostLayer, this.unitLayer, this.effects)
+    // Half resolution, deliberately. The filter is a full render-texture pass
+    // over the bank's bounds every frame, and smoke is the one thing on the map
+    // with no edge detail worth a retina one — the softening is free legibility
+    // and the fill cost is quartered.
+    const cap = new AlphaFilter({ alpha: SMOKE_CAP })
+    cap.resolution = 1
+    this.smokeLayer.filters = [cap]
+    this.smokeLayer.addChild(this.smoke)
+    this.world.addChild(
+      this.overlay,
+      this.fireLayer,
+      // Behind the Units and behind the Ghosts, which is the roof's own
+      // mitigation for F13 x F5: a Unit is never drawn through its own smoke,
+      // so the silhouette G2 rests on is untouched and only the ground it
+      // stands on is veiled.
+      this.smokeLayer,
+      this.ghostLayer,
+      this.unitLayer,
+      this.effects,
+    )
   }
 
   /** Draw the Field once. Terrain never changes during a battle. */
@@ -535,11 +706,17 @@ export class BattleView {
   draw(previous: BattleSnapshot, current: BattleSnapshot, alpha: number, view: ViewState): void {
     const byId = new Map(previous.units.map((u) => [u.id, u]))
     const units = current.units.map((u) => tween(byId.get(u.id), u, alpha))
+    // Battle time, interpolated the same way a Unit's position is. Smoke ages
+    // and drifts on it rather than on the wall clock (SMOKE_LIFE), so it stops
+    // with a paused battle and thickens the same at any Tempo.
+    const time = previous.time + (current.time - previous.time) * alpha
     this.collectFlashes(current)
     this.collectClashes(current)
+    this.collectSmoke(current, time)
     this.drawOverlay(view)
     this.drawFireZones(units, view)
     this.drawAimLines(units, view)
+    this.drawSmoke(time, view)
     this.drawGhosts(current, view)
     this.drawUnits(units, view)
     this.drawEffects(previous, current, alpha, units, view)
@@ -634,8 +811,87 @@ export class BattleView {
   }
 
   /**
-   * The flash, and nothing else yet: Powder Smoke is a drifting accumulator the
-   * design keeps deliberately inert (T10) and it belongs to its own slice.
+   * Raise a cloud for every Volley not seen yet — one per Volley, which is what
+   * F13 asks for. Remembered by id for the same reason a Flash is: the same
+   * snapshot is drawn for several frames and an unremembered Volley would smoke
+   * once per frame. The memory is pruned with the clouds so it cannot grow.
+   */
+  private collectSmoke(current: BattleSnapshot, time: number): void {
+    for (const volley of current.volleys) {
+      if (this.smoked.has(volley.id)) continue
+      this.smoked.add(volley.id)
+      const cos = Math.cos(volley.direction)
+      const sin = Math.sin(volley.direction)
+      this.puffs.push({
+        at: { x: volley.from.x + cos * SMOKE_MUZZLE, y: volley.from.y + sin * SMOKE_MUZZLE },
+        across: { x: -sin, y: cos },
+        width: volley.width,
+        born: time,
+        // The id, not a counter: two clouds raised in the same step have to
+        // differ, and the id is the only thing about a Volley that is unique.
+        seed: hashId(volley.id),
+      })
+    }
+    // A cloud born after `time` is a battle that has restarted under a view
+    // that outlived it — the ids start at v1 again, so the memory has to go
+    // with them or the new battle's first Volleys are silently already seen.
+    const alive = this.puffs.filter((p) => {
+      const age = time - p.born
+      return age >= 0 && age < SMOKE_LIFE
+    })
+    if (alive.length !== this.puffs.length) {
+      this.puffs = alive
+      if (alive.length === 0) this.smoked.clear()
+    }
+    if (this.puffs.length > SMOKE_MAX) this.puffs.splice(0, this.puffs.length - SMOKE_MAX)
+  }
+
+  /**
+   * The bank. Each cloud is a run of overlapping discs laid along the Face that
+   * fired, swelling and thinning as it goes downwind — so a battalion's
+   * discharge is a bar of smoke a hundred metres wide and a gun's is a knot,
+   * which is the same thing the flash says and the only thing left saying it
+   * once the flash has gone.
+   *
+   * Every disc goes into one Graphics inside one filtered Container, so what
+   * bounds the whole is SMOKE_CAP and never the arithmetic here.
+   */
+  private drawSmoke(time: number, view: ViewState): void {
+    const g = this.smoke
+    g.clear()
+    this.smokeLayer.visible = view.smoke !== false && this.puffs.length > 0
+    if (!this.smokeLayer.visible) return
+    for (const puff of this.puffs) {
+      const t = Math.min(1, Math.max(0, (time - puff.born) / SMOKE_LIFE))
+      // Lingers, then thins: powder smoke goes when the air takes it and not on
+      // a straight line down from the moment it was made.
+      const alpha = PUFF_ALPHA * (1 - t) ** 0.7
+      if (alpha <= 0.004) continue
+      // Fast out of the muzzle and slowing, which is what a cloud does.
+      const radius = SMOKE_RADIUS[0] + (SMOKE_RADIUS[1] - SMOKE_RADIUS[0]) * Math.sqrt(t)
+      const carried = SMOKE_DRIFT * SMOKE_LIFE * t
+      const cx = puff.at.x + SMOKE_BREEZE.x * carried
+      const cy = puff.at.y + SMOKE_BREEZE.y * carried
+      const discs = Math.min(14, Math.max(2, Math.round(puff.width / radius) + 1))
+      for (let i = 0; i < discs; i++) {
+        // Spread along the Face, ends included, so the bar is as wide as the
+        // Frontage that fired and not a disc's worth wider.
+        const along = (i / (discs - 1) - 0.5) * puff.width
+        const wobble = (jitter(puff.seed, i) - 0.5) * radius * 0.9
+        const size = radius * (0.72 + 0.5 * jitter(puff.seed, i + 64))
+        g.circle(
+          cx + puff.across.x * along - SMOKE_BREEZE.x * wobble,
+          cy + puff.across.y * along - SMOKE_BREEZE.y * wobble,
+          size,
+        ).fill({ color: SMOKE_COLOUR, alpha })
+      }
+    }
+  }
+
+  /**
+   * The flash alone. Its Powder Smoke is a layer down and a different clock —
+   * the flash is the discharge and the cloud is what the discharge leaves, and
+   * the second outlives the first by forty-five seconds.
    */
   private drawFlashes(): void {
     const now = performance.now()
