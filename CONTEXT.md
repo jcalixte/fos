@@ -58,7 +58,12 @@ _Avoid_: stamina, energy, tiredness
 
 **Disorder**:
 The state of a Unit whose ranks have lost their shape. A Disordered Unit cannot change
-Formation or charge until it re-forms. Its opposite is Ordered.
+Formation or charge until it re-forms, and its fire falls off while it is in it. It is something
+that happens to a Unit and never something it does: a **Pursuit** puts the pursuer in it, and a
+**Rout** running over a formed Unit puts that Unit in it. The way out is standing still for the
+drill, which a Unit that is marching is not doing
+([ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)). Its opposite
+is Ordered.
 _Avoid_: broken (that is Break), shaken, chaos, messy
 
 **Break**:
@@ -410,8 +415,11 @@ _Avoid_: game speed, time scale, simulation speed
 - A **Unit** whose **Morale** gives out will **Break** into a **Rout**, and may later **Rally**
 - A Routing **Unit** sheds **Strength** as it runs, and **Rallies** with a lower **Morale Ceiling**
 - **Pursuit** denies a **Rally** outright, and costs the pursuer **Disorder**, **Fatigue** and position
+- A **Unit** in **Disorder** re-forms by standing still, and a **Unit** that is marching is not
+  standing still — so what a **Pursuit** costs in ranks is paid on the walk home
 - The **Headquarters** hastens a **Rally**, which is its third job after couriers and sight
-- A Routing **Unit** that crosses a formed one throws it into **Disorder**
+- A Routing **Unit** that crosses a formed one throws it into **Disorder**, whichever army it
+  belongs to — men coming back through a line at the run do not present their colours first
 - A **Unit** delivers a **Volley** on its own reload clock, or presses a **Charge** into **Contact**
 - A **Unit** has to be halted to deliver a **Volley**, because what has to be halted is the
   **Face** — so a **Formation** with no **Face** and reach to fire with, which is **Open Order**

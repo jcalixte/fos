@@ -124,7 +124,25 @@ on which a Unit can be authored into a place it can never walk out of, so the pa
 none is: every Unit, every destination in the Plan and both pieces of Key Ground are reachable
 from where the men who have to get to them start.
 
-Not built yet: Disorder, Concealment, Powder Smoke, sound.
+Disorder, which is the ranks rather than the nerve or the legs — the third thing a Unit spends, and
+the one nothing it does can spend. Two things buy it: riding a mob down, and a mob running back over
+a formed Unit, either army's. It costs the three CONTEXT always said it would — no Formation change,
+and a drill already under way is ruined; no Charge, whoever asks; and half its fire, because a Unit
+whose files are mixed has no dressed rank to level along, which is what Open Order already pays for
+in its reload. The way out is standing still for the drill out of the loosest order there is, taken
+off the same table that times a battalion into square, so an elite gets its ranks back faster than a
+conscript and nothing in the rule says how long anything takes. A Unit that is marching is not
+standing still, which is how a Pursuit finally costs its third price: the regiment is disordered
+afresh every step it is among them and is not standing still until it has come home, so the length
+of the ride is charged without anything counting it
+([ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)). It is also
+the first rule by which one Unit's collapse reaches another directly: a broken battalion streaming
+back through its own second line now costs that line half a minute of not being able to make square,
+and that is exactly the minute horse tends to arrive in. On the map it takes the glyph — the last
+mark a Unit had left (DESIGN §8 rank 7, T21) — because Disorder has no silhouette, no colour and no
+edge of its own, and the silhouette already says what Formation a Unit is in.
+
+Not built yet: Concealment, Powder Smoke, sound.
 
 ## Layout
 
@@ -153,4 +171,5 @@ Not built yet: Disorder, Concealment, Powder Smoke, sound.
   - [0009 — The URL names a battle, and nothing inside one](./docs/adr/0009-the-url-names-a-battle.md)
   - [0010 — Fatigue is bought by the pace](./docs/adr/0010-fatigue-is-bought-by-the-pace.md)
   - [0011 — Morale comes back out of the fight](./docs/adr/0011-morale-comes-back-out-of-the-fight.md)
+  - [0012 — Disorder is what a mob costs the troops it runs over](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)
 <!-- docs:end -->

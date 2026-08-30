@@ -670,7 +670,7 @@ The full 20×20 grid is in the [annex](#annex--full-roof-grid). Six pairs matter
 | C4  | Field                | cell grid, Ground, Height, gradient, impassability, Concealment         | — |
 | C5  | Routing              | A* over cells, string-pulling, funnelling to Crossings                  | — |
 | C6  | Fighting             | Volley, Charge, Contact — every effect derived from C3's geometry       | — |
-| C7  | Morale               | Morale, Fatigue, Disorder, Break, Rout, Rally, Morale Ceiling, Army Break | — |
+| C7  | Morale               | Morale, Fatigue, Disorder, Break, Rout, Rally, Morale Ceiling, Army Break | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md), [0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md), [0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md) |
 | C8  | Battle Clock         | fixed timestep, Tempo, Arrivals, Plan triggers, end conditions, seed    | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
 | C9  | Field Renderer       | terrain drawn from the grid                                            | — |
 | C10 | Unit Renderer        | silhouette, base, Figures, the Arm/Grade/Morale channels, render interpolation | — |
@@ -756,7 +756,7 @@ now spoken for — which is the cost recorded as T18.
 | 4 | F10 Morale | Break at 15–30% casualties; 0 Strength is a bug | Castiglione | Add global Morale scalars. If per-Formation constants are needed, F8 has failed — record it. |
 | 5 | F11 battle length | 20–40 min at Tempo 1 | Castiglione | Raise default Tempo, then shorten the Scenario clock. Both are data. |
 | 6 | F6 Field on one screen | ≤1920m, 60fps | Rivoli — the largest Field in the campaign | Add zoom and pan, and accept that G2's silhouette guarantee weakens with it (T8). |
-| 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. Adding the glyph means G2 is being carried by UI rather than by the game. *The base outline is built and its edges are now spent on the Arm, Grade and Morale channels (§7), so the glyph is the only rung left.* |
+| 7 | F5 silhouette | 4 infantry silhouettes distinct at 1 px/m; Figure ≥ 3px | Rivoli | Add an army-coloured base outline, then a Formation glyph. *Both rungs are now spent and neither went where this row expected. The base outline's edges carry the Arm, Grade and Morale channels (§7), and the glyph carries **Disorder** ([ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)) — spent on the one read a Unit has that no silhouette could ever give, rather than on labelling the Formation the silhouette already names. So the ladder is gone and the fallback for a silhouette that does not read is a new one.* |
 | 8 | F4 routing | under 10ms on 250×250 | Rivoli — gorges are the worst case | Precompute a flow field per Crossing. Cheap, and it makes funnelling exact. |
 | 9 | F14 interpolation | zero judder at 10Hz sim / 60fps render | any scenario | Raise the sim to 20Hz. Costs determinism nothing; costs CPU almost nothing at 40 bodies. |
 | 10 | F17 Field authoring | a Field in under an hour | Rivoli — hand-painting 200m of relief | Build the tile editor after all, reinstating the cost ADR-0003 flagged. |
@@ -772,6 +772,7 @@ On the fixtures, where a rule is watched in isolation:
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
+| — | C7 Disorder: two causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts` |
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
@@ -784,12 +785,14 @@ Roster gave it. Take them again rather than trusting this table, which is what i
 | 5 | F11 dead clock | 0:10 and 0:08 | 0:23 and 0:02 |
 | 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
 | 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
-| 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **13.0–44.3%**, medians 18.3% and 18.8% |
-| 4 | F10 Breaks outside the band | 2 of 11, and each says why | 4 of 26, and each says why |
-| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 61 men |
+| 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **9.3–44.3%**, medians 18.3% and 18.8% |
+| 4 | F10 Breaks outside the band | 2 of 11, and each says why | 5 of 28, and each says why |
+| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 45 men, and it is a mob on the run |
 | 8 | F4 routing under 10ms | — | 0.16–1.49ms through the gorge; **4.4–5.0ms corner to corner** |
 | 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 fire both ways |
 | 2 | F3 the Latitude leash, in metres from the Post | close-up 100m; stand-off 250m; follow-up 300m | close-up 100m; stand-off 250m; follow-up 300m |
+| — | C7 Disorder, spells and Unit-seconds | 1 spell / 21s and 6 / 345s | 7 / 258s and 15 / 937s |
+| — | C7 Disorder bought by a Pursuit | **none, on any run** | **none, on any run** |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
@@ -913,33 +916,38 @@ attack column stops being a fat enough target for §6's line-against-column exch
 about thirteen the tail comes back. The Dragoner falls from 57.4% to 30.2% and the 1er Hussards from
 43.6% to 30.4%, and the single Volleys that decided them from 54% and 36% of the Unit to 24% and 23%.
 
-**The six Breaks outside the band are three shapes, and each says which on the line that reports
-it.** Two are a small mounted Unit taking a whole battalion's Volley — a quarter or a third of a
-two-hundred-and-eighty-man regiment at a stroke, with nothing at all regained. That is not a Morale
-rule deciding anything: `shots` scales with the Unit firing while the overlap reads the target's
-width and never its size, so the fire a Unit draws does not know how many men it has to absorb it
-with. Two are the opposite case — the 1er/5e and the 14e Légère, both broken past the half-hour
+**The seven Breaks outside the band are three shapes, and each says which on the line that reports
+it.** Two are a small mounted Unit taking a whole battalion's Volley — the 1er Hussards for 23% of
+itself and the Dragoner for 34%, at a stroke, with nothing at all regained. That is not a Morale
+rule deciding anything and it is not a fault in the fire either: a two-hundred-and-eighty-man
+regiment in two ranks is as wide as a battalion in line, so it draws the whole Volley with a third
+of the men to absorb it. The geometry is right and the arithmetic follows it. Two are the opposite
+case — the 1er/5e and the 14e Légère, both broken past the half-hour
 under fire so sporadic that the worst Volley either saw took 4% of it, both having steadied in the
 gaps. That is [ADR-0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md) working rather than
 failing: a battalion shot at once every two minutes is mostly out of the fight and ought to mend.
 What it costs is a Unit that fought all afternoon sitting a few points over the band.
 
 **The third shape appeared with the briefed Rosters, and it is the flank rule doing its job.** The
-other two miss high; this one misses low. The 2e/75e Broke at 13.0% of itself and the
-Kavalleriebatterie at 14.9%, both with no Fatigue on them, no lowered Ceiling under them, and every
-Morale point they lost coming on a step that cost them men — so neither shock nor mending explains
-either. What does is *where the fire came from*: weighted by the men it killed, the 2e/75e was shot
-0.98 off its Face and the battery 0.77, on the `1 - cos` scale `flanking` prices shock on, where 1
-is square on the flank. Fire from the flank is meant to cost more nerve than the men in it —
+other two miss high; this one misses low, and it is now three of the seven. The 2e/75e Broke at 9.3%
+of itself, the 32e at 13.7% and the Kavalleriebatterie at 14.9%, all with no Fatigue on them, no
+lowered Ceiling under them, and every Morale point they lost coming on a step that cost them men —
+so neither shock nor mending explains any of them. What does is *where the fire came from*: weighted
+by the men it killed, the 2e/75e was shot 1.52 off its Face, the 32e 1.78 and the battery 0.77, on
+the `1 - cos` scale `flanking` prices shock on, where 1 is square on the flank and 2 is from behind. Fire from the flank is meant to cost more nerve than the men in it —
 `flanking` exists because Units broke from being flanked long before the casualties justified it —
 so a battalion shot in the flank all afternoon Breaks below a band that counts casualties, and
 should. **It is a shape the design could not have seen before now:** a flank is something somebody
 has to manoeuvre to find, and until Rosters carried a rung nobody manoeuvred. Every Unit stood
 where its Plan posted it, facing where it was pointed.
 
-The three are not interchangeable and the budget run does not treat them as one. Twelve of the
-thirty-one Breaks *inside* the band were also flanked past the same bound, so read as a blanket
-excuse the flank clause would forgive nearly anything. It is asserted against the direction of the
+Disorder added no fourth shape. It moved two Breaks a few points and added two more to Rivoli taken
+Austrian, and every one of them landed in one of the three above — which is the answer wanted from a
+rule that costs a Unit its ranks and never its nerve.
+
+The three are not interchangeable and the budget run does not treat them as one. Most of the Breaks
+*inside* the band were also flanked past the same bound, so read as a blanket excuse the flank
+clause would forgive nearly anything. It is asserted against the direction of the
 miss instead: a big Volley and a Unit that steadied explain a Break that came late, and being shot
 off the Face explains one that came early, and only that.
 
@@ -987,6 +995,30 @@ below: a Unit at `hold-ground` standing under fire it cannot answer is obeying i
 number now moves when the brief moves, which is the first evidence that it measures the brief and
 not the rule list.
 
+**Disorder fires on all four runs and never once as a Pursuit, which is the design saying so
+rather than the rule failing.** Between one spell and fifteen a run, twenty-one to nine hundred and
+thirty-seven Unit-seconds — about two per cent of an afternoon on the run that has most of it — and
+every single one of them a mob coming back through a formed Unit. Not one is a pursuer, because the
+silent runs cannot reach one: a Plan has never issued a Charge, no rung of the Latitude ladder buys
+an advance after a beaten enemy, and a Pursuit is what a Charge becomes. So the half of C7's newest
+rule that the whole thing was built for is exercised on the fixture and nowhere else, which is the
+same answer §0 already gives for square and the countercharge — the campaign under-exercises it,
+and the fixture is where it is watched.
+
+**What it cost is one afternoon out of four, and the cost fell on the attacker again.** Castiglione
+does not move at all beyond a single Break landing 1.7 points later; Rivoli taken French does not
+move by a digit. Rivoli taken Austrian is the run that pays: the French go from 66.0% gone to 74.5%
+and the Austrians from 6.9% to 24.1%, with the same winner on the same ending. Both armies bleed
+more and neither wins differently, which is the shape a rule ought to have that costs troops their
+shape and never their nerve.
+
+**The rule was too eager once, and the measure is what said so.** Written as the two shapes merely
+touching, it fired on a mob streaming twenty metres in front of a line without a man of it coming
+through, and it flipped Rivoli taken Austrian outright. Asked instead as the two being *in among
+each other*, three runs of the four come back with the numbers they had. A rule that changes every
+battle it is added to is not a rule about mobs running over troops; it is a tax on standing behind a
+fight.
+
 **Two of this section's own targets cannot be checked as written.** Rank 2's *never idle under
 threat* predates ADR-0007: at `hold-ground` a Unit standing under fire it cannot answer is obeying
 its brief, so the measure reports 1210–6990 Unit-seconds of exactly that and cannot call any of it a
@@ -1017,6 +1049,7 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 | T14 | Rule list over behaviour tree or utility scoring | every autonomous act has a nameable cause, so F7 is free; deterministic; authorable as data | no subtlety and no coordination between Units; the list grows long and order-sensitive | [0004](./docs/adr/0004-initiative-is-an-ordered-rule-list.md) |
 | T16 | A Latitude ladder leashed to the Post, over Initiative that never advances | a Unit answers what it can see without a ninety-second Courier ride for a hundred metres of ground; the brief scales with the Field where the Courier does not | the rule list now reads differently on different Units, so a Dispatch's cause has two halves; a rung can be set and forgotten | [0007](./docs/adr/0007-a-standing-order-sets-a-units-latitude.md) |
 | T18 | Three map reads on a 2.6px bar, over a panel the player has to open | Arm, Grade and Morale are readable without selecting anything, so G2 covers a Unit and not only its Formation; Morale is on the map at all, where before it appeared only once a Unit had already Broken | every channel a Unit has is now spoken for, so a fourth read has nowhere to go but a glyph; all three are learned rather than labelled, and nothing on screen teaches them | — |
+| T21 | The glyph spent on Disorder, over a Formation glyph or a fourth channel | the one read on a Unit that no silhouette, hue or edge could ever have carried — and it decides whether the Unit can make square or go at anybody, so it is the read the player most needs before he picks a Unit up | the last rung of §8 rank 7's fallback ladder is gone, so a silhouette that fails at 0.7px/m now has no answer written down; a fifth read has nowhere at all to go; and the mark is learned rather than labelled, like the other four | [0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md) |
 | T17 | A Headquarters that can be harried and ridden over, against one that can be captured | *where do I stand* becomes a decision the player makes all afternoon; ADR-0002's other half — it can be shot at — is finally built, and off the beaten ground C6 already draws | a flat surcharge compresses the distance gradient F1 rests on, worst for the Orders with the shortest way to go; the enemy pays nothing for any of it until its own Orders are couriered | [0008](./docs/adr/0008-the-headquarters-rides-and-can-be-harried.md) |
 | T20 | Fatigue bought by the pace, over a cost per action | one law covers a flank march, a Rout, a gallop and a battery limbering up, so Pursuit costs what running costs without a rule of its own; Formation reaches Fatigue through its speed and never through a table, so F8 survives the easiest place to break it | a Formation that is slow because it is hard to hold together — a line over broken ground — reads as restful; nothing is saved, so it is an afternoon's arithmetic and cannot carry into a campaign | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
@@ -1036,12 +1069,19 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   **Trigger:** a Castiglione where the column is never the right way to attack.
 - **Command friction is the player's alone.** A Headquarters that is harried or ridden over costs the enemy nothing, because the Plan applies its Orders where they land instead of couriering them — so the whole of ADR-0008 is a rule only one army obeys, drawn only for the army that obeys it. **Trigger:** the first enemy commanded through Couriers rather than through an authored Plan, at which point the rule is already written and the enemy Headquarters wants drawing.
 - **Fatigue against a thirty-minute clock.** Bought by the pace, so infantry at 0.8–1.4 m/s tires slowly by design and cavalry at the gallop tires fast. **Trigger:** a Castiglione where no Unit is ever winded, in which case the rule is decoration for two Arms out of three — or one where a battalion is blown before the first Volley, which is an afternoon spent watching men who cannot fight.
-- **A Pursuit costs two of its three prices.** CONTEXT says it leaves the pursuer in Disorder,
-  heavy with Fatigue and far out of position. Fatigue and position are charged and neither needed a
-  rule — the run-in is priced by ADR-0010 and the walk home by the mob having run to its own rear —
-  but Disorder is not built anywhere, so a regiment that has spent two minutes loose among a mob
-  re-forms as tidily as one that never moved. **Trigger:** Pursuit reading as free on the fixture,
-  or the second place Disorder is wanted (a Rout crossing a formed Unit), whichever comes first.
+- **A Pursuit costs all three of its prices.** *Resolved by
+  [ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md).* The run-in
+  was priced by ADR-0010 and the walk home by the mob having run to its own rear; the ranks are now
+  priced by Disorder, and by the same trick — the pursuer is disordered afresh every step he is
+  among them and re-forms only standing still, so the length of the ride is paid for by not being
+  home yet. Nothing counts it. What is *not* measured is the price in a battle: no nominal run
+  reaches a Pursuit at all, so the whole of this rests on the fixture. **Trigger to look again:** the
+  first Scenario in which the enemy Plan lets horse go at anybody.
+- **Re-forming under fire.** ADR-0011 keeps Morale from mending between two Volleys; nothing keeps
+  ranks from mending between two Volleys, so a battalion dresses itself in half a minute inside a
+  firefight. Left as the honest first version rather than two rules of the same shape stacked on the
+  same afternoon before either is measured. **Trigger:** a Unit visibly re-forming in the middle of a
+  fight it could not have dressed in.
 - **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
