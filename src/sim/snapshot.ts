@@ -245,8 +245,29 @@ export const STRENGTH_STEP = 10
  */
 export const ENEMY_COURIERS = false
 
+/**
+ * A snapshot of nothing: no Field, no armies, no feed.
+ *
+ * What a screen holds before it has been told anything — a battle it has asked
+ * a server for and not yet heard back about. Not an empty battle: an empty
+ * *report* of one.
+ */
+export function noSnapshot(): BattleSnapshot {
+  return {
+    time: 0,
+    units: [],
+    couriers: [],
+    ghosts: [],
+    headquarters: [],
+    keyGround: [],
+    volleys: [],
+    contacts: [],
+    dispatches: [],
+  }
+}
+
 /** The rounding above, applied. */
-function shown(strength: number, mine: boolean): number {
+function menOf(strength: number, mine: boolean): number {
   const men = Math.round(strength)
   return mine ? men : Math.round(men / STRENGTH_STEP) * STRENGTH_STEP
 }
@@ -258,14 +279,27 @@ function shown(strength: number, mine: boolean): number {
  * the moment before an Army has been taken — and nothing is cut. Every other
  * caller names an army, and the parameter is required so that naming one is a
  * decision somebody made rather than a default nobody noticed.
+ *
+ * `deploying` is the harder half of the same cut: while two armies are being
+ * arranged at once, neither is on the other's Field at all (F23). It is not a
+ * phase this module knows about — the simulation has no Deployment in it, only
+ * a clock that has not started — so whoever is holding the phase says so. A
+ * solo battle never passes it: there is no second army being arranged, only a
+ * Roster standing where it was authored, and hiding that would be taking six
+ * existing battles away for a rule with nobody on the other side of it.
  */
-export function snapshot(battle: Battle, forArmy: ArmyId | null): BattleSnapshot {
+export function snapshot(
+  battle: Battle,
+  forArmy: ArmyId | null,
+  deploying = false,
+): BattleSnapshot {
   const briefs = briefsInFlight(battle)
   const dictated = dictatedUnits(battle)
   const own = (army: ArmyId | null) => forArmy === null || army === forArmy
+  const shown = deploying ? battle.units.filter((unit) => own(unit.army)) : battle.units
   return {
     time: battle.time,
-    units: battle.units.map((unit) => {
+    units: shown.map((unit) => {
       const mine = own(unit.army)
       return {
         id: unit.id,
@@ -275,7 +309,7 @@ export function snapshot(battle: Battle, forArmy: ArmyId | null): BattleSnapshot
         grade: unit.grade,
         // Whole men. Casualties are the expected value and land fractional; the
         // fraction is the simulation's business and not the screen's.
-        strength: shown(unit.strength, mine),
+        strength: menOf(unit.strength, mine),
         position: { ...unit.position },
         facing: unit.facing,
         formation: unit.formation,
@@ -315,7 +349,7 @@ export function snapshot(battle: Battle, forArmy: ArmyId | null): BattleSnapshot
       })),
     ghosts: ghosts(battle).filter((ghost) => own(armyOf(battle, ghost.unitId))),
     headquarters: battle.armies.flatMap((army) =>
-      army.headquarters
+      army.headquarters && (!deploying || own(army.id))
         ? [
             {
               army: army.id,

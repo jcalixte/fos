@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "server": "bun --watch server/main.ts",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint",

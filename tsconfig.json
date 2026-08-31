@@ -3,7 +3,8 @@
   "references": [
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
-    { "path": "./tsconfig.scripts.json" }
+    { "path": "./tsconfig.scripts.json" },
+    { "path": "./tsconfig.server.json" }
   ],
   // Not used to build anything — `files` is empty and the real settings live in
   // the referenced projects. It is here because Bun reads the nearest

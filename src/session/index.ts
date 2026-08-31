@@ -95,10 +95,44 @@ export interface BattleSession {
   readonly tempo: number
   /** How the battle ended, once it has. Null while it is still being fought. */
   readonly outcome: Outcome | null
+  /**
+   * The Army this Commander has taken, or null while he is still reading the
+   * offer. The screen reads the phase off this rather than remembering it: an
+   * army is taken by asking the battle for one, and under two Commanders the
+   * answer can be no.
+   */
+  readonly army: ArmyId | null
+  /**
+   * The address a second Commander joins at, or null where there is no second
+   * Commander — which is every solo battle. It is what G6's link is made of.
+   */
+  readonly address: string | null
+  /**
+   * True while the other Commander is still arranging his army, or has not
+   * arrived at all. Never true of a solo battle, and never carrying anything
+   * about *what* he is doing (F23).
+   */
+  readonly waitingForTheOther: boolean
+  /** True once this Commander has said his own army is arranged. */
+  readonly stoodTo: boolean
+  /**
+   * What went wrong, in a line meant to be read: both armies taken, no such
+   * battle, a Command refused. Null when nothing has.
+   */
+  readonly trouble: string | null
+  /**
+   * True when the battle refused this Commander outright rather than refusing
+   * one thing he said: both armies taken, or no battle at that address. There
+   * is nothing to wait for and nothing to retry — the same Scenario can always
+   * be fought alone, which is what the screen offers instead.
+   */
+  readonly turnedAway: boolean
   /** Wall-clock seconds have passed. */
   advance(seconds: number): void
   /** Say something to the battle. */
   send(command: Command): void
   /** What each army had to show for the afternoon. Read once it is over. */
   returns(): ArmyReturn[]
+  /** Put it down. A local battle simply ends; a remote one lets go of the socket. */
+  close(): void
 }

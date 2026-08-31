@@ -6,6 +6,8 @@ import { loadScenario } from "@/scenario/loader"
 import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
 import type { BattleSession, Command } from "@/session"
 import { LocalSession } from "@/session/local"
+import { RemoteSession } from "@/session/remote"
+import { deploymentZone } from "@/sim/deployment"
 import { canCharge, chargeable } from "@/sim/charge"
 import { canFire, FIGHTING_FORMATION } from "@/sim/formation"
 import type {
@@ -107,6 +109,23 @@ export interface BattleUi {
    * and everything is later while it is harried (ADR-0008).
    */
   headquarters: { riding: boolean; harried: boolean; surcharge: number; dictated: number }
+  /**
+   * The address to hand a second Commander, or null in a solo battle. It is
+   * what G6's link is made of, and the only thing on this screen that only a
+   * two-Commander battle has.
+   */
+  address: string | null
+  /**
+   * True while the other Commander is still arranging his army, or has not
+   * arrived. It says *that* and never what he is doing (F23).
+   */
+  waiting: boolean
+  /** True once this Commander has said his own army is arranged. */
+  stoodTo: boolean
+  /** What the battle would not take, or could not be reached. */
+  trouble: string | null
+  /** True when the battle refused this Commander outright rather than one thing. */
+  turnedAway: boolean
 }
 
 /** A Battle Ui as it stands with no Scenario on the Field. */
@@ -137,6 +156,11 @@ function blankUi(): BattleUi {
     keyGround: [],
     decidedBy: null,
     headquarters: { riding: false, harried: false, surcharge: 0, dictated: 0 },
+    address: null,
+    waiting: false,
+    stoodTo: false,
+    trouble: null,
+    turnedAway: false,
   }
 }
 
@@ -256,12 +280,23 @@ export function useBattle() {
   let loads = 0
 
   /**
-   * Put a Scenario on the Field, named as the URL names it. `army` takes it in
-   * the same breath, skipping the offer — that is the shortcut back onto a
-   * Field under work, and it is the only way the first decision of a battle is
-   * ever made for the player.
+   * Put a Scenario on the Field, named as the URL names it.
+   *
+   * `army` takes it in the same breath, skipping the offer — that is the
+   * shortcut back onto a Field under work, and it is the only way the first
+   * decision of a battle is ever made for the player. It is honoured only in a
+   * solo battle: a link handed to a second Commander says which *battle*, never
+   * which army, because the army is the server's to hand out.
+   *
+   * `address` names a battle already open on a server, and `against` asks for a
+   * new one. Either makes the session remote; neither makes anything else here
+   * different, which is the whole of what the seam was bought for (ADR-0013).
    */
-  async function start(host: HTMLElement, id: string, army?: string): Promise<void> {
+  async function start(
+    host: HTMLElement,
+    id: string,
+    { army, address, against }: { army?: string; address?: string; against?: boolean } = {},
+  ): Promise<void> {
     const load = ++loads
     ui.phase = "loading"
     ui.error = null
@@ -300,7 +335,10 @@ export function useBattle() {
       v.setField(battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
       view.value = v
 
-      const s = markRaw(new LocalSession(loaded)) as BattleSession
+      const remote = against === true || typeof address === "string"
+      const s = markRaw(
+        remote ? new RemoteSession(id, address ?? null, () => {}) : new LocalSession(loaded),
+      ) as BattleSession
       s.send({ kind: "tempo", tempo: ui.tempo })
       session.value = s
 
@@ -311,7 +349,8 @@ export function useBattle() {
       viewState.keyGround = s.current.keyGround
       last = performance.now()
       frame = requestAnimationFrame(tick)
-      if (army) commandArmy(army)
+      // Only solo. On a join link the seat is the server's to give.
+      if (army && !remote) commandArmy(army)
     } catch (error) {
       if (load !== loads) return
       const message = error instanceof Error ? error.message : String(error)
@@ -332,6 +371,7 @@ export function useBattle() {
     frame = 0
     view.value?.destroy()
     view.value = null
+    session.value?.close()
     session.value = null
     scenario = null
     battleId = ""
@@ -362,10 +402,53 @@ export function useBattle() {
     ui.tempo = s.tempo
     viewState.keyGround = s.current.keyGround
     readStaff()
+    readSeat(s)
+    readPhase(s)
     if (ui.dispatches.length !== s.current.dispatches.length) {
       ui.dispatches = s.current.dispatches
     }
-    if (s.outcome && ui.phase === "battle") finish(s)
+  }
+
+  /**
+   * Who this Commander is, read off the session rather than remembered.
+   *
+   * Taking an Army is a thing the battle answers, not a thing the screen
+   * decides: under two Commanders the answer can be no, and it does not come
+   * back in the same breath as the asking.
+   */
+  function readSeat(s: BattleSession): void {
+    const army = s.army ?? ""
+    if (army !== ui.playerArmy) {
+      ui.playerArmy = army
+      viewState.playerArmy = army
+      if (army) rememberBattle({ battle: battleId, army })
+    }
+    ui.address = s.address
+    ui.waiting = s.waitingForTheOther
+    ui.stoodTo = s.stoodTo
+    ui.trouble = s.trouble
+    ui.turnedAway = s.turnedAway
+  }
+
+  /**
+   * How far along the battle is, read off the session too. There is no phase
+   * the screen can know on its own any more: Standing To is a thing said and
+   * not a thing done, and the clock runs when the *battle* says both armies are
+   * arranged — or when the three minutes are up (F23).
+   */
+  function readPhase(s: BattleSession): void {
+    const phase: Phase = s.outcome
+      ? "over"
+      : !s.army
+        ? "command"
+        : s.running
+          ? "battle"
+          : "deployment"
+    if (phase === ui.phase) return
+    ui.phase = phase
+    viewState.deploymentZone =
+      phase === "deployment" ? deploymentZone(scenario!, ui.playerArmy) : null
+    if (phase === "over") finish(s)
   }
 
   /** Close the battle down and read what it came to. */
@@ -420,29 +503,51 @@ export function useBattle() {
   function commandArmy(armyId: string): void {
     const s = session.value
     if (!s || !scenario || ui.phase !== "command") return
-    const mine = scenario.armies.find((a) => a.id === armyId)
-    if (!mine) return
-    ui.playerArmy = mine.id
-    viewState.playerArmy = mine.id
-    // From here the battle is only ever seen through one Commander's eyes: what
-    // the other army's Units have left in their legs, what they are laid on and
-    // what they have been told stop being taken at all (C17).
-    s.send({ kind: "take-army", army: mine.id })
+    if (!scenario.armies.some((a) => a.id === armyId)) return
+    // Asked for, and not taken. From the moment it is granted the battle is
+    // only ever seen through one Commander's eyes: what the other army's Units
+    // have left in their legs, what they are laid on and what they have been
+    // told stop being taken at all (C17). `readSeat` picks up the answer.
+    s.send({ kind: "take-army", army: armyId })
+    readSeat(s)
+    readPhase(s)
     ui.units = s.current.units
     readHeadquarters()
-    // Drawn from the Scenario, which the screen has anyway. The session holds
-    // the same rectangle and is what actually keeps a Unit inside it.
-    viewState.deploymentZone = mine.deploymentZone ?? null
-    ui.phase = "deployment"
-    rememberBattle({ battle: battleId, army: mine.id })
   }
 
+  /**
+   * Hand this battle to a second Commander.
+   *
+   * The Scenario on the Field does not change and neither does anything else on
+   * this screen: the session underneath it does, from the whole battle in this
+   * tab to a socket onto a process holding it. That swap being one line is what
+   * C16 was bought for, and it is the strongest thing anybody can say about the
+   * seam actually being one.
+   */
+  function fightAnother(): void {
+    const s = session.value
+    if (!s || ui.phase !== "command" || s.address !== null) return
+    s.close()
+    const r = markRaw(new RemoteSession(battleId, null, () => {})) as BattleSession
+    r.send({ kind: "tempo", tempo: ui.tempo })
+    session.value = r
+    // Nothing is on the Field until a seat and an army have been given: at
+    // Deployment neither army is on the other's map at all (F23).
+    ui.units = []
+    ui.dispatches = []
+  }
+
+  /**
+   * Stand To: the army is arranged. Solo that is the whole barrier and the
+   * clock runs at once; against another Commander it is one half of one, and
+   * the battle starts on both or on the three-minute clock (F23).
+   */
   function beginBattle(): void {
     const s = session.value
     if (!s) return
-    ui.phase = "battle"
-    viewState.deploymentZone = null
     s.send({ kind: "stand-to" })
+    readSeat(s)
+    readPhase(s)
   }
 
   function setTempo(tempo: number): void {
@@ -976,6 +1081,7 @@ export function useBattle() {
     ui,
     start,
     commandArmy,
+    fightAnother,
     beginBattle,
     setTempo,
     toggleFireZones,

@@ -1,0 +1,27 @@
+# The process a two-Commander battle lives in (ADR-0013). No build step: Bun's
+# resolver takes `src/sim/`'s extensionless imports directly, which is half of
+# why the server runs on it at all (ADR-0014).
+FROM oven/bun:1-alpine
+WORKDIR /app
+
+# Nothing to install. The whole runtime dependency list of this project is pixi,
+# vue, vue-router and daisyui, and the server uses none of them — `Bun.serve`
+# carries the socket.
+COPY tsconfig.json ./
+COPY server ./server
+COPY src ./src
+# The Scenarios and the Rosters they name, read off the disk exactly as a
+# headless run reads them. Both ends build their Field with the same
+# `buildScenario`, so a divergence would have to be in decoding a PNG rather
+# than in reading one.
+#
+# Both directories, because a Scenario names its Rosters by the path the browser
+# fetches them at — `/rosters/french-castiglione.json` — and `loadScenarioFromDisk`
+# joins that onto the root. Copying only `scenarios/` gets a server that opens a
+# socket, answers every battle with *gone*, and says nothing about why.
+COPY public/scenarios ./public/scenarios
+COPY public/rosters ./public/rosters
+
+ENV PORT=8787
+EXPOSE 8787
+CMD ["bun", "server/main.ts"]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, useTemplateRef } from "vue"
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from "vue"
 import { useRoute, useRouter } from "vue-router"
 import DeploymentPanel from "@/components/DeploymentPanel.vue"
 import DispatchPanel from "@/components/DispatchPanel.vue"
@@ -23,11 +23,21 @@ const host = useTemplateRef<HTMLElement>("host")
 const id = String(route.params.battle)
 
 /**
+ * The battle's address on a server, when the URL carries one. That is what
+ * makes this a two-Commander battle: the page is otherwise identical, which is
+ * the seam doing its job (ADR-0013).
+ */
+const address = typeof route.params.id === "string" ? route.params.id : undefined
+
+/**
  * The army, if the URL already names one. It is a query and not a path so that
  * taking one does not remount the Field, and so that the one press back from
  * Deployment is the menu rather than the offer that was just answered.
+ *
+ * Not honoured on a join link. Which army a Commander gets there is the
+ * server's answer and not the address bar's.
  */
-const army = typeof route.query.army === "string" ? route.query.army : undefined
+const army = !address && typeof route.query.army === "string" ? route.query.army : undefined
 
 /**
  * Take an Army, and say so in the URL. Replacing rather than pushing keeps the
@@ -37,8 +47,36 @@ const army = typeof route.query.army === "string" ? route.query.army : undefined
  */
 function take(armyId: string): void {
   battle.commandArmy(armyId)
-  if (ui.playerArmy === armyId) {
+  if (!address && ui.playerArmy === armyId) {
     void router.replace({ name: "battle", params: { battle: id }, query: { army: armyId } })
+  }
+}
+
+/**
+ * The address the server gave this battle, put in the URL as soon as it has
+ * one. The path changing remounts the Field, which is what makes the second
+ * mount a *join* — by the token this browser has just been given — and is
+ * therefore the same path a Commander coming back Out of Contact takes.
+ */
+watch(
+  () => ui.address,
+  (at) => {
+    if (at && !address) void router.replace({ name: "seat", params: { battle: id, id: at } })
+  },
+)
+
+/** The link to hand the other Commander, once there is one. */
+const link = computed(() => (ui.address ? `${location.origin}/battles/${id}/${ui.address}` : null))
+const copied = ref(false)
+
+async function copyLink(): Promise<void> {
+  if (!link.value) return
+  try {
+    await navigator.clipboard.writeText(link.value)
+    copied.value = true
+    setTimeout(() => (copied.value = false), 2000)
+  } catch {
+    // No clipboard permission. The link is on screen to be read either way.
   }
 }
 
@@ -91,7 +129,7 @@ function clock(seconds: number): string {
 
 function onKey(event: KeyboardEvent): void {
   if (event.key === "Escape") battle.deselect()
-  if (event.key === " " && ui.phase === "battle") {
+  if (event.key === " " && ui.phase === "battle" && !ui.address) {
     event.preventDefault()
     battle.togglePause()
   }
@@ -99,7 +137,7 @@ function onKey(event: KeyboardEvent): void {
 
 onMounted(() => {
   globalThis.addEventListener("keydown", onKey)
-  if (host.value) void battle.start(host.value, id, army)
+  if (host.value) void battle.start(host.value, id, { army, address })
 })
 onBeforeUnmount(() => {
   globalThis.removeEventListener("keydown", onKey)
@@ -128,8 +166,18 @@ onBeforeUnmount(() => {
           {{ headquartersNote.text }}
         </p>
 
+        <!-- The line, when it goes. Not an ending: the battle has not stopped
+             and the seat is still ours (F24). -->
+        <p v-if="ui.trouble && ui.phase !== 'command'" class="text-xs text-warning">
+          {{ ui.trouble }}
+        </p>
+
         <div v-if="ui.phase === 'battle' || ui.phase === 'over'" class="flex items-center gap-1">
+          <!-- One clock runs for both, so there is nothing here to stop: a
+               Commander who wants to stop watching stops watching, and the
+               afternoon does not wait for him (F24). -->
           <button
+            v-if="!ui.address"
             type="button"
             class="btn btn-ghost btn-xs"
             :disabled="ui.phase === 'over'"
@@ -190,14 +238,17 @@ onBeforeUnmount(() => {
           </template>
         </div>
 
-        <button
-          v-else-if="ui.phase === 'deployment'"
-          type="button"
-          class="btn btn-primary btn-sm"
-          @click="battle.beginBattle()"
-        >
-          Begin the battle
-        </button>
+        <template v-else-if="ui.phase === 'deployment'">
+          <!-- *That* he is still arranging, and nothing about what he is doing:
+               the whole of blind Deployment is that there is nothing to say
+               here beyond the waiting (F23). -->
+          <p v-if="ui.stoodTo && ui.waiting" class="text-xs text-warning">
+            Stood to — the other Commander is still arranging his army
+          </p>
+          <button v-else type="button" class="btn btn-primary btn-sm" @click="battle.beginBattle()">
+            {{ ui.address ? "Stand to" : "Begin the battle" }}
+          </button>
+        </template>
 
         <!-- Leaving is not breaking off: nothing is decided and nothing is
              saved, the Field is simply put away. -->
@@ -257,15 +308,41 @@ onBeforeUnmount(() => {
             <p class="mt-2 text-xs leading-relaxed text-base-content/70">
               {{ ui.scenarioSummary }}
             </p>
-            <p class="mt-5 text-xs font-semibold tracking-wide text-base-content/80">
+            <!-- Both armies are taken, or there is no battle at that address.
+                 Said where it was asked for, with the offer still under it: the
+                 same Scenario can always be fought alone. -->
+            <p
+              v-if="ui.trouble"
+              class="mt-4 rounded-box border border-error/40 bg-error/10 p-3 text-xs text-error"
+            >
+              {{ ui.trouble }}
+            </p>
+
+            <!-- Turned away outright, so the offer is withdrawn: pressing an
+                 army would ask a battle that has stopped listening. The same
+                 Scenario can always be fought alone, and that is the door out. -->
+            <div v-if="ui.turnedAway" class="mt-5">
+              <RouterLink
+                class="btn btn-primary btn-sm"
+                :to="{ name: 'battle', params: { battle: id } }"
+              >
+                Fight it alone
+              </RouterLink>
+              <RouterLink class="ml-2 btn btn-ghost btn-sm" :to="{ name: 'battles' }">
+                choose another battle
+              </RouterLink>
+            </div>
+
+            <p v-else class="mt-5 text-xs font-semibold tracking-wide text-base-content/80">
               Which army do you take?
             </p>
-            <div class="mt-3 grid gap-3 sm:grid-cols-2">
+            <div v-if="!ui.turnedAway" class="mt-3 grid gap-3 sm:grid-cols-2">
               <button
                 v-for="option in ui.armies"
                 :key="option.id"
                 type="button"
                 class="rounded-box border border-base-content/15 bg-base-200 p-4 text-left transition hover:border-primary hover:bg-base-100"
+                :data-army="option.id"
                 @click="take(option.id)"
               >
                 <span class="flex items-center gap-2">
@@ -279,6 +356,41 @@ onBeforeUnmount(() => {
                   {{ option.brief }}
                 </span>
               </button>
+            </div>
+
+            <!-- The other way to fight this afternoon. One press, and the
+                 battle moves off this tab and onto a server; the Field, the
+                 armies and every button below are unchanged, which is the whole
+                 of what the session seam was for (ADR-0013). -->
+            <div
+              v-if="!ui.address && !ui.turnedAway"
+              class="mt-6 border-t border-base-content/10 pt-4"
+            >
+              <button type="button" class="btn btn-ghost btn-sm" @click="battle.fightAnother()">
+                Fight another Commander
+              </button>
+              <p class="mt-2 text-xs text-base-content/50">
+                Opens the battle on a server and gives you a link to hand over. The other Commander
+                takes the army you leave.
+              </p>
+            </div>
+
+            <div v-else-if="ui.address" class="mt-6 border-t border-base-content/10 pt-4">
+              <p class="text-xs font-semibold tracking-wide text-base-content/80">
+                Hand this to the other Commander
+              </p>
+              <div class="mt-2 flex items-center gap-2">
+                <code class="min-w-0 flex-1 truncate rounded bg-base-100 px-2 py-1 text-xs">
+                  {{ link }}
+                </code>
+                <button type="button" class="btn btn-ghost btn-xs" @click="void copyLink()">
+                  {{ copied ? "copied" : "copy" }}
+                </button>
+              </div>
+              <p class="mt-2 text-xs text-base-content/50">
+                He gets whichever army you leave. Neither of you sees the other's until you have
+                both Stood To.
+              </p>
             </div>
           </div>
         </div>

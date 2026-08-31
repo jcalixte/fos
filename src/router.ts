@@ -30,6 +30,22 @@ const routes: RouteRecordRaw[] = [
   { path: "/plate", name: "plate", component: ThePlate },
   /** How the Field is drawn. Kept, so it is a page rather than a dialog. */
   { path: "/settings", name: "settings", component: TheSettings },
+  /**
+   * One battle, with two Commanders in it. The id is the address the server
+   * gave it, and the server is authoritative on it: a hand-edited one is turned
+   * back by the battle itself rather than trusted, and the page falls back to
+   * the offer. `?army=` is not honoured here at all — a link handed to a second
+   * Commander says which battle and never which army, because the army is the
+   * server's to give out.
+   *
+   * This is the day [ADR-0009](../docs/adr/0009-the-url-names-a-battle.md)
+   * named. It routed only what a bookmark can keep a promise about, because "a
+   * battle in progress cannot be returned to", and wrote down its own revisit
+   * condition: the day a battle can be saved, the phases become routable. A
+   * battle held in a process is that day, reached without the serialisation T13
+   * refused.
+   */
+  { path: "/battles/:battle/:id", name: "seat", component: TheBattle },
   {
     path: "/battles/:battle",
     name: "battle",

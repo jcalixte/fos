@@ -1,0 +1,23 @@
+# Two images, which is the honest cost of two runtimes in one repo (ADR-0014):
+# Vite and vue-tsc build the site, Bun runs the server. Solo play needs only
+# `web` — that is F19's static half, and it is what keeps the answer to "does
+# this still work as a static site" yes.
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    environment:
+      # Where the Scenarios are read from, inside the image.
+      SCENARIO_ROOT: public
+    expose:
+      - "8787"

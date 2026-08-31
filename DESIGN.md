@@ -995,6 +995,40 @@ Roster gave it. Take them again rather than trusting this table, which is what i
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
+And on a two-Commander Castiglione, which is where rows 7 to 10 said to watch them. Two browsers on
+one machine, the server in a third process, `/ws` proxied by Vite.
+
+| Rank | Target | Measured | Where |
+|------|--------|----------|-------|
+| 7 | F21 round trip under one 100ms step | **median 1.9ms, p90 3.5ms, worst 4.5ms** over 30 Orders | one machine, loopback |
+| 7 | F21 one authority, one clock | both Commanders' clocks read the same second; Tempo is the slower of the two asked for | `server/register.test.ts` |
+| 7 | F21 an Order only from the Commander whose Army it names | the other army's Units are not in the snapshot to name, and the seat's army is read back out of the register | `server/main.ts`, `register.test.ts` |
+| 8 | F22 the cut, zero enemy Reports on the wire | 10 assertions on a five-minute headless Castiglione with both Plans firing | `src/sim/cut.test.ts` |
+| 9 | F23 both armies arranged blind | each Commander is sent 11 Units and one Headquarters; 22 and two the step the clock runs | `register.test.ts`, and by eye |
+| 9 | F23 Deployment ends on both, or on 3 minutes | both: at once; clock: on the wall clock, started when the *second* army was taken | `register.test.ts` |
+| 10 | F24 the clock never pauses | plug pulled at 0:15, rejoined at the same address at 0:52, same seat and same army, afternoon carried on | two browsers, one machine |
+
+**F21's round trip is three orders of magnitude inside its budget, and that was the easy half.** A
+Courier rides at 13 m/s and F1's floor is 200m ≈ 15s; two milliseconds is 0.013% of that. The row
+was always going to pass on one machine and the number worth having is from two, which is not
+measured here and is the honest gap in this table. What the loopback figure does establish is that
+nothing in the *authority* is slow: the server takes an Order, steps nothing, cuts a snapshot for 22
+Units and answers, and that whole path is under five milliseconds at the worst of thirty tries.
+
+**What the wire costs is the number this milestone did not promise and should have.** A state message
+is about 15KB and there are ten a second, so a Commander is sent roughly 148KB a second and the
+server sends twice that. It works, and on one machine it is invisible. The reason it is recorded
+rather than fixed is that the obvious fix is not one: rounding every coordinate to a centimetre takes
+**2%** off, because the payload is field *names* and not float digits. A real reduction is a shorter
+encoding or a per-Unit delta, and both are a change to make deliberately. **Trigger:** the first
+battle fought across a real connection where the Field visibly stutters — at which point the answer
+is the encoding and not the tick rate, because the tick rate is the simulation's.
+
+**F23's clock is measured and F23's question is not.** That both Commanders are sent only their own
+army, and that the arranging ends on both having Stood To or on the three minutes, are assertions
+that pass. Whether a person can arrange Rivoli's thirteen Units inside three minutes is a fact about
+a person, and nobody has been timed doing it. That is the row to take to a second player first.
+
 **The engine moved and the battles did not.** [ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)
 took `pnpm test` and `pnpm measure` to Bun so that the tests run on whatever engine the authority
 runs on, and asked for the budget to be re-taken rather than assumed to carry over. Taken both ways
@@ -1372,10 +1406,22 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   notification. **Trigger:** the first measurement of what the feed actually teaches. If it is the
   main teacher, this is the first thing to reconsider.
 - **Two implementations of one seam.** The local session and the remote one both talk to
-  `src/sim/`, and the only thing keeping them one game is that neither may hold a rule.
+  `src/sim/`, and the only thing keeping them one game is that neither may hold a rule. **Built, and
+  the guard has already been spent once**: Deployment is a Commander moving men by hand, both
+  sessions do it, and the arithmetic that holds a Unit inside its zone therefore went into
+  `sim/deployment.ts` rather than being written twice. There are two differences left and both are
+  about a *session* and not a battalion — a solo battle can be paused and a two-Commander battle
+  cannot, and blind Deployment applies only where there is a second army being arranged.
   **Trigger:** the first behaviour that exists in one and not the other — at which point
   ADR-0013 has been broken rather than extended, and should be superseded rather than quietly
   stretched.
+- **A state message is 15KB and there are ten a second.** Roughly 148KB/s to each Commander, twice
+  that out of the server. Fine on one machine and unmeasured on a real connection. What makes it a
+  tension rather than a bug is that the cheap fix is a mirage: rounding every coordinate to a
+  centimetre takes 2% off, because the cost is field names. **Trigger:** a battle across a real
+  connection where the Field stutters — the answer is then a shorter encoding or a per-Unit delta,
+  never a slower tick, because the tick is the simulation's own 10Hz and F14 draws between two of
+  them.
 - **A battle now outlives the tab that opened it.** T13 says *no save — no serialisation of
   simulation state at all*, and that is still true: the state was never written down, it simply
   lives in a process. **Trigger:** wanting a battle to outlive the *server*, at which point T13 is

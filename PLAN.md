@@ -59,46 +59,68 @@ Delete this file when it is done. It is scaffolding, not documentation.
       things that are run; the server and the tests both *import* the disk loader.
 - [x] Played end to end in a browser: arrange, form up, brief, Stand To, Order, Tempo, pause.
 
-## Phase 3 — the server (C16 remote, C18)
+## Phase 3 — the server (C16 remote, C18) — done
 
-- [ ] `server/main.ts` on `Bun.serve` — WebSocket only, no HTTP API, no framework. Creating a battle
-      is a message on the socket already open.
-- [ ] `RemoteSession` client, same interface as `LocalSession`.
-- [ ] **Battle Register** (C18): battles in progress, two seats, tokens in `localStorage`, expiry for
-      one nobody joined.
-- [ ] Route `/battles/:battle/:id`. Server is authoritative on the id; a hand-edited slug redirects
-      rather than being trusted. `?army=` is not honoured on a join link.
-- [ ] A third browser is turned away with a line saying both armies are taken.
-- **Done when:** two browsers on one machine fight a Castiglione end to end.
+- [x] `server/main.ts` on `Bun.serve`. WebSocket only, no HTTP API, no framework, no dependency:
+      opening a battle, joining one and giving an Order are all messages on the socket. A GET that
+      lands on it says so rather than answering blank.
+- [x] `src/session/wire.ts` — the protocol, imported by both ends, so it has one meaning. The feed
+      goes as a tail with an index; the seam's `dispatches` contract is unchanged either side.
+- [x] `RemoteSession`, same interface as `LocalSession`. Its only arithmetic is `alpha`, measured
+      from when the state arrived instead of from a step it took.
+- [x] **Battle Register** (C18): battles, two seats, tokens in `localStorage`, expiry for one nobody
+      joined and for one that has been decided.
+- [x] Route `/battles/:battle/:id`. `?army=` is not honoured there. A bad id comes back *gone* and
+      the page offers the same Scenario alone.
+- [x] A third browser is told both armies are taken, and the offer is withdrawn rather than left
+      pressable.
+- [x] Two browsers on one machine fight a Castiglione end to end.
 
-## Phase 4 — the two-Commander rules (F21, F23, F24)
+## Phase 4 — the two-Commander rules (F21, F23, F24) — done
 
-- [ ] Blind Deployment: each Commander sent his own army only.
-- [ ] **Stand To**, and Deployment ending on both or on a 3-minute clock — started when the *second*
-      Commander arrives, not at creation.
-- [ ] The waiting Commander is told *that* the other is still arranging, never what he is doing.
-- [ ] Tempo: each asks, the battle runs at the slower of the two. Default ×4.
-- [ ] **Out of Contact**: clock never pauses, army fights on its Standing Orders, seat reclaimed by
-      token, and the Scenario clock is the only timeout.
-- [ ] Orders accepted only from the Commander whose Army they name.
-- **Done when:** pulling the plug mid-battle and rejoining recovers the seat, and the battle did not
-  stop while you were gone.
+Built with Phase 3 rather than after it, because the barrier is what makes "fight a Castiglione end
+to end" mean anything: without it either Commander starts the clock on the other.
 
-## Phase 5 — deployment
+- [x] Blind Deployment: `snapshot(battle, forArmy, deploying)` sends each Commander his own army and
+      his own staff, and nothing else. Solo does not pass the flag — there is no second army being
+      arranged there, and hiding a Roster standing where it was authored would take six existing
+      battles away for a rule with nobody on the other side of it.
+- [x] **Stand To**, and Deployment ending on both or on a 3-minute clock started when the *second*
+      Commander takes an army.
+- [x] The waiting Commander is told *that* the other is still arranging, and nothing else.
+- [x] Tempo: each asks, the battle runs at the slower. The screen reads back what it got.
+- [x] **Out of Contact**: the clock never pauses, the seat is reclaimed by token at the same
+      address, and the feed is replayed from the top for a Commander who missed some of it.
+- [x] Orders accepted only from the Commander whose Army they name — and the other army's Units are
+      not in his snapshot to name.
+- [x] The deployment arithmetic went to `src/sim/deployment.ts` rather than into both sessions. That
+      was the seam's guard being spent for the first time, and it is recorded in DESIGN §9.
 
-- [ ] `Dockerfile.server` on `oven/bun`; the SPA image unchanged.
-- [ ] `docker-compose.yml` — `web` (nginx) + `api` (bun).
-- [ ] `nginx.conf` proxies `/ws` with the upgrade headers. The SPA fallback stays as it is.
-- **Done when:** two people on two machines fight a battle on fos.apoena.dev.
+## Phase 5 — deployment — written, not yet built
 
-## Phase 6 — measure what was promised
+- [x] `Dockerfile.server` on `oven/bun`, with no build step and no `node_modules`. Verified by
+      running the server from a tree holding only the files the image copies — which caught that
+      `public/rosters/` has to come too, a Scenario naming its Rosters by the path the browser
+      fetches them at.
+- [x] `docker-compose.yml` — `web` (nginx) + `api` (bun). `docker compose config` parses.
+- [x] `nginx.conf` proxies `/ws` with the upgrade headers and a long read timeout, because a
+      Commander Out of Contact still holds a seat. The SPA fallback is untouched.
+- [ ] **Two people on two machines on fos.apoena.dev.** Not done: no Docker daemon here to build the
+      images with, and no second machine. This is the one box in this plan that needs a deploy.
 
-DESIGN §8 rows 7–10, each of which named where it is watched.
+## Phase 6 — measure what was promised — done, with one honest gap
 
-- [ ] F21 round trip under one 100ms step, on two machines.
-- [ ] F22 the cut, as a headless assertion — the one row whose fallback is *fix it*.
-- [ ] F23 Deployment inside 3 minutes on Rivoli, the largest army to arrange.
-- [ ] F24 plug pulled mid-Castiglione.
+Recorded in DESIGN §8.
+
+- [x] F21 round trip: median 1.9ms, p90 3.5ms, worst 4.5ms over 30 Orders. **On one machine only** —
+      the two-machine figure is the gap, and it is the same gap as Phase 5's last box.
+- [x] F22 the cut, as ten headless assertions on a five-minute Castiglione with both Plans firing.
+- [x] F23 the clock and the blindness, as assertions. Whether a *person* can arrange Rivoli's
+      thirteen Units in three minutes is unmeasured and needs a second player.
+- [x] F24 plug pulled mid-Castiglione at 0:15, rejoined at 0:52, same seat and same army.
+- [x] Unpromised and now recorded: a state message is 15KB and there are ten a second, so ~148KB/s
+      per Commander. Rounding coordinates buys 2% — the payload is field names — so the trigger's
+      answer is a shorter encoding and not a slower tick.
 
 ## Not in this plan, deliberately
 

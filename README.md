@@ -8,6 +8,7 @@ commander: you take one of the two armies, deploy it, then issue Orders that tak
 ```bash
 pnpm install
 pnpm dev           # the battle on :5173
+pnpm server        # the two-Commander server on :8787, proxied at /ws by pnpm dev
 pnpm test          # the simulation, headless — no canvas involved
 pnpm measure       # the DESIGN section 8 budget: whole battles stepped to the clock
 pnpm lint          # oxlint  (pnpm lint:fix to autofix)
@@ -18,10 +19,13 @@ node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what
 node scripts/make-rivoli-field.mjs       # repaint Rivoli's, and audit that nothing is walled in
 ```
 
-Vite builds the site; **Bun runs the tests**, because it is what the multiplayer server runs on and
-the simulation is measured on whatever engine plays it ([ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)).
+Vite builds the site; **Bun runs the server and the tests**, because the simulation is measured on
+whatever engine plays it ([ADR-0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)).
+A solo battle needs no server at all — the app loads over HTTP and the whole afternoon then runs in
+the tab. `pnpm server` is only for fighting somebody.
 
-Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify.
+Deployed at https://fos.apoena.dev — pushes to `main` are picked up by Coolify. Two images:
+`docker-compose.yml` runs nginx for the site and Bun for the socket.
 
 ## What is built
 
@@ -161,7 +165,22 @@ a Unit's keyline as well as its body, smoke *sharpens* an elite battalion and a 
 dark ink gains what a pale body loses; the single Unit it costs is a conscript in the white army,
 which by design has almost no keyline to gain by. There is exactly one in the six Rosters authored.
 
-Not built yet: Concealment, sound.
+**Two Commanders, on one battle.** Press *Fight another Commander* on the army offer and you get a
+link to hand over; he takes the army you leave. The battle is held and stepped by a server, and each
+of you is sent only what is his — no enemy Reports, Ghosts, Couriers or Dispatches, and at
+Deployment no enemy army at all, so both are arranged blind. The clock runs when you have both Stood
+To, or after three minutes, whichever comes first, and it runs at the slower of the two Tempos you
+ask for. Going Out of Contact is not an ending: the afternoon does not stop, your army fights on its
+Standing Orders, and coming back to the same address gives you the same seat
+([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)).
+
+The rule about what one Commander may not see is obeyed in solo too. A selected enemy battalion used
+to hand over its exact Strength, its Fatigue and what its next Volley was laid on; now it shows what
+the map shows and nothing else. And both Headquarters are drawn — yours filled, his hollow — which
+is what makes Harried and Overrun a rule both armies obey.
+
+Not built yet: Concealment, sound. No tutorial: what a mark means is meant to be learned from the
+game, and how is an open question (DESIGN §1, G9).
 
 ## Layout
 
@@ -169,7 +188,9 @@ Not built yet: Concealment, sound.
 |---|---|
 | `src/sim/` | the simulation: pure, no DOM, no renderer ([ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md)) |
 | `src/render/` | PixiJS drawing, and the only place interpolation happens |
-| `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle |
+| `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle — `build.ts` is shared, `loader.ts` needs a canvas, `disk.ts` needs a filesystem |
+| `src/session/` | the seam: takes Orders, emits snapshots, reports the Outcome — local in the tab, or remote over a socket ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)) |
+| `server/` | the process a two-Commander battle lives in: `Bun.serve`, one WebSocket, no framework |
 | `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |
 | `scripts/` | the Field painters, each of which audits the Scenario standing on its ground |
 
