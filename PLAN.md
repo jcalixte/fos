@@ -7,6 +7,30 @@ codebase already shaped for it rather than from one being reshaped around it.
 
 Delete this file when it is done. It is scaffolding, not documentation.
 
+## What is left
+
+Phases 0 to 4 and 6 are done and verified. Everything below is the whole of what is not.
+
+1. **Deploy it.** `Dockerfile.server`, `docker-compose.yml` and the `/ws` proxy are written and the
+   server has been run from a tree holding exactly the files the image copies — but no image has
+   been built, because there is no Docker daemon on this machine. **Coolify is pointed at
+   `Dockerfile` and now needs pointing at `docker-compose.yml` instead**, or it will keep deploying
+   the SPA alone and every join link will fail on a socket nobody is answering. That is the one
+   change outside this repo.
+2. **Fight one across two machines**, which is the other half of Phase 6's F21 row and the only way
+   to get a round-trip figure that means anything. The loopback number is 1.9ms median against a
+   100ms budget; what a real connection costs is unmeasured.
+3. **Time a person arranging Rivoli.** F23's three minutes is asserted as a clock and unmeasured as
+   a human act. Thirteen Units is the largest army anybody has to arrange, and if three minutes
+   binds, DESIGN §8 says the arranging *grammar* is what is slow and the clock is not the thing to
+   change.
+4. **Watch what the wire costs.** 15KB a state, ten a second, ~148KB/s per Commander. Recorded in
+   DESIGN §8 with its trigger; rounding coordinates buys 2%, so the answer when it bites is a
+   shorter encoding.
+
+Then delete this file, and sweep `DESIGN.md` and `README.md` for "player" → "Commander" — the last
+item under *Not in this plan* and the only one of them that is bookkeeping rather than design.
+
 ## Phase 0 — one engine (ADR-0014) — done
 
 - [x] `from "vitest"` → `from "bun:test"` in the six `*.test.ts` files and in `budget.measure.ts`.
