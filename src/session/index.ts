@@ -84,8 +84,16 @@ export interface BattleSession {
   readonly previous: BattleSnapshot
   readonly current: BattleSnapshot
   readonly alpha: number
-  /** Whether the clock is running. A decided battle is not. */
+  /** Whether the clock is running. A decided battle is not, and neither is a paused one. */
   readonly running: boolean
+  /**
+   * True once the clock has started, whether or not it is running this second.
+   *
+   * Apart from `running`, and the difference is the whole reason it exists: a
+   * solo Commander may stop his own afternoon, and a stopped afternoon is not
+   * an army back in the middle of being arranged.
+   */
+  readonly begun: boolean
   /**
    * The Tempo the clock is actually running at, which is not always the one
    * that was asked for: under two Commanders both ask and the battle takes the

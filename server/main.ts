@@ -265,6 +265,8 @@ function stateFor(battle: HeldBattle, seat: Seat): State {
     dispatches: dispatches.slice(from),
     dispatchesFrom: from,
     running: battle.running && field.outcome === null,
+    // Set once and never cleared: there is nothing here that stops a clock.
+    begun: battle.running,
     tempo: tempoOf(battle),
     outcome: field.outcome,
     returns: field.outcome ? armyReturns(field) : null,

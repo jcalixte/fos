@@ -437,11 +437,14 @@ export function useBattle() {
    * arranged — or when the three minutes are up (F23).
    */
   function readPhase(s: BattleSession): void {
+    // `begun` and not `running`: a solo Commander may stop his own afternoon,
+    // and a stopped afternoon is not an army back in the middle of being
+    // arranged.
     const phase: Phase = s.outcome
       ? "over"
       : !s.army
         ? "command"
-        : s.running
+        : s.begun
           ? "battle"
           : "deployment"
     if (phase === ui.phase) return

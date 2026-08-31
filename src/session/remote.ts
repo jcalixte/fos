@@ -74,6 +74,10 @@ export class RemoteSession implements BattleSession {
     return this.state?.running ?? false
   }
 
+  get begun(): boolean {
+    return this.state?.begun ?? false
+  }
+
   get tempo(): number {
     return this.state?.tempo ?? this.asked
   }

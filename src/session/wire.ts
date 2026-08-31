@@ -70,6 +70,8 @@ export interface State {
   /** How many the Commander has been sent before these. */
   dispatchesFrom: number
   running: boolean
+  /** True once the clock has started. It never goes back to false. */
+  begun: boolean
   tempo: number
   outcome: Outcome | null
   /** Filled in with the Outcome, and null while the battle is still on. */

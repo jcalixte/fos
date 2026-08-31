@@ -22,6 +22,7 @@ export class LocalSession implements BattleSession {
   private readonly runner: BattleRunner
   private readonly scenario: LoadedScenario
   private army_: ArmyId | null = null
+  private begun_ = false
 
   constructor(scenario: LoadedScenario) {
     this.scenario = scenario
@@ -47,6 +48,10 @@ export class LocalSession implements BattleSession {
     return this.runner.running && this.battle.outcome === null
   }
 
+  get begun(): boolean {
+    return this.begun_
+  }
+
   get tempo(): number {
     return this.runner.tempo
   }
@@ -70,7 +75,7 @@ export class LocalSession implements BattleSession {
   }
 
   get stoodTo(): boolean {
-    return this.runner.running
+    return this.begun_
   }
 
   /** Nothing between the Commander and the battle, so nothing to go wrong. */
@@ -134,6 +139,7 @@ export class LocalSession implements BattleSession {
       case "stand-to":
         // Solo, Standing To is the whole barrier: there is nobody else to wait
         // for, so the arranging ends when the one Commander says it has.
+        this.begun_ = true
         this.runner.running = true
         return
       case "order": {
