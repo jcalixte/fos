@@ -713,7 +713,7 @@ on screen teaches them*, and it now has a Goal above it rather than only a cost 
   - **F12** Morph the slot layout through a Formation change — **How**: Figures stay rigid *in* their slots; the slot layout itself interpolates over the transition's real duration, so a line visibly folds into a square → C3, C10
   - **F13** Volley as flash and Powder Smoke — **How**: discrete Volleys already give the battlefield a beat; one flash and one drifting cloud each → C11
   - **F14** Interpolate rendering between sim states — **How**: renderer draws between the last two states; interpolation never touches the sim → C10, C8
-  - **F15** Sound every battle event — **How**: one sound per event type, read off the snapshot — `volleys` and `contacts` are already events for the one step they happened in, and a Charge and a Rout are a Unit's state changing between two — so the cut comes free and the enemy's Orders are silent without a rule saying so (§10). Synthesised and not sampled: black powder is filtered noise with a hard attack and an exponential tail, so nothing is downloaded and every sound is a constant somebody can move → C13
+  - **F15** Sound every battle event — **How**: one sound per event type, read off the snapshot — `volleys` and `contacts` are already events for the one step they happened in, and a Charge and a Rout are a Unit's state changing between two — so the cut comes free and the enemy's Orders are silent without a rule saying so (§10). Synthesised and not sampled: black powder is filtered noise with a hard attack and an exponential tail, so nothing is downloaded and every sound is a constant somebody can move. A discharge is a dozen cracks scattered across half a second rather than one burst, because six hundred men do not fire together and it is the scattering that makes it a battalion (§10). Under the events, a bed read off the same snapshot — the roar of the whole Field, and the pas ordinaire beaten under it and drowned by it → C13
 - **G8** worth fighting more than once  _W:7_
   - **F21** Advance one battle for two Commanders — **How**: the battle is held and stepped by a server; one seam — a session takes Orders, emits snapshots, reports the Outcome — implemented twice, local in the tab and remote over a socket, neither containing a rule (ADR-0013). The remote half is Bun — its resolver takes `sim/`'s extensionless imports directly and `Bun.serve` carries the socket, so the backend adds no build step and no dependency, and the tests move to the same engine with it (ADR-0014) → C16, C8 _(rejected: host-authoritative, lockstep peers — see T22)_
   - **F22** Send each Commander only what is his — **How**: the snapshot is cut per Commander before it leaves, so what he may not see was never on his machine; the renderer's existing filters become the second line rather than the first → C16, C11
@@ -973,6 +973,8 @@ On the fixtures, where a rule is watched in isolation:
 | — | C7 Disorder: two causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts` |
 | — | F13 one flash and one drifting cloud per Volley | one cloud, born at the muzzles, capped at 0.268 however many fire | the plate, `/plate`, with the toggle |
 | — | F15 a distinct sound per Volley, gun, Charge, Contact, Rout and Order arrival | all six heard in one commanded Castiglione; every Volley heard exactly once against 6 frames a step, every Rout once against the steps it spends running, and Orders from one army only | `src/sound/listen.test.ts` |
+| — | F15 a discharge rolls rather than cracks | 5–16 cracks over 0.3–0.6s for a battalion, 2–6 over 0.55s for a battery, thinned and smeared with distance; 56 voices a step is the ceiling | `src/sound/index.ts`, and by ear |
+| — | F15 the bed under it | roar 0.02–0.06 through an artillery duel, settling over ~7s; drums at 76/min, drowned as the roar rises, and no catch-up burst after a pause | a Castiglione in Chromium |
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
@@ -1847,6 +1849,39 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   Order arriving is the one sound not quietened by distance**, because it is a cue to the Commander
   rather than a noise on the Field: an Order landing at the far end of the line is precisely the one
   he most needs to be told about.
+
+- **A Volley was synthesised as one crack, which is one musket.** Six hundred men do not fire
+  together: the word of command reaches them at slightly different moments, the sound rolls down the
+  line, and it trails off in stragglers. The first version of `sound/` made a discharge a single
+  noise burst, so a battalion and a lone skirmisher differed only in volume — and it was heard as
+  such immediately. A discharge is now a dozen short cracks scattered across half a second, weighted
+  to the front and each at its own pitch, and **it is the scattering and not the volume that makes
+  it a battalion.** A battery rolls too, for the same reason and slower: several pieces on their own
+  reload clocks.
+
+  Distance turned out to do two things and only one of them is volume. High frequencies go first, so
+  far fire is duller; and its cracks have smeared into each other, so it is longer and less
+  articulate. That is most of what makes a battery a kilometre off read as a rolling boom rather
+  than as a quiet bang — and it is cheap, because fewer cracks are needed to draw a sound that has
+  already smeared, which is what keeps the voice count survivable when twenty-two battalions fire
+  inside the same 100ms.
+
+- **The roar was calibrated against a guess and measured at silence.** The bed under the battle
+  integrates `clamour`'s discharges-per-step, and the first version clipped each step to 0 or 1
+  *before* smoothing it. A step holds one discharge or none, so the average of the clipped thing is
+  the duty cycle — the roar could never rise above the fraction of steps somebody fired in, and on a
+  running Castiglione it sat at **0.005**, which is silence. The rate is smoothed first and the
+  curve laid over it after, compressive so that a few guns are already a murmur and a general action
+  still has somewhere left to go. Measured at 0.02–0.06 through an artillery duel.
+
+- **The drums are the one sound here with no event under them.** F15 reads *sound every battle
+  event*, and a bed and a beat are not events. They are kept because they are not a score either: a
+  battalion's drummer is on the Field and beating the pace is his job, so the pas ordinaire at 76 to
+  the minute is a thing that was audible at Castiglione. They are beaten in real time and not in
+  battle time — at Tempo 4 the afternoon goes four times as fast and the drummer does not — and they
+  are drowned by the roar rather than mixed under it, which is both true and what gives an afternoon
+  its shape. **Watch this row.** If anything else arrives that is atmosphere rather than event, F15
+  has been stretched past what it says and wants either a wider target or a Function of its own.
 
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which

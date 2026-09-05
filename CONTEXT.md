@@ -160,10 +160,18 @@ _Avoid_: fog of war, stealth, hidden, invisible
 **Noise**:
 What the Field is heard doing: a **Volley**, a gun, a **Charge** going in, **Contact**, a **Unit**
 Routing, and a rider reaching one of your own. Heard from where your **Headquarters** is standing,
-so fire near the staff is loud and fire a kilometre off is a murmur — and it moves as you ride.
+so fire near the staff is loud and fire a kilometre off is a murmur — and it moves as you ride. A
+discharge rolls rather than cracks, because six hundred men do not fire together. Under all of it
+sits the roar of the whole Field, which is not any one of these and is all of them at once.
 Everything the Noise says is also on the screen, which is why it is the one thing here that can be
 turned off.
 _Avoid_: audio, SFX, sound effect, cue, ambience
+
+**Drums**:
+The pas ordinaire, 76 to the minute, beaten under the battle and drowned by it — you cannot hear a
+drum over musketry. Not a score: a battalion's drummer is on the **Field** and beating the pace is
+his job. They keep real time and not battle time, so **Tempo** does not hurry them.
+_Avoid_: music, soundtrack, score, background track
 
 ### Commanding
 

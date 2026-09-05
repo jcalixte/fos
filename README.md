@@ -182,10 +182,15 @@ is what makes Harried and Overrun a rule both armies obey.
 **The Field, heard.** A Volley, a gun, a Charge going in, Contact, a Unit Routing, and a rider
 reaching one of your own — each its own sound, and each heard from where your Headquarters is
 standing, so fire near the staff is loud and fire a kilometre off is a murmur and both change as you
-ride. Nothing is downloaded: black powder is a burst of noise with a hard attack and a long tail, so
-every sound in the game is a filter and four numbers. It ships off, and there are three settings —
-off, quiet, full — on the Settings page and on the battle screen, because leaving a battle to
-quieten it would cost you the battle.
+ride. A discharge rolls rather than cracks: six hundred men do not fire together, so a Volley is a
+dozen cracks scattered across half a second, and distance dulls them and smears them into each other
+as well as quietening them. Under it all sits the roar of the whole Field, swelling through the
+crisis and falling away when the firing stops, and beneath that the pas ordinaire at 76 to the
+minute — a real sound on a real battlefield, drowned by musketry exactly as it was.
+
+Nothing is downloaded: every sound in the game is a filter and four numbers. It ships off, and the
+settings — off, quiet, full, and the drums on their own switch — are on the Settings page and on the
+battle screen, because leaving a battle to quieten it would cost you the battle.
 
 Not built yet: Concealment. No tutorial: what a mark means is meant to be learned from the game, and
 how is an open question (DESIGN §1, G9).
