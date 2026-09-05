@@ -6,6 +6,12 @@ is in it from the moment the crowd is on top of it. Nothing the player can ask f
 nothing about being shot at, tired or shaken buys it either — it is something that happens to a
 Unit, never something it does.
 
+**Amended by [ADR-0015](./0015-a-unit-stands-in-ground-of-its-own.md).** There is now a third: two
+formed Units that have walked through each other have opened each other's files, which is the same
+fact as the mob read without the Rout in it. The clause it amends is the count; everything else here
+holds, and *the mob has to run over a Unit and not merely past it* is the reasoning ADR-0015 leans
+on to insist that somebody be walking.
+
 What it costs is CONTEXT's three. No **Formation** change, and a drill already under way is ruined.
 No **Charge**, whoever asks — an **Order**, or the rule list answering horse coming on. And half its
 fire, folded into `fireEffect` beside **Morale** and **Fatigue**.

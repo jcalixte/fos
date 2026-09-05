@@ -830,8 +830,8 @@ clock, which is untouched. Resolved by making the number smaller: three minutes.
 | C4  | Field                | cell grid, Ground, Height, gradient, impassability, Concealment         | — |
 | C5  | Routing              | A* over cells, string-pulling, funnelling to Crossings                  | — |
 | C6  | Fighting             | Volley, Charge, Contact — every effect derived from C3's geometry       | — |
-| C7  | Morale               | Morale, Fatigue, Disorder, Break, Rout, Rally, Morale Ceiling, Army Break | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md), [0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md), [0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md) |
-| C8  | Battle Clock         | fixed timestep, Tempo, Arrivals, Plan triggers, end conditions, seed    | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md) |
+| C7  | Morale               | Morale, Fatigue, Disorder, Break, Rout, Rally, Morale Ceiling, Army Break | [0010](./docs/adr/0010-fatigue-is-bought-by-the-pace.md), [0011](./docs/adr/0011-morale-comes-back-out-of-the-fight.md), [0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md), [0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md) |
+| C8  | Battle Clock         | fixed timestep, Tempo, Arrivals, Plan triggers, end conditions, seed, and the ground a Unit stands in — what a march is held against and what a Charge strikes first | [0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md), [0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md) |
 | C9  | Field Renderer       | terrain drawn from the grid                                            | — |
 | C10 | Unit Renderer        | silhouette, base, Figures, the Arm/Grade/Morale channels, render interpolation | — |
 | C11 | Effects              | muzzle flash, Powder Smoke, Couriers, Ghosts                           | [0002](./docs/adr/0002-orders-are-couriered-from-a-headquarters.md) |
@@ -970,7 +970,7 @@ On the fixtures, where a rule is watched in isolation:
 | 4 | F10 Morale: Break at 15–30% casualties | 16.4% conscript, 22.2% line, 25.9% elite | `src/sim/sim.test.ts` |
 | 2 | F9 Contact decided in ≤30s | one step, 0.1s | `src/sim/sim.test.ts` |
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
-| — | C7 Disorder: two causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts` |
+| — | C7 Disorder: three causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; two formed Units walked through each other disorder both; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts`, `src/sim/sim.test.ts` |
 | — | F13 one flash and one drifting cloud per Volley | one cloud, born at the muzzles, capped at 0.268 however many fire | the plate, `/plate`, with the toggle |
 | — | F15 a distinct sound per Volley, gun, Charge, Contact, Rout and Order arrival | all six heard in one commanded Castiglione; every Volley heard exactly once against 6 frames a step, every Rout once against the steps it spends running, and Orders from one army only | `src/sound/listen.test.ts` |
 | — | F15 a discharge rolls rather than cracks | 5–16 cracks over 0.3–0.6s for a battalion, 2–6 over 0.55s for a battery, thinned and smeared with distance; 56 voices a step is the ceiling | `src/sound/index.ts`, and by ear |
@@ -984,18 +984,20 @@ Roster gave it. Take them again rather than trusting this table, which is what i
 
 | Rank | Target | Castiglione | Rivoli |
 |------|--------|-------------|--------|
-| 5 | F11 20–40 min | 40:00, by Key Ground both ways | 40:00, by condition both ways |
-| 5 | F11 dead clock | 0:10 and 0:08 | 0:23 and 0:02 |
+| 5 | F11 20–40 min | 40:00, by Key Ground both ways | 40:00, by condition taken French and by Key Ground taken Austrian |
+| 5 | F11 dead clock | 0:10 and 0:08 | 0:23 and 0:14 |
 | 3 | F20 Arrival on its clock | 1 Arrival, 0.0s late | **8 Arrivals, none more than 0.1s late** |
 | 3 | F20 arrives somewhere it can leave | 16m walked in its first minute | 80–246m walked in the first minute |
-| 4 | F10 Break at 15–30% | **15.8–30.4%**, medians 17.0% and 20.4% | **9.3–44.3%**, medians 18.3% and 18.8% |
-| 4 | F10 Breaks outside the band | 2 of 11, and each says why | 5 of 28, and each says why |
-| 4 | F10 0 Strength is a bug | lowest 69 men | lowest 45 men, and it is a mob on the run |
+| 4 | F10 Break at 15–30% | **15.7–30.4%**, medians 17.1% and 20.4% | **15.6–33.9%**, medians 20.7% and 20.8% |
+| 4 | F10 Breaks outside the band | 2 of 11, and each says why | 1 of 25, and it says why |
+| 4 | F10 0 Strength is a bug | lowest 67 men | lowest 56 men |
 | 8 | F4 routing under 10ms | — | 0.15–0.65ms through the gorge; **4.0ms corner to corner** |
-| 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 fire both ways |
+| 2 | F3 rule list under ~20 | 11 rules; 4 and 8 fire | 11 rules; 8 and 7 fire |
 | 2 | F3 the Latitude leash, in metres from the Post | close-up 100m; stand-off 250m; follow-up 300m | close-up 100m; stand-off 250m; follow-up 300m |
-| — | C7 Disorder, spells and Unit-seconds | 1 spell / 21s and 6 / 345s | 7 / 258s and 15 / 937s |
+| — | C7 Disorder, spells and Unit-seconds | 16 spells / 1328s and 16 / 2370s | 26 / 2509s and 57 / 4344s |
+| — | C7 Disorder, walked through by a formed Unit | 14 of 16 and 12 of 16 | 18 of 26 and 50 of 57 |
 | — | C7 Disorder bought by a Pursuit | **none, on any run** | **none, on any run** |
+| — | C7 Disorder, longest single spell | 181s and 472s | 477s and 479s |
 | — | F18 identical replay | digest identical on a second run | digest identical on a second run |
 | — | §9 order-cycles to the far flank | 52–55 against a floor of 3 | 36–63 against a floor of 3 |
 
@@ -1055,7 +1057,7 @@ took `pnpm test` and `pnpm measure` to Bun so that the tests run on whatever eng
 runs on, and asked for the budget to be re-taken rather than assumed to carry over. Taken both ways
 on the same commit, the four nominal runs agree on every simulation number the report prints: the
 same Breaks at the same second, the same casualty shares, the same lowest Strength to seventeen
-digits (73.23555467172763), the same Disorder spells and Unit-seconds, the same drift in metres, the
+digits, the same Disorder spells and Unit-seconds, the same drift in metres, the
 same order-cycles. **The only lines that moved are wall clock.** The routing probes are 10–35%
 quicker on JavaScriptCore — 4.39ms to 4.00ms corner to corner, 0.99ms to 0.65ms down the gorge — and
 the whole measure run takes 9.8s against 19.2s. The table above now carries Bun's numbers, and the
@@ -1270,14 +1272,22 @@ number now moves when the brief moves, which is the first evidence that it measu
 not the rule list.
 
 **Disorder fires on all four runs and never once as a Pursuit, which is the design saying so
-rather than the rule failing.** Between one spell and fifteen a run, twenty-one to nine hundred and
-thirty-seven Unit-seconds — about two per cent of an afternoon on the run that has most of it — and
-every single one of them a mob coming back through a formed Unit. Not one is a pursuer, because the
-silent runs cannot reach one: a Plan has never issued a Charge, no rung of the Latitude ladder buys
-an advance after a beaten enemy, and a Pursuit is what a Charge becomes. So the half of C7's newest
-rule that the whole thing was built for is exercised on the fixture and nowhere else, which is the
-same answer §0 already gives for square and the countercharge — the campaign under-exercises it,
-and the fixture is where it is watched.
+rather than the rule failing.** Between sixteen spells a run and fifty-seven, thirteen hundred to
+forty-three hundred Unit-seconds. Not one is a pursuer, because the silent runs cannot reach one: a
+Plan has never issued a Charge, no rung of the Latitude ladder buys an advance after a beaten enemy,
+and a Pursuit is what a Charge becomes. So the half of C7's newest rule that the whole thing was
+built for is exercised on the fixture and nowhere else, which is the same answer §0 already gives
+for square and the countercharge — the campaign under-exercises it, and the fixture is where it is
+watched.
+
+**Three quarters to nine tenths of it is now one formed Unit walking through another**, which is
+[ADR-0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md) arriving: before it, a battalion
+could be marched clean through the battalion beside it at no cost at all, and the spell count on
+these runs was between one and fifteen. It is the mob rule read without the Rout in it, and the runs
+say what the design suspected — armies that never leave intervals walk through themselves
+constantly. The longest single spell is 479s, inside a drill and a half, which is the check that
+what is being charged is the passage and not the standing: two Units that come to rest in each other
+sort their ranks out where they stand.
 
 **What it cost is one afternoon out of four, and the cost fell on the attacker again.** Castiglione
 does not move at all beyond a single Break landing 1.7 points later; Rivoli taken French does not
@@ -1366,6 +1376,7 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 | T24 | Reports and Dispatches are the Commander's own army's — in solo too | one rule across both games instead of two; and T11's refusal of a countable bar finally enforced, since a selected enemy Unit no longer hands over an exact man-count | F7's *every consequential event* becomes every one of yours, and the half it drops is the interesting half — a rule taken for G8 and charged to G9 | — |
 | T25 | Tempo asked for, not set | neither Commander can impose the pace of the afternoon on the other, for the price of one `Math.min` | wall-clock length stops being knowable in advance, and a Commander who is losing can hold the other at ×1 for the full half hour | — |
 | T26 | Bun for the server, and the tests moved with it | the backend adds no build step and no dependency — extensionless imports resolve and the socket is built in; and the authority and the baseline stay on one engine | tests no longer share an engine with a Chrome player's solo battle, and §8's measured numbers have to be re-taken under `bun test` rather than carried over | [0014](./docs/adr/0014-one-javascript-engine-for-the-simulation.md) |
+| T27 | A Unit holds the ground under its Footprint, enforced by refusing the step | a screen and a second line are finally worth something — a Charge strikes what stands in front of what it was aimed at, and a march stops against an enemy instead of walking through him; no steering, no shoving, and nothing that has to decide which of two battalions gives way | a Move Order can be held indefinitely and silently by an enemy standing on its destination; Disorder roughly triples across the nominal runs; and Open Order needed an exemption before the rule could be measured at all | [0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md) |
 | T15 | Two nominals plus fixtures over one nominal | honest coverage — Rivoli under-tests exactly what Castiglione tests | two Fields to author before the design is validated at all | — |
 
 ### Tensions being watched (unresolved by design)

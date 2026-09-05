@@ -15,12 +15,17 @@ import type { Battle, Unit } from "./types"
  * long the way back is, which is a drill and therefore a length of time spent
  * standing still.
  *
- * Two things buy it and there is no third. A regiment that has ridden a mob
- * down is loose among men who are running, and a Unit that a mob has run
- * through has had its files opened by its own side. Both are CONTEXT's, both
- * have been owed since Pursuit was built, and neither is a rule the player can
- * ask for: Disorder is something that happens to a Unit and never something it
- * does.
+ * Three things buy it and there is no fourth. A regiment that has ridden a mob
+ * down is loose among men who are running; a Unit that a mob has run through
+ * has had its files opened by its own side; and two formed Units that have
+ * walked through each other have opened each other's. The first two are
+ * CONTEXT's and were owed since Pursuit was built. The third is what stops a
+ * brigade being one body of men drawn as four, and it arrived with the ground a
+ * Unit stands in
+ * ([ADR-0015](../../docs/adr/0015-a-unit-stands-in-ground-of-its-own.md)).
+ *
+ * None of the three is a rule the player can ask for: Disorder is something
+ * that happens to a Unit and never something it does.
  *
  * What it costs is CONTEXT's three — no Formation change, no Charge, and fire
  * that falls off — and the three are enforced where each of them lives rather

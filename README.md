@@ -48,6 +48,15 @@ Then Morale decides its fate rather than Strength — a battalion Breaks at abou
 Routs away from whatever broke it, is deaf to Orders while it runs, and Rallies with a lower Morale
 Ceiling than it had before.
 
+The ground a Unit stands in, which nothing used to hold. A march is stopped against an enemy
+Footprint rather than walking through it, the Order standing until the enemy gives way; a Charge
+strikes the first Face it comes to and re-aims itself on it, so the line in front of the guns costs
+the horse its Contact where before it was ridden through unnoticed; and two of one's own Units that
+walk through each other come out of it in Disorder, which is what a brigade pays for not leaving
+intervals between its lines. A screen holds no ground and a mob has none left to hold, and both are
+walked through freely
+([ADR-0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md)).
+
 The Charge, which is the one Order aimed at a Unit and not at a piece of ground. It walks up at the
 Formation's own pace and runs only the last hundred and fifty metres, and where it lands is decided
 by which Face it struck: off a Face there is no fight, and a battalion in march column or halfway
@@ -133,8 +142,8 @@ none is: every Unit, every destination in the Plan and both pieces of Key Ground
 from where the men who have to get to them start.
 
 Disorder, which is the ranks rather than the nerve or the legs — the third thing a Unit spends, and
-the one nothing it does can spend. Two things buy it: riding a mob down, and a mob running back over
-a formed Unit, either army's. It costs the three CONTEXT always said it would — no Formation change,
+the one nothing it does can spend. Three things buy it: riding a mob down, a mob running back over
+a formed Unit, either army's, and two formed Units walking through each other. It costs the three CONTEXT always said it would — no Formation change,
 and a drill already under way is ruined; no Charge, whoever asks; and half its fire, because a Unit
 whose files are mixed has no dressed rank to level along, which is what Open Order already pays for
 in its reload. The way out is standing still for the drill out of the loosest order there is, taken
@@ -237,4 +246,5 @@ how is an open question (DESIGN §1, G9).
   - [0012 — Disorder is what a mob costs the troops it runs over](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)
   - [0013 — A battle with two Commanders lives on a server](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)
   - [0014 — One JavaScript engine for the simulation, and it is the server's](./docs/adr/0014-one-javascript-engine-for-the-simulation.md)
+  - [0015 — A Unit stands in ground of its own](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md)
 <!-- docs:end -->

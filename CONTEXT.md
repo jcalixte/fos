@@ -59,8 +59,9 @@ _Avoid_: stamina, energy, tiredness
 **Disorder**:
 The state of a Unit whose ranks have lost their shape. A Disordered Unit cannot change
 Formation or charge until it re-forms, and its fire falls off while it is in it. It is something
-that happens to a Unit and never something it does: a **Pursuit** puts the pursuer in it, and a
-**Rout** running over a formed Unit puts that Unit in it. The way out is standing still for the
+that happens to a Unit and never something it does: a **Pursuit** puts the pursuer in it, a
+**Rout** running over a formed Unit puts that Unit in it, and two formed Units that have walked
+through each other are both in it. The way out is standing still for the
 drill, which a Unit that is marching is not doing
 ([ADR-0012](./docs/adr/0012-disorder-is-what-a-mob-costs-the-troops-it-runs-over.md)). Its opposite
 is Ordered.
@@ -125,7 +126,11 @@ _Avoid_: width, size, span
 
 **Footprint**:
 The rectangle of Field a Unit's Formation covers. Terrain applies to a Unit by averaging the
-cells under its Footprint — a Unit is never partly in two places, it is "60% in wood".
+cells under its Footprint — a Unit is never partly in two places, it is "60% in wood". It is also
+the ground the Unit holds: a march is stopped against an enemy Footprint and a **Charge** strikes
+the first one it reaches
+([ADR-0015](./docs/adr/0015-a-unit-stands-in-ground-of-its-own.md)). **Open Order** and a mob hold
+none.
 _Avoid_: hitbox, bounds, collider, area
 
 **Density**:
@@ -443,6 +448,9 @@ _Avoid_: game speed, time scale, simulation speed
 - **Ground** and **Height** reach a Unit only through the cells under its **Footprint**
 - A **Crossing** is the only way a Unit passes impassable **Ground**, and only if its **Frontage**
   fits the gap
+- A **Unit** holds the ground under its **Footprint**: an enemy march is stopped against it and a
+  **Charge** strikes the first one it comes to, whatever it was aimed at. **Open Order** holds none,
+  because a screen is mostly the gaps between its men, and a mob has none left to hold
 - A **Unit** given somewhere to be finds its own **Route** there, funnelling to **Crossings**
 - A **Unit** with no applicable **Order** acts on its **Initiative**
 - **Initiative** suspends an **Order** and resumes it; it never cancels one
@@ -485,6 +493,8 @@ _Avoid_: game speed, time scale, simulation speed
 - The **Headquarters** hastens a **Rally**, which is its third job after couriers and sight
 - A Routing **Unit** that crosses a formed one throws it into **Disorder**, whichever army it
   belongs to — men coming back through a line at the run do not present their colours first
+- Two formed **Units** that have walked through each other are both in **Disorder**, which is what
+  a brigade pays for not leaving intervals between its lines
 - A **Unit** delivers a **Volley** on its own reload clock, or presses a **Charge** into **Contact**
 - A **Unit** has to be halted to deliver a **Volley**, because what has to be halted is the
   **Face** — so a **Formation** with no **Face** and reach to fire with, which is **Open Order**
