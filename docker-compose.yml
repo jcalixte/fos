@@ -7,8 +7,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "80:80"
+    # Exposed, not published. The host's port 80 is held by the proxy that
+    # terminates fos.apoena.dev, so binding it here fails the deploy outright;
+    # the proxy reaches this container over the compose network instead.
+    expose:
+      - "80"
+    # A stopped container is a dead site nobody is told about. This is what was
+    # missing when the SPA went down on 4 September and stayed down.
+    restart: unless-stopped
     depends_on:
       - api
 
@@ -21,3 +27,4 @@ services:
       SCENARIO_ROOT: public
     expose:
       - "8787"
+    restart: unless-stopped
