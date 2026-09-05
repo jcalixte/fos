@@ -54,7 +54,7 @@
       "unitId": "fr-85e",
       "body": {
         "kind": "move",
-        "destination": { "x": 780, "y": 660 },
+        "destination": { "x": 800, "y": 730 },
         "arrivalFacing": -1.5708,
         "arrivalFormation": "line"
       }
@@ -64,7 +64,7 @@
       "unitId": "fr-33e",
       "body": {
         "kind": "move",
-        "destination": { "x": 1010, "y": 660 },
+        "destination": { "x": 1000, "y": 710 },
         "arrivalFacing": -1.5708,
         "arrivalFormation": "line"
       }
