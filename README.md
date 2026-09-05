@@ -192,6 +192,13 @@ Nothing is downloaded: every sound in the game is a filter and four numbers. It 
 settings — off, quiet, full, and the drums on their own switch — are on the Settings page and on the
 battle screen, because leaving a battle to quieten it would cost you the battle.
 
+**The band**, if you want one, is the only part of this the game does not make itself. Drop tracks
+into `public/music/` and name them in the `index.json` beside them — they are streamed rather than
+bundled, so the build stays where it is and nothing is fetched until the switch is thrown, and they
+are looped through in turn and pulled down under the fire. It ships empty; the README in that folder
+says where to find music that is genuinely free, and every track's licence is printed in Settings
+because attribution is a condition of most of them.
+
 Not built yet: Concealment. No tutorial: what a mark means is meant to be learned from the game, and
 how is an open question (DESIGN §1, G9).
 
@@ -202,7 +209,8 @@ how is an open question (DESIGN §1, G9).
 | `src/sim/` | the simulation: pure, no DOM, no renderer ([ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md)) |
 | `src/render/` | PixiJS drawing, and the only place interpolation happens |
 | `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle — `build.ts` is shared, `loader.ts` needs a canvas, `disk.ts` needs a filesystem |
-| `src/sound/` | the Field made audible: `listen.ts` decides what is worth hearing and is pure, `index.ts` holds the audio device |
+| `src/sound/` | the Field made audible: `listen.ts` decides what is worth hearing and is pure, `index.ts` holds the audio device, `music.ts` the band |
+| `public/music/` | tracks the band plays, named by `index.json`; ships empty and streamed, never bundled |
 | `src/session/` | the seam: takes Orders, emits snapshots, reports the Outcome — local in the tab, or remote over a socket ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)) |
 | `server/` | the process a two-Commander battle lives in: `Bun.serve`, one WebSocket, no framework |
 | `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |

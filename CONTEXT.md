@@ -173,6 +173,13 @@ drum over musketry. Not a score: a battalion's drummer is on the **Field** and b
 his job. They keep real time and not battle time, so **Tempo** does not hurry them.
 _Avoid_: music, soundtrack, score, background track
 
+**Band**:
+Recorded music played under a battle and looped through in turn. The one thing in the game that is
+not the battle — a **Volley** is heard because a Volley happened, and this is not. It is pulled down
+by the roar the way the **Drums** are, ships with no tracks in it at all, and names the licence of
+every track it does have.
+_Avoid_: BGM, OST, playlist, background music
+
 ### Commanding
 
 **Commander**:

@@ -713,7 +713,7 @@ on screen teaches them*, and it now has a Goal above it rather than only a cost 
   - **F12** Morph the slot layout through a Formation change — **How**: Figures stay rigid *in* their slots; the slot layout itself interpolates over the transition's real duration, so a line visibly folds into a square → C3, C10
   - **F13** Volley as flash and Powder Smoke — **How**: discrete Volleys already give the battlefield a beat; one flash and one drifting cloud each → C11
   - **F14** Interpolate rendering between sim states — **How**: renderer draws between the last two states; interpolation never touches the sim → C10, C8
-  - **F15** Sound every battle event — **How**: one sound per event type, read off the snapshot — `volleys` and `contacts` are already events for the one step they happened in, and a Charge and a Rout are a Unit's state changing between two — so the cut comes free and the enemy's Orders are silent without a rule saying so (§10). Synthesised and not sampled: black powder is filtered noise with a hard attack and an exponential tail, so nothing is downloaded and every sound is a constant somebody can move. A discharge is a dozen cracks scattered across half a second rather than one burst, because six hundred men do not fire together and it is the scattering that makes it a battalion (§10). Under the events, a bed read off the same snapshot — the roar of the whole Field, and the pas ordinaire beaten under it and drowned by it → C13
+  - **F15** Sound every battle event — **How**: one sound per event type, read off the snapshot — `volleys` and `contacts` are already events for the one step they happened in, and a Charge and a Rout are a Unit's state changing between two — so the cut comes free and the enemy's Orders are silent without a rule saying so (§10). Synthesised and not sampled: black powder is filtered noise with a hard attack and an exponential tail, so nothing is downloaded and every sound is a constant somebody can move. A discharge is a dozen cracks scattered across half a second rather than one burst, because six hundred men do not fire together and it is the scattering that makes it a battalion (§10). Under the events, a bed read off the same snapshot — the roar of the whole Field, and the pas ordinaire beaten under it and drowned by it. Under that again, optionally, a band: recorded music streamed from `public/music/`, looped through in turn, pulled down by the roar and shipped empty (§10) → C13
 - **G8** worth fighting more than once  _W:7_
   - **F21** Advance one battle for two Commanders — **How**: the battle is held and stepped by a server; one seam — a session takes Orders, emits snapshots, reports the Outcome — implemented twice, local in the tab and remote over a socket, neither containing a rule (ADR-0013). The remote half is Bun — its resolver takes `sim/`'s extensionless imports directly and `Bun.serve` carries the socket, so the backend adds no build step and no dependency, and the tests move to the same engine with it (ADR-0014) → C16, C8 _(rejected: host-authoritative, lockstep peers — see T22)_
   - **F22** Send each Commander only what is his — **How**: the snapshot is cut per Commander before it leaves, so what he may not see was never on his machine; the renderer's existing filters become the second line rather than the first → C16, C11
@@ -975,6 +975,8 @@ On the fixtures, where a rule is watched in isolation:
 | — | F15 a distinct sound per Volley, gun, Charge, Contact, Rout and Order arrival | all six heard in one commanded Castiglione; every Volley heard exactly once against 6 frames a step, every Rout once against the steps it spends running, and Orders from one army only | `src/sound/listen.test.ts` |
 | — | F15 a discharge rolls rather than cracks | 5–16 cracks over 0.3–0.6s for a battalion, 2–6 over 0.55s for a battery, thinned and smeared with distance; 56 voices a step is the ceiling | `src/sound/index.ts`, and by ear |
 | — | F15 the bed under it | roar 0.02–0.06 through an artillery duel, settling over ~7s; drums at 76/min, drowned as the roar rises, and no catch-up burst after a pause | a Castiglione in Chromium |
+| — | F15 a crack is shorter than the gap between cracks | peak overlap 2 for a battalion, 1 for a battery, 3 for Contact — against 5, 2 and 5 before | `src/sound/index.ts` |
+| — | F15 the band loops through its tracks | one handover per track, crossfaded over 5s, and nothing started once it is switched off | two tracks in `public/music/`, in Chromium |
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
@@ -1873,6 +1875,34 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   running Castiglione it sat at **0.005**, which is silence. The rate is smoothed first and the
   curve laid over it after, compressive so that a few guns are already a murmur and a general action
   still has somewhere left to go. Measured at 0.02–0.06 through an artillery duel.
+
+- **A discharge was five overlapping noise bursts, which is a noise generator.** The rolling fire
+  above was right in shape and wrong in arithmetic: sixteen cracks landed about **20ms** apart and
+  each was given a **70ms** decay, so five sounded at once for most of the discharge — and
+  overlapping filtered white noise is filtered white noise. A 0.85s tail sat on top of it. So a
+  Volley was nearly a second of continuous hiss, and it was heard as such the first time anybody
+  played it. **A crack's decay has to be shorter than the gap between cracks**, which is the whole
+  rule and was never written down: 20ms for a musket against a 20ms gap, 90ms for a gun, 35ms for
+  the clatter of Contact, and the tails cut to a third. Peak overlap 5 → 2. A limiter now sits on
+  the bus as well, because twenty-two battalions firing inside one 100ms can ask for more than one,
+  and anything over one is not loudness but fuzz — which is heard as *the sound is broken* rather
+  than as *the battle is loud*.
+
+- **The band arrived, and it is the row below firing on the first afternoon.** Recorded music,
+  looped through in turn under the battle. It is not derived from anything: a Volley is heard
+  because a Volley happened, and this is a file somebody else wrote playing over the top. F15 has
+  now been stretched exactly as far as the next entry warned it might be, and the honest reading is
+  that **G7 wants a Function for atmosphere that F15 is not** — *sound every battle event* does not
+  cover a bed, a beat or a band, and three things now live under it that are none of them events.
+  Left as a widening rather than a new Function because there is one afternoon of evidence and a
+  Function wants more, but it should not be left much longer.
+
+  Kept honest in three ways. It is **streamed and never bundled** — tracks sit in `public/music/`
+  and are named by an `index.json` there, the way `public/scenarios/index.json` names the battles,
+  so the build is unchanged at 470KB and nothing is fetched until somebody asks. It ships **empty**,
+  so the app has a band switch and no band, and works exactly as well. And every track's **licence
+  is printed in Settings**, because attribution is a condition of most of the licences worth using
+  and a credit nobody can find is not one.
 
 - **The drums are the one sound here with no event under them.** F15 reads *sound every battle
   event*, and a bed and a beat are not events. They are kept because they are not a score either: a
