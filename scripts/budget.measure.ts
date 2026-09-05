@@ -84,7 +84,13 @@ interface RunReport {
    * Told apart by the Dispatch, which is where the cause is written down —
    * the state itself is one number and does not remember what set it.
    */
-  disorder: { spells: number; seconds: number; longest: number; byPursuit: number }
+  disorder: {
+    spells: number
+    seconds: number
+    longest: number
+    byPursuit: number
+    byPassage: number
+  }
   drift: Map<string, number>
   shareGone: { army: string; share: number }[]
   digest: string
@@ -173,6 +179,7 @@ function run(scenario: string, taken: string): RunReport {
   let disorderSeconds = 0
   let disorderLongest = 0
   let disorderByPursuit = 0
+  let disorderByPassage = 0
   let dispatchesRead = 0
 
   for (let n = 0; n < CLOCK_LIMIT_STEPS && !isOver(battle); n++) {
@@ -276,9 +283,9 @@ function run(scenario: string, taken: string): RunReport {
     // ones each step, so the feed is walked once over the battle and not once
     // a step.
     for (; dispatchesRead < battle.dispatches.length; dispatchesRead++) {
-      if (battle.dispatches[dispatchesRead].text.includes("in disorder, loose among")) {
-        disorderByPursuit++
-      }
+      const text = battle.dispatches[dispatchesRead].text
+      if (text.includes("in disorder, loose among")) disorderByPursuit++
+      else if (text.includes("came through its ranks")) disorderByPassage++
     }
 
     // Idle under threat, sampled once a second: F3's target stated as its
@@ -320,6 +327,7 @@ function run(scenario: string, taken: string): RunReport {
         0,
       ),
       byPursuit: disorderByPursuit,
+      byPassage: disorderByPassage,
     },
     drift,
     shareGone: battle.armies.map((a) => ({ army: a.id, share: shareGone(battle, a) })),
@@ -400,7 +408,8 @@ function report(r: RunReport): void {
     `C7  Disorder: ${r.disorder.spells} spells` +
       (r.disorder.spells === 0
         ? " — no Unit ever lost its ranks"
-        : `, ${r.disorder.byPursuit} of them a Pursuit and the rest a mob coming back through` +
+        : `, ${r.disorder.byPursuit} a Pursuit, ${r.disorder.byPassage} a formed Unit walked` +
+          ` through, and the rest a mob coming back` +
           `; ${r.disorder.seconds.toFixed(0)} Unit-seconds, longest ${r.disorder.longest.toFixed(0)}s`),
   )
   lines.push(
