@@ -17,6 +17,7 @@ pnpm build         # type-check and build to static assets
 node scripts/make-bridge-fixture.mjs     # repaint the bridge fixture's Field
 node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what stands on it
 node scripts/make-rivoli-field.mjs       # repaint Rivoli's, and audit that nothing is walled in
+node scripts/make-arcole-field.mjs       # repaint Arcole's, and audit that its Crossings still span water
 ```
 
 Vite builds the site; **Bun runs the server and the tests**, because the simulation is measured on
