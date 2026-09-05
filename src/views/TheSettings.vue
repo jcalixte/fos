@@ -4,7 +4,7 @@ import TopBar from "@/components/TopBar.vue"
 import { swatchField } from "@/render/plate"
 import { PAPERS, type PaperName, STAFF_MAP_DEFAULTS, buildStaffMapCanvas } from "@/render/staffmap"
 import { HACHURE_CHOICES, loadSettings, saveSettings, type Settings } from "@/settings"
-import { LOUDNESS_CHOICES } from "@/sound"
+import { LOUDNESS_CHOICES, type Track } from "@/sound"
 
 /**
  * How the Field is drawn, and how loud it is.
@@ -43,6 +43,21 @@ function draw(): void {
   }
   swatches.value = drawn
 }
+
+/**
+ * What the band knows, read straight off the manifest rather than through a
+ * battle. The licences are printed because most of the ones worth using make
+ * the credit a condition, and a credit nobody can find is not one.
+ */
+const tracks = ref<Track[]>([])
+onMounted(async () => {
+  try {
+    const response = await fetch("/music/index.json")
+    if (response.ok) tracks.value = ((await response.json()) as { tracks: Track[] }).tracks ?? []
+  } catch {
+    tracks.value = []
+  }
+})
 
 onMounted(draw)
 watch(() => settings.hachures, draw)
@@ -148,6 +163,28 @@ const paperNote = computed(() =>
             <input v-model="settings.drums" type="checkbox" class="checkbox checkbox-sm" />
             Beat the drums — the pas ordinaire, 76 to the minute, under the battle and drowned by it
           </label>
+          <label class="flex w-fit items-center gap-2 text-xs">
+            <input v-model="settings.music" type="checkbox" class="checkbox checkbox-sm" />
+            Play the band — recorded music, looped through in turn and pulled down under the fire
+          </label>
+          <div v-if="tracks.length" class="flex flex-col gap-1 text-xs text-base-content/50">
+            <p v-for="track in tracks" :key="track.file">
+              <span class="text-base-content/70">{{ track.title }}</span> — {{ track.by }} ·
+              <component
+                :is="track.href ? 'a' : 'span'"
+                :href="track.href"
+                :class="track.href && 'link'"
+                target="_blank"
+                rel="noreferrer"
+                >{{ track.licence }}</component
+              >
+            </p>
+          </div>
+          <p v-else class="text-xs text-base-content/40">
+            No tracks are installed. The band is the one thing in this game somebody else wrote, so
+            it ships empty — <code>public/music/README.md</code> says where to find music that is
+            actually free and how to name it.
+          </p>
         </section>
 
         <p class="text-xs text-base-content/40">

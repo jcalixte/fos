@@ -51,6 +51,12 @@ export interface Settings {
    * who has turned the Noise up has said he wants to hear the battle.
    */
   drums: boolean
+  /**
+   * Whether the band plays. Off, and not merely because it is a preference: the
+   * app ships with no tracks in `public/music/` at all, so this is a switch for
+   * something that is not there until somebody puts it there.
+   */
+  music: boolean
 }
 
 export const HACHURE_CHOICES = ["light", "full"] as const
@@ -60,6 +66,7 @@ export const DEFAULT_SETTINGS: Settings = {
   hachures: STAFF_MAP_DEFAULTS.hachures === "off" ? "light" : STAFF_MAP_DEFAULTS.hachures,
   sound: "off",
   drums: true,
+  music: false,
 }
 
 export function loadSettings(): Settings {
@@ -78,7 +85,7 @@ export function loadSettings(): Settings {
       stored.sound && (LOUDNESS_CHOICES as readonly string[]).includes(stored.sound)
         ? stored.sound
         : DEFAULT_SETTINGS.sound
-    return { paper, hachures, sound, drums: stored.drums !== false }
+    return { paper, hachures, sound, drums: stored.drums !== false, music: stored.music === true }
   } catch {
     return { ...DEFAULT_SETTINGS }
   }

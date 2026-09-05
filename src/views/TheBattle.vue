@@ -230,6 +230,16 @@ onBeforeUnmount(() => {
           >
             drums
           </button>
+          <button
+            type="button"
+            class="btn btn-xs"
+            :class="ui.music && ui.sound !== 'off' ? 'btn-primary' : 'btn-ghost'"
+            :disabled="ui.sound === 'off'"
+            title="the band, held under the battle and pulled down by it"
+            @click="battle.toggleMusic()"
+          >
+            band
+          </button>
 
           <!-- Breaking off ends the battle and cannot be taken back, so the
                offer is made before it is taken — the same two gestures a Charge

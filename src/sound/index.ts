@@ -9,8 +9,10 @@ import {
   type Listening,
   type Noise,
 } from "./listen"
+import { Music, type Track } from "./music"
 
 export type { Noise, Sounding } from "./listen"
+export type { Track } from "./music"
 
 /**
  * C13 — the Field, made audible. One sound per event type (F15), synthesised
@@ -152,6 +154,10 @@ export class Noises {
 
   /** Whether the drums beat. Their own switch, because they are their own thing. */
   private drumming = false
+  /** Whether the band was asked for, which survives the Noise being silenced. */
+  private wanted = false
+  /** The band. Its own switch too, and the one thing here that is not the battle. */
+  private band = new Music()
   /** The bed: a rumble, a crackle over it, and how loud each currently is. */
   private bed: { rumble: GainNode; crackle: GainNode } | null = null
   /** Discharges a step, smoothed. The roar is a curve laid over this. */
@@ -162,10 +168,11 @@ export class Noises {
   private beat = 0
 
   /** Open the Field. `across` is its width in metres, which is what pans. */
-  open(across: number, loudness: Loudness, drums: boolean): void {
+  open(across: number, loudness: Loudness, drums: boolean, music: boolean): void {
     this.across = across
     this.loudness = loudness
     this.drumming = drums
+    this.wanted = music
     this.rate = 0
     this.roar = 0
     this.crowd = 0
@@ -187,6 +194,21 @@ export class Noises {
   }
 
   /**
+   * The band, which is recorded music and not a reading of the battle — see
+   * `music.ts`. Its own switch for that reason above every other: it is the one
+   * thing here somebody else wrote.
+   */
+  setMusic(on: boolean): void {
+    this.wanted = on
+    this.band.setOn(on && this.loudness !== "off")
+  }
+
+  /** Every track the band knows, for the credits Settings has to print. */
+  tracks(): Track[] {
+    return this.band.tracks()
+  }
+
+  /**
    * Take the audio device, which a browser hands over inside a gesture and
    * nowhere else. Called from the two presses every battle passes through —
    * taking an Army, and Standing To — rather than from the frame loop, where
@@ -202,9 +224,11 @@ export class Noises {
   setLoudness(loudness: Loudness): void {
     this.loudness = loudness
     if (loudness === "off") {
+      this.band.setOn(false)
       void this.ctx?.suspend()
       return
     }
+    this.band.setOn(this.wanted)
     if (!this.ctx) this.build()
     if (this.master) this.master.gain.value = MASTER[loudness]
     void this.ctx?.resume()
@@ -234,6 +258,9 @@ export class Noises {
       this.swell(clamour(current))
       this.march()
     }
+    // Every frame and not every step: a crossfade is watched on the wall clock,
+    // and a stopped battle still has a track running out.
+    this.band.advance(this.roar)
   }
 
   /**
@@ -601,6 +628,8 @@ export class Noises {
     this.ctx = ctx
     this.master = master
     this.noise = noise
+    this.band.attach(ctx, master)
+    if (this.wanted) this.band.setOn(true)
     this.bed = {
       rumble: this.layer(ctx, master, noise, "lowpass", 220, 0.7),
       crackle: this.layer(ctx, master, noise, "bandpass", 700, 1.2),
@@ -644,6 +673,8 @@ export class Noises {
     this.ctx = null
     this.master = null
     this.noise = null
+    this.band.close()
+    this.band = new Music()
     this.bed = null
     this.beat = 0
     this.rate = 0

@@ -75,6 +75,8 @@ export interface BattleUi {
   sound: Loudness
   /** Whether the drums beat. Off is silence under the battle, not a quieter one. */
   drums: boolean
+  /** Whether the band plays. Nothing at all until tracks are put in `public/music/`. */
+  music: boolean
   running: boolean
   ordersInFlight: number
   units: UnitSnapshot[]
@@ -151,6 +153,7 @@ function blankUi(): BattleUi {
     fireZones: false,
     sound: "off",
     drums: true,
+    music: false,
     running: false,
     ordersInFlight: 0,
     units: [],
@@ -350,9 +353,10 @@ export function useBattle() {
       view.value = v
       // Metres and not cells: what the Noise pans across is the ground, the
       // same width the Commander is looking at.
-      noises.open(battle.field.width * battle.field.cellSize, look.sound, look.drums)
+      noises.open(battle.field.width * battle.field.cellSize, look.sound, look.drums, look.music)
       ui.sound = look.sound
       ui.drums = look.drums
+      ui.music = look.music
 
       const remote = against === true || typeof address === "string"
       const s = markRaw(
@@ -602,6 +606,11 @@ export function useBattle() {
   function setSound(level: Loudness): void {
     ui.sound = level
     noises.setLoudness(level)
+  }
+
+  function toggleMusic(): void {
+    ui.music = !ui.music
+    noises.setMusic(ui.music)
   }
 
   function toggleDrums(): void {
@@ -1135,6 +1144,7 @@ export function useBattle() {
     toggleFireZones,
     setSound,
     toggleDrums,
+    toggleMusic,
     togglePause,
     offerToConcede,
     breakOff,
