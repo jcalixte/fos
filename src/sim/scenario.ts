@@ -80,6 +80,29 @@ export interface ScenarioArmy {
   deploymentZone?: [number, number, number, number]
 }
 
+/**
+ * A note in the Book: what was happening on this ground at this hour, and why
+ * it mattered, in the Scenario's own voice.
+ *
+ * Authored beside the Plan and not derived from the battle, because what a
+ * Chapter carries is *history* — what Bonaparte was trying to do, what the
+ * ground cost Quasdanovich — and the simulation knows none of that. It knows
+ * what its own afternoon did, which is what the Dispatch feed already says.
+ *
+ * Keyed to the clock, which is honest here in a way it would not be elsewhere:
+ * a Book runs no Commander, so the afternoon is a function of the Field, the
+ * Rosters and the two Plans with no free parameter in it, and the hour a
+ * Chapter is written against is the hour it will open at.
+ */
+export interface Chapter {
+  /** Battle time it opens at, in seconds. */
+  at: number
+  title: string
+  text: string
+  /** A Unit it is about, so the reader can be shown who. Optional. */
+  unitId?: string
+}
+
 export interface ScenarioFile {
   name: string
   summary: string
@@ -99,6 +122,11 @@ export interface ScenarioFile {
   crossings: { name: string; cells: [number, number, number, number] }[]
   keyGround: KeyGround[]
   plan: PlannedOrder[]
+  /**
+   * The Book's account of this battle. Optional: a Scenario without one is
+   * still fought, and is still watched — it simply has nothing to say over it.
+   */
+  chapters?: Chapter[]
 }
 
 export function entryToUnit(entry: RosterEntry, army: string): Unit {
