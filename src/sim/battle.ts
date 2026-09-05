@@ -12,8 +12,12 @@ import {
   beginChange,
   frontage,
   gapToPoint,
+  holdsGround,
   intendedFormation,
   mobRadius,
+  overlaps,
+  spanAlong,
+  type Standing,
   traverseRate,
   unitFootprint,
 } from "./formation"
@@ -54,7 +58,7 @@ import {
   type UnitId,
   type Vec2,
 } from "./types"
-import { angleDelta, bearing, distance } from "./vec"
+import { angleDelta, axes, bearing, distance, dot } from "./vec"
 import { route as findRoute } from "./routing"
 
 /**
@@ -189,6 +193,61 @@ export function admits(battle: Battle, unit: Unit, at: Vec2, heading: number): b
   return unitFootprint(unit).width <= crossingWidth(field, cx, cy, heading)
 }
 
+/** Where a Unit stands: the ground its Formation covers, and which way round. */
+function standingOf(unit: Unit, at: Vec2 = unit.position): Standing {
+  return { shape: unitFootprint(unit), at, facing: unit.facing }
+}
+
+/**
+ * The enemy Unit standing in the ground this one is about to step into, if
+ * there is one. Two thousand men do not walk through two thousand men, and
+ * until this existed they did: a Route was costed by Ground alone (C5) and a
+ * march tested the Field and nothing else, so a battalion ordered at a battery
+ * two hundred metres behind an enemy line went through the line to reach it.
+ *
+ * Answered as the ground and not as a body: the step is refused, the Unit
+ * stands, and the Order stands with it. That is exactly what `admits` already
+ * does at the mouth of a Crossing, and it is the whole reason there is no
+ * shoving in here — nothing pushes anything, so nothing has to decide which of
+ * two battalions gives way, and two of them cannot deadlock each other by both
+ * having somewhere to be.
+ *
+ * A mob neither bars nor is barred. It has no Formation left to hold ground
+ * with, and what it costs the troops it comes through is Disorder and not a
+ * halt (ADR-0012) — a Rout that stopped an army's march would be the most
+ * useful thing that could happen to the army it broke from.
+ *
+ * Nor does a screen, either way round, because Open Order holds no ground and
+ * C3 has always said so. A skirmish line that stopped a column would be the
+ * cheapest wall in the game, bought for one Formation change by the loosest
+ * eight hundred men on the Field.
+ *
+ * Nor does the Unit this one has been let go at: a Charge answers to Contact,
+ * which is decided at CONTACT_RANGE and so always before the two shapes could
+ * touch at all.
+ *
+ * Already in among them is let out. Two Units that begin the day standing in
+ * each other — a Deployment, an Arrival landing on somebody — would otherwise
+ * have no step either of them could take, and would stand there for the rest of
+ * the afternoon.
+ */
+function barredBy(battle: Battle, unit: Unit, at: Vec2): Unit | null {
+  if (!holdsGround(unit.formation)) return null
+  const here = standingOf(unit)
+  const next = standingOf(unit, at)
+  for (const other of battle.units) {
+    if (other === unit || other.army === unit.army) continue
+    if (other.strength <= 0 || isRouting(other)) continue
+    if (!holdsGround(other.formation)) continue
+    if (unit.charging?.targetId === other.id) continue
+    const theirs = standingOf(other)
+    if (!overlaps(next, theirs)) continue
+    if (overlaps(here, theirs)) continue
+    return other
+  }
+  return null
+}
+
 /**
  * Move a Unit that is running rather than marching: straight down a heading, at
  * whatever the ground leaves of the pace, stopping at anything it cannot enter.
@@ -212,7 +271,60 @@ function runOn(
     return
   }
   if (!admits(battle, unit, next, heading)) return
+  if (barredBy(battle, unit, next)) return
   unit.position = next
+}
+
+/**
+ * The Unit a Charge has actually run into, on its way to the one it was aimed
+ * at. A regiment let go at the guns behind a line meets the line first, and
+ * until this existed it did not: the run closed on `gapTo` the target and
+ * nothing else, so the horse rode through both Faces of an intact battalion and
+ * resolved its Contact against the battery beyond.
+ *
+ * Both measures are taken along the line of the charge and never between the
+ * two centres, which is the whole difficulty in here. The lane is the charge's
+ * own Frontage widened by whatever the other Unit presents across it, and the
+ * gap is the ground the charge still has to cover before the two shapes touch —
+ * so a battalion in march column threads a gap between two lines untouched, and
+ * a regiment two hundred metres wide strikes whatever stands in those two
+ * hundred metres *in front of it*. Measured centre to centre instead, that same
+ * regiment reads as touching everything it rides abreast of, and a charge down
+ * a corridor would strike the walls of it.
+ *
+ * Only what is close enough to touch, and of those the nearest, so this decides
+ * *who* the Contact is with and never brings one forward. Ground already
+ * covered is out — a negative gap is a Unit the charge is level with or past,
+ * which on a 0.7m stride can only be one it started the day standing in.
+ *
+ * A mob is not in the way of anything, and neither is a screen — the same two
+ * exemptions `barredBy` keeps, for the same reasons. Horse that has broken one
+ * battalion and is riding it down does not have to break it again, and Open
+ * Order holds no ground to be struck over.
+ */
+function interposed(battle: Battle, unit: Unit, target: Unit): Unit | null {
+  const { along, across } = axes(bearing(unit.position, target.position))
+  const mine = unitFootprint(unit)
+  const lane = spanAlong(mine, unit.facing, across) / 2
+  const reach = spanAlong(mine, unit.facing, along) / 2
+  let met: Unit | null = null
+  let nearest = CONTACT_RANGE
+  for (const other of battle.units) {
+    if (other === unit || other === target || other.army === unit.army) continue
+    if (other.strength <= 0 || isRouting(other)) continue
+    if (!holdsGround(other.formation)) continue
+    const theirs = unitFootprint(other)
+    const offset = {
+      x: other.position.x - unit.position.x,
+      y: other.position.y - unit.position.y,
+    }
+    if (Math.abs(dot(offset, across)) > lane + spanAlong(theirs, other.facing, across) / 2) continue
+    const gap = dot(offset, along) - reach - spanAlong(theirs, other.facing, along) / 2
+    if (gap < 0 || gap > nearest) continue
+    nearest = gap
+    met = other
+  }
+  return met
 }
 
 /**
@@ -308,6 +420,19 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     if (gap <= CONTACT_RANGE) rideDown(battle, unit, target, dt)
     const closing = Math.min(chargeSpeed(unit.arm), Math.max(0, gap) / dt)
     runOn(battle, unit, bearing(unit.position, target.position), closing, dt, true)
+    return
+  }
+
+  // The first Face it comes to, and not the one it was aimed at. What the
+  // charge is committed to from here is what it ran into: the Charge is
+  // re-aimed rather than merely resolved once, so the recoil goes back from
+  // this Unit and the Pursuit follows this one's mob. The player picked the
+  // direction to let the horse go in, and a screen standing in it is the answer
+  // to what he picked.
+  const met = interposed(battle, unit, target)
+  if (met) {
+    charge.targetId = met.id
+    resolveContact(battle, unit, met)
     return
   }
 
@@ -424,6 +549,11 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     // Held at the mouth of a Crossing it does not fit through. Initiative is
     // what gets it into column; until then it stands, and so does the Order.
     if (!admits(battle, unit, next, heading)) return
+    // And held against a Unit it cannot walk through, which is the same answer
+    // and the same silence: the Order does not die, it waits, and what gets the
+    // battalion moving again is the enemy giving way or a Courier with
+    // somewhere else to be.
+    if (barredBy(battle, unit, next)) return
     unit.position = next
     if (toWaypoint <= stride) unit.route.shift()
     return
@@ -552,6 +682,9 @@ export function step(battle: Battle): void {
   // just been ridden over is not sending anybody this step (ADR-0008).
   advanceHeadquarters(battle, STEP)
   advanceCouriers(battle, STEP)
+  // Where everybody stood before anybody moved. `unit.position` is replaced and
+  // never written into, so holding the old ones costs nothing and no copy.
+  const before = battle.units.map((unit) => unit.position)
   for (const unit of battle.units) {
     applyInitiative(unit, battle)
     advanceFormationChange(battle, unit, STEP)
@@ -586,6 +719,7 @@ export function step(battle: Battle): void {
     recover(battle, unit, STEP)
   }
   trampledThrough(battle)
+  walkedThrough(battle, before)
   clearTheGone(battle)
   holdKeyGround(battle)
   decide(battle)
@@ -630,6 +764,58 @@ function trampledThrough(battle: Battle): void {
       const through = gapToPoint(unitFootprint(unit), unit.position, unit.facing, mob.position) <= 0
       if (!over && !through) continue
       disarrange(battle, unit, `${mob.name} came back through it`)
+    }
+  }
+}
+
+/**
+ * Formed Units standing in each other's ground, and what it costs the pair of
+ * them: Disorder's third buyer, beside the Pursuit and the mob.
+ *
+ * In practice it is a Unit's own side, because an enemy is barred from walking
+ * into it at all (`barredBy`) — but there is no clause here saying so, because
+ * the fact is about files being opened and not about whose files they are, and
+ * that is the same reading ADR-0012 already takes for a Rout. Deployment and an
+ * Arrival can both put two enemies in one place without anybody having marched
+ * there, and neither of them wants a rule of its own.
+ *
+ * Somebody has to be *walking*, which is the difference between this and an
+ * ambient tax on standing near anybody — the thing ADR-0012 refused when it
+ * asked the mob to run over a Unit rather than past it. A mob always gets past
+ * and the refresh always ends; two battalions that have come to rest in each
+ * other never would, so they would carry Disorder for the rest of the
+ * afternoon over a state neither of them was doing anything about. Standing
+ * still is also precisely what mends it, so the pair sort their ranks out where
+ * they stand and are crowded rather than ruined.
+ *
+ * This is what stops a brigade being a single body of men that happens to be
+ * drawn as four: before it, a second line could be marched clean through the
+ * first at no cost whatever, and the intervals a brigade was actually drawn up
+ * with bought nothing. They buy something now, and the price of not leaving
+ * them is half a minute of not being able to make square.
+ *
+ * A screen is nobody's ranks and opens nobody's: Open Order holds no ground
+ * (C3), so a battalion that walks through one has walked through 1.6m intervals
+ * and the men in them have stepped aside, which is what they are out there to
+ * be able to do.
+ *
+ * The mob is left to `trampledThrough`, which asks the question in discs
+ * because a mob has no Footprint to ask it in. Both run after the march for the
+ * same reason: everybody moved this step, and what matters is where they ended
+ * it.
+ */
+function walkedThrough(battle: Battle, before: Vec2[]): void {
+  const moved = (unit: Unit, i: number) => distance(before[i], unit.position) >= 0.001
+  for (let i = 0; i < battle.units.length; i++) {
+    const a = battle.units[i]
+    if (a.strength <= 0 || isRouting(a) || !holdsGround(a.formation)) continue
+    for (let j = i + 1; j < battle.units.length; j++) {
+      const b = battle.units[j]
+      if (b.strength <= 0 || isRouting(b) || !holdsGround(b.formation)) continue
+      if (!moved(a, i) && !moved(b, j)) continue
+      if (!overlaps(standingOf(a), standingOf(b))) continue
+      disarrange(battle, a, `${b.name} came through its ranks`)
+      disarrange(battle, b, `${a.name} came through its ranks`)
     }
   }
 }

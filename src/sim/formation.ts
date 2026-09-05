@@ -287,6 +287,25 @@ export function spanAlong(shape: Footprint, facing: number, axis: Vec2): number 
   return Math.abs(shape.depth * dot(along, axis)) + Math.abs(shape.width * dot(across, axis))
 }
 
+/**
+ * Whether a Formation holds the ground it stands on — whether another body of
+ * men has to go round it rather than through it.
+ *
+ * Open Order does not, and that is not a new rule: `explainFormation` has said
+ * *a screen at 1.6m intervals ... but it holds no ground itself* since the
+ * Formation existed. Men at those intervals are mostly the gaps between them,
+ * so a battalion walks through a screen and the screen falls back through the
+ * battalion, which is the whole of what a screen is for and the reason it is
+ * put out in front of one.
+ *
+ * Everything else holds it, march column included. Four abreast on the road is
+ * the worst thing on the Field to be run into and not the easiest, and it has
+ * no Face for an entirely different reason.
+ */
+export function holdsGround(formation: FormationName): boolean {
+  return formation !== "open-order"
+}
+
 export function faces(arm: Arm, formation: FormationName): 0 | 1 | 4 {
   return spec(arm, formation).faces
 }
@@ -415,6 +434,30 @@ export function gapBetween(a: Standing, b: Standing): number {
   for (const c of cornersOf(b)) gap = Math.min(gap, gapToPoint(a.shape, a.at, a.facing, c))
   for (const c of cornersOf(a)) gap = Math.min(gap, gapToPoint(b.shape, b.at, b.facing, c))
   return gap
+}
+
+/**
+ * Whether two Footprints are standing in the same ground. The separating-axis
+ * test over the four axes the two rectangles have between them, which is
+ * `gapTo`'s one measure asked four times: on any axis where the ground between
+ * the two centres is wider than the two spans laid along it, there is daylight,
+ * and one such axis is enough to say they are apart.
+ *
+ * Not `gapBetween(a, b) <= 0`, which is taken corner by corner and has its hole
+ * exactly where this question matters most — a column crossing a line at right
+ * angles through the middle of it puts no corner of either shape inside the
+ * other, and that is a battalion standing in a battalion.
+ */
+export function overlaps(a: Standing, b: Standing): boolean {
+  const offset = { x: b.at.x - a.at.x, y: b.at.y - a.at.y }
+  const mine = axes(a.facing)
+  const theirs = axes(b.facing)
+  for (const axis of [mine.along, mine.across, theirs.along, theirs.across]) {
+    const apart = Math.abs(dot(offset, axis))
+    const spans = spanAlong(a.shape, a.facing, axis) + spanAlong(b.shape, b.facing, axis)
+    if (apart > spans / 2) return false
+  }
+  return true
 }
 
 /**
