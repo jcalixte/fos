@@ -8,6 +8,7 @@ import { rideTo, sendOrder } from "@/sim/headquarters"
 import { armyReturns } from "@/sim/return"
 import { snapshot } from "@/sim/snapshot"
 import type { Battle, Unit } from "@/sim/types"
+import * as record from "./record"
 
 /**
  * The process a two-Commander battle lives in (ADR-0013).
@@ -61,13 +62,18 @@ const server = Bun.serve<Sitting, never>({
       // Out of Contact, and not an ending: the seat, the army and the afternoon
       // stay where they are, and the clock does not pause (F24).
       const seat = seatOf(socket)
-      if (seat) seat.present = false
+      if (seat) {
+        seat.present = false
+        record.wentQuiet(seat)
+      }
     },
     message(socket, raw) {
       let ask: Ask
       try {
         ask = JSON.parse(String(raw)) as Ask
       } catch {
+        const seat = seatOf(socket)
+        if (seat) record.refused(seat, "that was not a message")
         return say(socket, { tell: "refused", because: "that was not a message" })
       }
       handle(socket, ask)
@@ -82,7 +88,19 @@ setInterval(() => {
   for (const battle of moved) report(battle)
 }, TICK_MS)
 
-setInterval(() => register.sweep(), SWEEP_MS)
+setInterval(() => {
+  register.sweep()
+  record.prune()
+}, SWEEP_MS)
+
+// A battle need not end for the process to: stopped is the one ending nothing
+// else here would write down.
+for (const signal of ["SIGTERM", "SIGINT"] as const) {
+  process.on(signal, () => {
+    record.stopping()
+    process.exit(0)
+  })
+}
 
 // ---------------------------------------------------------------------------
 
@@ -102,6 +120,7 @@ function handle(socket: ServerWebSocket<Sitting>, ask: Ask): void {
     const seat = register.sit(battle, undefined)
     if (!seat) return say(socket, { tell: "full", battle: battle.id })
     socket.data = { battle: battle.id, token: seat.token }
+    record.asked(seat, "open")
     return say(socket, seated(battle, seat))
   }
 
@@ -114,6 +133,7 @@ function handle(socket: ServerWebSocket<Sitting>, ask: Ask): void {
     const seat = register.sit(battle, ask.token)
     if (!seat) return say(socket, { tell: "full", battle: battle.id })
     socket.data = { battle: battle.id, token: seat.token }
+    record.asked(seat, "join")
     say(socket, seated(battle, seat))
     // A seat reclaimed after a drop is owed the afternoon it missed, so the
     // feed goes again from the top.
@@ -125,6 +145,7 @@ function handle(socket: ServerWebSocket<Sitting>, ask: Ask): void {
   const battle = register.get(socket.data.battle)
   const seat = seatOf(socket)
   if (!battle || !seat) return say(socket, { tell: "refused", because: "no seat here" })
+  record.asked(seat, ask.command.kind)
   apply(battle, seat, ask.command)
 }
 
@@ -143,6 +164,7 @@ function apply(battle: HeldBattle, seat: Seat, command: Command): void {
   switch (command.kind) {
     case "take-army": {
       if (!register.takeArmy(battle, seat, command.army)) {
+        record.refused(seat, "that army is taken")
         return sayTo(seat, { tell: "refused", because: "that army is taken" })
       }
       // The seat again, now that it names an army: it is the answer to the one
@@ -208,6 +230,7 @@ function apply(battle: HeldBattle, seat: Seat, command: Command): void {
     case "pause":
       // One clock runs for both. A Commander who wants to stop watching stops
       // watching; the afternoon does not wait for him (F24).
+      record.refused(seat, "a battle with two Commanders does not stop")
       return sayTo(seat, {
         tell: "refused",
         because: "a battle with two Commanders does not stop",
@@ -277,7 +300,12 @@ function stateFor(battle: HeldBattle, seat: Seat): State {
 }
 
 function tell(battle: HeldBattle, seat: Seat, socket: ServerWebSocket<Sitting>): void {
-  say(socket, { tell: "state", state: stateFor(battle, seat) })
+  // Stringified here rather than in `say` so the length can be counted: this is
+  // the whole of what a Commander is sent, every other message being a handful
+  // of bytes against ten states a second.
+  const line = JSON.stringify({ tell: "state", state: stateFor(battle, seat) })
+  socket.send(line)
+  record.sent(seat, Buffer.byteLength(line, "utf8"), true)
 }
 
 function tellSeat(battle: HeldBattle, seat: Seat): void {

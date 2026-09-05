@@ -4,6 +4,7 @@ import { isOver, step } from "@/sim/battle"
 import { BattleClock } from "@/sim/runner"
 import { takeCommand } from "@/sim/scenario"
 import type { ArmyId } from "@/sim/types"
+import * as record from "./record"
 
 /**
  * C18, the Battle Register: battles in progress and their addresses, the two
@@ -93,6 +94,7 @@ export class BattleRegister {
       touchedAt: now,
     }
     this.battles.set(battle.id, battle)
+    record.opened(battle)
     return battle
   }
 
@@ -110,6 +112,7 @@ export class BattleRegister {
     const held = token ? battle.seats.find((seat) => seat.token === token) : undefined
     if (held) {
       held.present = true
+      record.satDown(held, true)
       return held
     }
     if (battle.seats.length >= MOST_SEATS) return null
@@ -122,6 +125,7 @@ export class BattleRegister {
       present: true,
     }
     battle.seats.push(seat)
+    record.satDown(seat, false)
     return seat
   }
 
@@ -182,6 +186,7 @@ export class BattleRegister {
     if (battle.running || battle.deadline === null) return false
     const both = battle.seats.length === MOST_SEATS && battle.seats.every((seat) => seat.stoodTo)
     if (!both && now < battle.deadline) return false
+    record.deploymentEnded(battle, both ? "both-stood-to" : "the-clock")
     battle.running = true
     battle.deadline = null
     return true
@@ -193,10 +198,12 @@ export class BattleRegister {
     for (const [id, battle] of this.battles) {
       const alone = battle.seats.length < MOST_SEATS
       if (alone && now - battle.openedAt > UNJOINED_MS) {
+        record.forget(battle, "nobody-joined")
         this.battles.delete(id)
         continue
       }
       if (isOver(battle.loaded.battle) && now - battle.touchedAt > DECIDED_MS) {
+        record.forget(battle, "decided")
         this.battles.delete(id)
       }
     }
