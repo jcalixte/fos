@@ -42,6 +42,15 @@ export interface Settings {
    * what any of this is for.
    */
   sound: Loudness
+  /**
+   * Whether the drums beat. Their own switch and not a rung of the one above,
+   * because they are the one sound in the game a player may reasonably not want
+   * without wanting silence.
+   *
+   * On, unlike the Noise: they cost nothing when the Noise is off, and a player
+   * who has turned the Noise up has said he wants to hear the battle.
+   */
+  drums: boolean
 }
 
 export const HACHURE_CHOICES = ["light", "full"] as const
@@ -50,6 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   paper: STAFF_MAP_DEFAULTS.paper,
   hachures: STAFF_MAP_DEFAULTS.hachures === "off" ? "light" : STAFF_MAP_DEFAULTS.hachures,
   sound: "off",
+  drums: true,
 }
 
 export function loadSettings(): Settings {
@@ -68,7 +78,7 @@ export function loadSettings(): Settings {
       stored.sound && (LOUDNESS_CHOICES as readonly string[]).includes(stored.sound)
         ? stored.sound
         : DEFAULT_SETTINGS.sound
-    return { paper, hachures, sound }
+    return { paper, hachures, sound, drums: stored.drums !== false }
   } catch {
     return { ...DEFAULT_SETTINGS }
   }

@@ -220,6 +220,16 @@ onBeforeUnmount(() => {
           >
             {{ level }}
           </button>
+          <button
+            type="button"
+            class="btn btn-xs"
+            :class="ui.drums && ui.sound !== 'off' ? 'btn-primary' : 'btn-ghost'"
+            :disabled="ui.sound === 'off'"
+            title="the pas ordinaire, beaten under the battle and drowned by it"
+            @click="battle.toggleDrums()"
+          >
+            drums
+          </button>
 
           <!-- Breaking off ends the battle and cannot be taken back, so the
                offer is made before it is taken — the same two gestures a Charge
