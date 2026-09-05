@@ -179,8 +179,16 @@ to hand over its exact Strength, its Fatigue and what its next Volley was laid o
 the map shows and nothing else. And both Headquarters are drawn — yours filled, his hollow — which
 is what makes Harried and Overrun a rule both armies obey.
 
-Not built yet: Concealment, sound. No tutorial: what a mark means is meant to be learned from the
-game, and how is an open question (DESIGN §1, G9).
+**The Field, heard.** A Volley, a gun, a Charge going in, Contact, a Unit Routing, and a rider
+reaching one of your own — each its own sound, and each heard from where your Headquarters is
+standing, so fire near the staff is loud and fire a kilometre off is a murmur and both change as you
+ride. Nothing is downloaded: black powder is a burst of noise with a hard attack and a long tail, so
+every sound in the game is a filter and four numbers. It ships off, and there are three settings —
+off, quiet, full — on the Settings page and on the battle screen, because leaving a battle to
+quieten it would cost you the battle.
+
+Not built yet: Concealment. No tutorial: what a mark means is meant to be learned from the game, and
+how is an open question (DESIGN §1, G9).
 
 ## Layout
 
@@ -189,6 +197,7 @@ game, and how is an open question (DESIGN §1, G9).
 | `src/sim/` | the simulation: pure, no DOM, no renderer ([ADR-0003](./docs/adr/0003-typescript-with-a-pure-simulation-core.md)) |
 | `src/render/` | PixiJS drawing, and the only place interpolation happens |
 | `src/scenario/` | decoding a Scenario's PNGs and JSON into a Battle — `build.ts` is shared, `loader.ts` needs a canvas, `disk.ts` needs a filesystem |
+| `src/sound/` | the Field made audible: `listen.ts` decides what is worth hearing and is pure, `index.ts` holds the audio device |
 | `src/session/` | the seam: takes Orders, emits snapshots, reports the Outcome — local in the tab, or remote over a socket ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)) |
 | `server/` | the process a two-Commander battle lives in: `Bun.serve`, one WebSocket, no framework |
 | `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |

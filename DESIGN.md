@@ -713,7 +713,7 @@ on screen teaches them*, and it now has a Goal above it rather than only a cost 
   - **F12** Morph the slot layout through a Formation change — **How**: Figures stay rigid *in* their slots; the slot layout itself interpolates over the transition's real duration, so a line visibly folds into a square → C3, C10
   - **F13** Volley as flash and Powder Smoke — **How**: discrete Volleys already give the battlefield a beat; one flash and one drifting cloud each → C11
   - **F14** Interpolate rendering between sim states — **How**: renderer draws between the last two states; interpolation never touches the sim → C10, C8
-  - **F15** Sound every battle event — **How**: one sound per event type, off the same event stream that feeds Dispatches → C13
+  - **F15** Sound every battle event — **How**: one sound per event type, read off the snapshot — `volleys` and `contacts` are already events for the one step they happened in, and a Charge and a Rout are a Unit's state changing between two — so the cut comes free and the enemy's Orders are silent without a rule saying so (§10). Synthesised and not sampled: black powder is filtered noise with a hard attack and an exponential tail, so nothing is downloaded and every sound is a constant somebody can move → C13
 - **G8** worth fighting more than once  _W:7_
   - **F21** Advance one battle for two Commanders — **How**: the battle is held and stepped by a server; one seam — a session takes Orders, emits snapshots, reports the Outcome — implemented twice, local in the tab and remote over a socket, neither containing a rule (ADR-0013). The remote half is Bun — its resolver takes `sim/`'s extensionless imports directly and `Bun.serve` carries the socket, so the backend adds no build step and no dependency, and the tests move to the same engine with it (ADR-0014) → C16, C8 _(rejected: host-authoritative, lockstep peers — see T22)_
   - **F22** Send each Commander only what is his — **How**: the snapshot is cut per Commander before it leaves, so what he may not see was never on his machine; the renderer's existing filters become the second line rather than the first → C16, C11
@@ -972,6 +972,7 @@ On the fixtures, where a rule is watched in isolation:
 | 5 | F11 battle length: 20–40 min at Tempo 1 | the fixture's 30-minute clock runs out; neither army got past half of itself running | the bridge-march fixture, headless, with no Orders |
 | — | C7 Disorder: two causes, three costs, one way out | a Pursuit disorders the pursuer and holds him there until he stands; a mob run over a formed Unit disorders it; the drill is C3's and Grade reaches it | `src/sim/disorder.test.ts` |
 | — | F13 one flash and one drifting cloud per Volley | one cloud, born at the muzzles, capped at 0.268 however many fire | the plate, `/plate`, with the toggle |
+| — | F15 a distinct sound per Volley, gun, Charge, Contact, Rout and Order arrival | all six heard in one commanded Castiglione; every Volley heard exactly once against 6 frames a step, every Rout once against the steps it spends running, and Orders from one army only | `src/sound/listen.test.ts` |
 
 And on the two nominal battles, which is where the rows above say to watch them. `pnpm measure`
 steps Castiglione and Rivoli to the clock with the player silent — each army taken in turn, so each
@@ -1822,6 +1823,30 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   that was the thing being argued with. The budget run is byte-identical, which is again the whole
   of what it proves: no square is ever formed in the silent runs, so they show no collateral
   damage and cannot show the change working.
+
+- **F15's sound was cascaded off a stream that does not exist.** §4 says the sounds come *"off the
+  same event stream that feeds Dispatches"*, which reads as though there is one. There is not: a
+  `Dispatch` is `{at, unitId, army, text}` — a line of prose with no `kind` on it — pushed from
+  twenty-one places across seven modules of `sim/`. Giving it a `kind` to hang sound off would have
+  widened the wire and touched the whole simulation for a decoration, and been the second thing this
+  design has done to C12 that C12 did not ask for.
+
+  Built off the snapshot instead, which turns out to be the better half of the same idea. `volleys`
+  and `contacts` are already events for exactly the step they happened in — which is what a sound
+  *is* — and a Charge and a Rout are read as a Unit's state changing between two steps. **The cut
+  then came free.** Volleys, Contacts, Charges and Routs are on the Field for both armies, so they
+  sound for both; an Order arriving is read off a Courier, and a Courier is only ever on his own
+  Commander's wire (F22), so the enemy's Orders are silent without a rule anywhere saying they must
+  be. The How in §4 is amended to say the snapshot.
+
+  Two things came out of building it. **The Commander's ears are at his Headquarters**, which is not
+  a thing any row asked for and is the only honest answer available: F6 fixes the camera on the
+  whole Field and never moves it, so there is no viewpoint to listen from, and the game already says
+  where the man is standing. Fire near the staff is loud and fire a kilometre off is a murmur, and
+  both change as he rides — ADR-0008's *where do I stand* with a second answer under it. And **an
+  Order arriving is the one sound not quietened by distance**, because it is a cue to the Commander
+  rather than a noise on the Field: an Order landing at the far end of the line is precisely the one
+  he most needs to be told about.
 
 - **Two places still read movement as displacement alone, and are left doing so.** A battalion
   wheeling on the spot covers no ground, so it fires while it turns — right for a battery, which

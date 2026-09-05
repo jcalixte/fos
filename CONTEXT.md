@@ -137,7 +137,7 @@ is the reason dispersal is not priced as Depth — a screen stands better under 
 line, and a column stands worst of all.
 _Avoid_: packing, spread, cover, evasion, armour
 
-### Seeing
+### Seeing and hearing
 
 **Powder Smoke**:
 The cloud a Unit leaves behind when it fires. It is drawn and it drifts, and that is all it does
@@ -156,6 +156,14 @@ _Avoid_: card, panel, inspector, stats, tooltip, readout
 The state of a Unit the enemy cannot see, because opaque Ground covers it or a Height stands
 between. Open ground in view is never concealed — terrain is the only thing that hides anything.
 _Avoid_: fog of war, stealth, hidden, invisible
+
+**Noise**:
+What the Field is heard doing: a **Volley**, a gun, a **Charge** going in, **Contact**, a **Unit**
+Routing, and a rider reaching one of your own. Heard from where your **Headquarters** is standing,
+so fire near the staff is loud and fire a kilometre off is a murmur — and it moves as you ride.
+Everything the Noise says is also on the screen, which is why it is the one thing here that can be
+turned off.
+_Avoid_: audio, SFX, sound effect, cue, ambience
 
 ### Commanding
 
