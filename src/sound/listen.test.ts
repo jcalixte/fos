@@ -4,7 +4,7 @@ import { step } from "@/sim/battle"
 import { sendOrder } from "@/sim/headquarters"
 import { noSnapshot, snapshot, type UnitSnapshot, type VolleySnapshot } from "@/sim/snapshot"
 import type { Battle } from "@/sim/types"
-import { clamour, listen, listening, type Noise, SOUNDINGS_PER_STEP } from "./listen"
+import { listen, listening, type Noise, SOUNDINGS_PER_STEP } from "./listen"
 
 /**
  * F15, asserted against a real authored battle rather than a fixture, the way
@@ -213,47 +213,6 @@ function volley(): VolleySnapshot {
 const riding = [
   { id: "c1", unitId: "fr-32e", position: { x: 0, y: 0 }, origin: { x: 0, y: 0 }, held: false },
 ]
-
-describe("the roar under it all", () => {
-  it("is silent on a Field where nothing is happening", () => {
-    expect(clamour({ ...noSnapshot(), units: [unit()] })).toEqual({ fire: 0, bodies: 0 })
-  })
-
-  it("counts a Contact for several Volleys, because it does not stop after one report", () => {
-    const one = clamour({ ...noSnapshot(), volleys: [volley()] })
-    const met = clamour({
-      ...noSnapshot(),
-      contacts: [
-        {
-          id: "k1",
-          at: 0.1,
-          unitId: "fr-32e",
-          targetId: "au-ir43-1",
-          where: { x: 100, y: 100 },
-          side: 0,
-          width: 120,
-          outcome: "recoiled" as const,
-        },
-      ],
-    })
-    expect(met.fire).toBeGreaterThan(one.fire)
-  })
-
-  it("counts Units going at somebody, and a mob for rather less", () => {
-    const at = clamour({ ...noSnapshot(), units: [unit({ charging: "au-ir43-1" })] })
-    const away = clamour({ ...noSnapshot(), units: [unit({ routing: true })] })
-    expect(at.bodies).toBeGreaterThan(away.bodies)
-    expect(away.bodies).toBeGreaterThan(0)
-  })
-
-  it("hears the whole battle and not the Commander's half of it (F22)", () => {
-    // The roar is uncut on purpose: fire, Contacts, Charges and Routs are on
-    // the Field for both armies, and hearing only your own men fight would be
-    // a strange afternoon.
-    const run = commanded()
-    expect(clamour(snapshot(run.battle, FRENCH))).toEqual(clamour(snapshot(run.battle, AUSTRIAN)))
-  })
-})
 
 describe("a rider who handed nothing over", () => {
   it("is heard when he reaches a Unit standing where it was", () => {

@@ -73,10 +73,14 @@ export interface BattleUi {
    * battle thrown away.
    */
   sound: Loudness
-  /** Whether the drums beat. Off is silence under the battle, not a quieter one. */
-  drums: boolean
   /** Whether the band plays. Nothing at all until tracks are put in `public/music/`. */
   music: boolean
+  /**
+   * Whether there is a band to play at all — whether `public/music/index.json`
+   * names any tracks. The switch is shown either way and says which it is: a
+   * control that does nothing and does not say so is worse than no control.
+   */
+  bandAvailable: boolean
   running: boolean
   ordersInFlight: number
   units: UnitSnapshot[]
@@ -152,8 +156,8 @@ function blankUi(): BattleUi {
     tempo: 4,
     fireZones: false,
     sound: "off",
-    drums: true,
     music: false,
+    bandAvailable: false,
     running: false,
     ordersInFlight: 0,
     units: [],
@@ -353,10 +357,14 @@ export function useBattle() {
       view.value = v
       // Metres and not cells: what the Noise pans across is the ground, the
       // same width the Commander is looking at.
-      noises.open(battle.field.width * battle.field.cellSize, look.sound, look.drums, look.music)
+      noises.open(battle.field.width * battle.field.cellSize, look.sound, look.music)
       ui.sound = look.sound
-      ui.drums = look.drums
       ui.music = look.music
+      // Not awaited: a battle does not wait on a manifest, and the switch is
+      // drawn as soon as the answer arrives.
+      void noises.learn().then((has) => {
+        if (load === loads) ui.bandAvailable = has
+      })
 
       const remote = against === true || typeof address === "string"
       const s = markRaw(
@@ -611,11 +619,6 @@ export function useBattle() {
   function toggleMusic(): void {
     ui.music = !ui.music
     noises.setMusic(ui.music)
-  }
-
-  function toggleDrums(): void {
-    ui.drums = !ui.drums
-    noises.setDrums(ui.drums)
   }
 
   function toggleFireZones(): void {
@@ -1143,7 +1146,6 @@ export function useBattle() {
     setTempo,
     toggleFireZones,
     setSound,
-    toggleDrums,
     toggleMusic,
     togglePause,
     offerToConcede,

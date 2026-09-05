@@ -126,40 +126,6 @@ export function listen(memory: Listening, current: BattleSnapshot): Sounding[] {
 }
 
 /**
- * How loud the Field is as a whole, this step.
- *
- * The Soundings above are events; this is the bed under them — the roar a
- * battle makes, which is not any one of the things happening on it and is all
- * of them at once. Read as a rate rather than a level, because that is what a
- * snapshot can honestly report: one step holds the discharges of one step, and
- * how loud the afternoon *is* comes of integrating them, which is the device's
- * business and not this one's.
- *
- * Uncut on purpose, and it costs nothing: `volleys`, `contacts`, `routing` and
- * `charging` are on the Field for both armies (F22), so the roar a Commander
- * hears is the whole battle's and not his own half of it. It would be a strange
- * thing to hear only your own men fighting.
- */
-export function clamour(current: BattleSnapshot): Clamour {
-  let bodies = 0
-  for (const unit of current.units) {
-    if (unit.charging !== null) bodies += 1
-    else if (unit.routing) bodies += 0.6
-  }
-  // A Contact is worth several Volleys: it is the loudest thing that happens,
-  // and unlike a Volley it does not stop after one report.
-  return { fire: current.volleys.length + current.contacts.length * 3, bodies }
-}
-
-/** What the Field is doing taken all together, rather than event by event. */
-export interface Clamour {
-  /** Discharges in this step. A rate: the device integrates it. */
-  fire: number
-  /** Units going at somebody or running from him. A count, already a level. */
-  bodies: number
-}
-
-/**
  * An Order arriving: a Courier who was on the road last step and is not on it
  * now.
  *

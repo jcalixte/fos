@@ -1,14 +1,6 @@
 import type { BattleSnapshot } from "@/sim/snapshot"
 import type { Vec2 } from "@/sim/types"
-import {
-  clamour,
-  FULL_FRONTAGE,
-  forget,
-  listen,
-  listening,
-  type Listening,
-  type Noise,
-} from "./listen"
+import { FULL_FRONTAGE, forget, listen, listening, type Listening, type Noise } from "./listen"
 import { Music, type Track } from "./music"
 
 export type { Noise, Sounding } from "./listen"
@@ -88,35 +80,13 @@ const GOLD = 0.618033988749895
 const CARRIES = 0.35
 
 /**
- * The bed: how fast the roar rises and falls, per step.
+ * How fast the band is pulled down under fire, and how fast it comes back.
  *
- * A battle does not get loud in one discharge and does not fall silent in one
- * either. About seven seconds to settle, which is roughly the interval between
- * one battalion's Volleys — so the bed reads as *fire is being kept up* rather
- * than following any particular round of it.
+ * Ducked off the Soundings actually played rather than off any reading of the
+ * battle: what has to get out of the way of a Volley is the music, and what
+ * says a Volley happened is that one was just played.
  */
-const ROAR_SETTLES = 0.014
-
-/**
- * Discharges in one step at which the Field is two-thirds of the way to a full
- * roar — about one and a half a second.
- *
- * Calibrated against what a Castiglione actually does rather than guessed:
- * twenty-two battalions on a twenty-second reload clock is roughly one Volley a
- * second, which is 0.1 here, and that afternoon should read as a battle going
- * on and not as a full-dress general action.
- */
-const AT_FULL_CRY = 0.15
-
-/**
- * The pas ordinaire: 76 to the minute, which is the pace a French battalion
- * actually marched at. Beaten in real time and not in battle time — at Tempo 4
- * the afternoon goes four times as fast and the drummer does not.
- */
-const PAS_ORDINAIRE = 76
-
-/** How far ahead beats are scheduled. Comfortably past one 10Hz snapshot. */
-const BEAT_LOOKAHEAD = 0.6
+const DUCK_SETTLES = 0.06
 
 interface Envelope {
   attack: number
@@ -152,45 +122,21 @@ export class Noises {
   /** Voices started in the step being heard, against `VOICES_PER_STEP`. */
   private spent = 0
 
-  /** Whether the drums beat. Their own switch, because they are their own thing. */
-  private drumming = false
   /** Whether the band was asked for, which survives the Noise being silenced. */
   private wanted = false
   /** The band. Its own switch too, and the one thing here that is not the battle. */
   private band = new Music()
-  /** The bed: a rumble, a crackle over it, and how loud each currently is. */
-  private bed: { rumble: GainNode; crackle: GainNode } | null = null
-  /** Discharges a step, smoothed. The roar is a curve laid over this. */
-  private rate = 0
-  private roar = 0
-  private crowd = 0
-  /** Context time the next beat falls on, or 0 for a drummer not yet started. */
-  private beat = 0
+  /** How hard the band is currently held down, 0 to 1. */
+  private ducked = 0
 
   /** Open the Field. `across` is its width in metres, which is what pans. */
-  open(across: number, loudness: Loudness, drums: boolean, music: boolean): void {
+  open(across: number, loudness: Loudness, music: boolean): void {
     this.across = across
     this.loudness = loudness
-    this.drumming = drums
     this.wanted = music
-    this.rate = 0
-    this.roar = 0
-    this.crowd = 0
-    this.beat = 0
+    this.ducked = 0
     forget(this.memory)
     if (this.master) this.master.gain.value = MASTER[loudness]
-  }
-
-  /**
-   * The drums, which are a separate switch from the Noise.
-   *
-   * They are not a soundtrack — a battalion's drummer is on the Field and is
-   * how the pace is passed down it — but they are the one sound here a player
-   * may reasonably not want without wanting silence, so they get their own.
-   */
-  setDrums(on: boolean): void {
-    this.drumming = on
-    if (!on) this.beat = 0
   }
 
   /**
@@ -206,6 +152,12 @@ export class Noises {
   /** Every track the band knows, for the credits Settings has to print. */
   tracks(): Track[] {
     return this.band.tracks()
+  }
+
+  /** Read the band's manifest, so the screen knows whether there is one. */
+  async learn(): Promise<boolean> {
+    await this.band.learn()
+    return this.band.tracks().length > 0
   }
 
   /**
@@ -243,10 +195,6 @@ export class Noises {
    * backlog.
    */
   hear(current: BattleSnapshot): void {
-    // Whether the afternoon actually moved. A paused battle and a snapshot
-    // handed over for the sixth time look the same from here, and neither is a
-    // step the drums should march through.
-    const advanced = current.time !== this.memory.heardAt && current.time >= this.memory.heardAt
     const heard = listen(this.memory, current)
     if (this.loudness === "off") return
     if (!this.ctx || !this.master || !this.noise) return
@@ -254,13 +202,16 @@ export class Noises {
     this.spent = 0
     const ears = this.ears(current)
     for (const sounding of heard) this.play(sounding.noise, sounding.at, ears, sounding.width)
-    if (advanced) {
-      this.swell(clamour(current))
-      this.march()
-    }
+
+    // The band gets out of the way of the fighting, and comes back when it
+    // stops. Read off what was just played rather than off the battle: what has
+    // to make room for a Volley is the music, and what says a Volley happened
+    // is that one was played.
+    const want = Math.min(1, heard.length / 2)
+    this.ducked += (want - this.ducked) * (want > this.ducked ? 1 : DUCK_SETTLES)
     // Every frame and not every step: a crossfade is watched on the wall clock,
     // and a stopped battle still has a track running out.
-    this.band.advance(this.roar)
+    this.band.advance(this.ducked)
   }
 
   /**
@@ -513,93 +464,6 @@ export class Noises {
     osc.stop(ends)
   }
 
-  /**
-   * The bed: the roar of the whole Field, under everything else.
-   *
-   * Not one of the things happening on the battle and all of them at once — the
-   * sound a battle makes from a distance, which no single event can carry
-   * because it is what the events add up to. Integrated from `clamour`'s rate
-   * rather than set from any one step, so it swells through the crisis and
-   * falls away when the firing stops rather than flickering with each Volley.
-   *
-   * Two layers, because a battle does not merely get louder as it gets worse.
-   * The rumble is always there once anything is happening; the crackle comes in
-   * over it only at real intensity, which is what makes a general action sound
-   * different from a skirmish rather than just bigger.
-   */
-  private swell(heat: { fire: number; bodies: number }): void {
-    const ctx = this.ctx
-    const bed = this.bed
-    if (!ctx || !bed) return
-    // The rate first, and the curve after it. Clipping each step to 0 or 1
-    // before smoothing was the first version of this and it was wrong: a step
-    // holds one discharge or none, so the average of the clipped thing is the
-    // duty cycle, and the roar could never rise above the fraction of steps
-    // somebody fired in. Measured at 0.005 on a Castiglione, which is silence.
-    this.rate += (heat.fire - this.rate) * ROAR_SETTLES
-    this.crowd += (Math.min(1, heat.bodies / 8) - this.crowd) * ROAR_SETTLES * 2
-    // Compressive, so a few guns are already a murmur and a general action
-    // still has somewhere left to go.
-    this.roar = 1 - Math.exp(-this.rate / AT_FULL_CRY)
-
-    const body = Math.min(1, this.roar + this.crowd * 0.3)
-    // Squared, so the crackle is genuinely a second stage and not the first one
-    // in different clothes.
-    this.ramp(bed.rumble, 0.42 * body)
-    this.ramp(bed.crackle, 0.14 * body * body)
-  }
-
-  /** Move one bed layer to a new gain. Set and never jumped: a jump clicks. */
-  private ramp(gain: GainNode, to: number): void {
-    const at = this.ctx!.currentTime
-    gain.gain.cancelScheduledValues(at)
-    gain.gain.setValueAtTime(gain.gain.value, at)
-    gain.gain.linearRampToValueAtTime(to, at + 0.15)
-  }
-
-  /**
-   * The drums, beaten at the pas ordinaire.
-   *
-   * Diegetic and not a score: a battalion's drummer is on the Field and beating
-   * the pace is his job. They are quietened by the roar rather than mixed under
-   * it — you cannot hear a drum over musketry, which is both true and the thing
-   * that gives an afternoon its shape: drums through the approach, drowned at
-   * the crisis, and back again when the firing dies.
-   *
-   * Beaten in real time. At Tempo 4 the afternoon goes four times as fast and
-   * the drummer does not, because he is a sound in the room and not an event in
-   * the battle.
-   */
-  private march(): void {
-    const ctx = this.ctx
-    if (!ctx || !this.drumming) return
-    const interval = 60 / PAS_ORDINAIRE
-    // A battle that was stopped, or a tab that was in the background: the
-    // clock kept running and nothing was scheduled against it. Without this the
-    // drummer makes up every beat he missed, all in the same instant.
-    if (this.beat === 0 || this.beat < ctx.currentTime) this.beat = ctx.currentTime + interval
-    const under = Math.max(0, 1 - this.roar * 1.6)
-    while (this.beat < ctx.currentTime + BEAT_LOOKAHEAD) {
-      const when = Math.max(this.beat, ctx.currentTime) - ctx.currentTime
-      // Every fourth beat is the one the foot comes down on.
-      const accent = Math.round(this.beat / interval) % 4 === 0
-      const gain = (accent ? 0.3 : 0.16) * under
-      if (gain > 0.004) {
-        this.thump(0, gain, accent ? 96 : 84, 0.24, when)
-        // The stick, not the skin: muffled right down, because a drum a
-        // quarter of a mile off is almost entirely its low end.
-        this.voice(
-          0,
-          gain * 0.5,
-          { type: "lowpass", from: 900, to: 300, q: 0.7 },
-          { attack: 0.002, decay: 0.09 },
-          when,
-        )
-      }
-      this.beat += interval
-    }
-  }
-
   private build(): void {
     const ctx = new AudioContext()
     // Twenty-two battalions can fire inside the same 100ms and each is a dozen
@@ -630,40 +494,6 @@ export class Noises {
     this.noise = noise
     this.band.attach(ctx, master)
     if (this.wanted) this.band.setOn(true)
-    this.bed = {
-      rumble: this.layer(ctx, master, noise, "lowpass", 220, 0.7),
-      crackle: this.layer(ctx, master, noise, "bandpass", 700, 1.2),
-    }
-  }
-
-  /** One continuous layer of the bed: noise, filtered, at a gain that is ramped. */
-  private layer(
-    ctx: AudioContext,
-    master: GainNode,
-    noise: AudioBuffer,
-    type: BiquadFilterType,
-    frequency: number,
-    q: number,
-  ): GainNode {
-    const source = ctx.createBufferSource()
-    source.buffer = noise
-    source.loop = true
-    // Two in series, not one. A single biquad rolls off at 12dB an octave,
-    // which over a bed that never stops leaves audible hiss on top of the
-    // rumble — and a permanent hiss is the one thing a bed must not be.
-    const filter = ctx.createBiquadFilter()
-    filter.type = type
-    filter.frequency.value = frequency
-    filter.Q.value = q
-    const again = ctx.createBiquadFilter()
-    again.type = type
-    again.frequency.value = frequency
-    again.Q.value = q
-    const gain = ctx.createGain()
-    gain.gain.value = 0
-    source.connect(filter).connect(again).connect(gain).connect(master)
-    source.start()
-    return gain
   }
 
   /** Put the device down with the Field. */
@@ -675,11 +505,7 @@ export class Noises {
     this.noise = null
     this.band.close()
     this.band = new Music()
-    this.bed = null
-    this.beat = 0
-    this.rate = 0
-    this.roar = 0
-    this.crowd = 0
+    this.ducked = 0
     void ctx?.close()
   }
 }

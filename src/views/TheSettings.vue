@@ -160,10 +160,6 @@ const paperNote = computed(() =>
             </button>
           </div>
           <label class="flex w-fit items-center gap-2 text-xs">
-            <input v-model="settings.drums" type="checkbox" class="checkbox checkbox-sm" />
-            Beat the drums — the pas ordinaire, 76 to the minute, under the battle and drowned by it
-          </label>
-          <label class="flex w-fit items-center gap-2 text-xs">
             <input v-model="settings.music" type="checkbox" class="checkbox checkbox-sm" />
             Play the band — recorded music, looped through in turn and pulled down under the fire
           </label>

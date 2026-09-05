@@ -223,19 +223,13 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="btn btn-xs"
-            :class="ui.drums && ui.sound !== 'off' ? 'btn-primary' : 'btn-ghost'"
-            :disabled="ui.sound === 'off'"
-            title="the pas ordinaire, beaten under the battle and drowned by it"
-            @click="battle.toggleDrums()"
-          >
-            drums
-          </button>
-          <button
-            type="button"
-            class="btn btn-xs"
             :class="ui.music && ui.sound !== 'off' ? 'btn-primary' : 'btn-ghost'"
-            :disabled="ui.sound === 'off'"
-            title="the band, held under the battle and pulled down by it"
+            :disabled="ui.sound === 'off' || !ui.bandAvailable"
+            :title="
+              ui.bandAvailable
+                ? 'the band, held under the battle and pulled down by the fighting'
+                : 'no tracks are installed — see public/music/README.md'
+            "
             @click="battle.toggleMusic()"
           >
             band
