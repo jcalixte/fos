@@ -9,22 +9,16 @@ Delete this file when it is done. It is scaffolding, not documentation.
 
 ## What is left
 
-Phases 0 to 4 and 6 are done and verified. Everything below is the whole of what is not.
+Phases 0 to 6 are done and verified. Everything below is the whole of what is not.
 
-1. **Deploy it.** `Dockerfile.server`, `docker-compose.yml` and the `/ws` proxy are written and the
-   server has been run from a tree holding exactly the files the image copies — but no image has
-   been built, because there is no Docker daemon on this machine. **Coolify is pointed at
-   `Dockerfile` and now needs pointing at `docker-compose.yml` instead**, or it will keep deploying
-   the SPA alone and every join link will fail on a socket nobody is answering. That is the one
-   change outside this repo.
-2. **Fight one across two machines**, which is the other half of Phase 6's F21 row and the only way
+1. **Fight one across two machines**, which is the other half of Phase 6's F21 row and the only way
    to get a round-trip figure that means anything. The loopback number is 1.9ms median against a
    100ms budget; what a real connection costs is unmeasured.
-3. **Time a person arranging Rivoli.** F23's three minutes is asserted as a clock and unmeasured as
+2. **Time a person arranging Rivoli.** F23's three minutes is asserted as a clock and unmeasured as
    a human act. Thirteen Units is the largest army anybody has to arrange, and if three minutes
    binds, DESIGN §8 says the arranging *grammar* is what is slow and the clock is not the thing to
    change.
-4. **Watch what the wire costs.** 15KB a state, ten a second, ~148KB/s per Commander. Recorded in
+3. **Watch what the wire costs.** 15KB a state, ten a second, ~148KB/s per Commander. Recorded in
    DESIGN §8 with its trigger; rounding coordinates buys 2%, so the answer when it bites is a
    shorter encoding.
 
@@ -120,7 +114,7 @@ to end" mean anything: without it either Commander starts the clock on the other
 - [x] The deployment arithmetic went to `src/sim/deployment.ts` rather than into both sessions. That
       was the seam's guard being spent for the first time, and it is recorded in DESIGN §9.
 
-## Phase 5 — deployment — written, not yet built
+## Phase 5 — deployment — built and running
 
 - [x] `Dockerfile.server` on `oven/bun`, with no build step and no `node_modules`. Verified by
       running the server from a tree holding only the files the image copies — which caught that
@@ -129,8 +123,13 @@ to end" mean anything: without it either Commander starts the clock on the other
 - [x] `docker-compose.yml` — `web` (nginx) + `api` (bun). `docker compose config` parses.
 - [x] `nginx.conf` proxies `/ws` with the upgrade headers and a long read timeout, because a
       Commander Out of Contact still holds a seat. The SPA fallback is untouched.
-- [ ] **Two people on two machines on fos.apoena.dev.** Not done: no Docker daemon here to build the
-      images with, and no second machine. This is the one box in this plan that needs a deploy.
+- [x] **Both images built and running on fos.apoena.dev.** Coolify builds from `docker-compose.yml`
+      now rather than from `Dockerfile` alone. `web` is exposed and not published: port 80 on that
+      host belongs to the proxy terminating the domain, so publishing it is a collision with the
+      thing routing to the site. `wss://fos.apoena.dev/ws` answers 101, opens a Castiglione and
+      streams state — which is also how the `api` image was shown to read its own Scenarios and
+      Rosters off the disk it was built with.
+- [ ] **Two people on two machines.** Still open, and it is item 1 above.
 
 ## Phase 6 — measure what was promised — done, with one honest gap
 
