@@ -389,7 +389,16 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
       endCharge(battle, unit, `${unit.name} is clear of ${target.name}, and pulling up`)
       return
     }
+    // Thrown back onto something it cannot get through — a wood, a bank, or a
+    // Unit standing behind it — and it pulls up there. Without this the Charge
+    // is a state with no way out of it: the recoil ends at RECOIL_DISTANCE and
+    // nothing else ends it, so a regiment with nowhere to go would stand in
+    // contact with what threw it for the rest of the afternoon.
+    const from = unit.position
     runOn(battle, unit, bearing(target.position, unit.position), chargeSpeed(unit.arm), dt, true)
+    if (unit.position === from) {
+      endCharge(battle, unit, `${unit.name} was thrown back onto ground it could not give`)
+    }
     return
   }
 
