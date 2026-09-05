@@ -35,8 +35,9 @@ function day(seconds: number): string {
     <div class="w-full max-w-3xl">
       <h2 class="text-lg font-semibold">Choose a battle</h2>
       <p class="mt-1 text-xs text-base-content/60">
-        Every battle offers both its armies. You take one of them, arrange it, and fight the Plan
-        the Scenario wrote for the other.
+        Every battle can be taken or read. Take an army and you arrange it and fight the Plan the
+        Scenario wrote for the other; read the account and nobody commands — both Plans run, the day
+        goes as it went, and what happened is said over the top of it.
       </p>
 
       <div v-if="error" class="mt-5 rounded-box border border-error/40 bg-error/10 p-4">
@@ -74,12 +75,9 @@ function day(seconds: number): string {
         <div
           v-for="battle in battles"
           :key="battle.id"
-          class="rounded-box border border-base-content/15 bg-base-200 transition hover:border-primary"
+          class="rounded-box border border-base-content/15 bg-base-200"
         >
-          <RouterLink
-            class="block p-4 text-left transition hover:bg-base-100"
-            :to="{ name: 'battle', params: { battle: battle.id } }"
-          >
+          <div class="p-4 text-left">
             <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <span class="text-sm font-semibold">{{ battle.name }}</span>
               <span class="font-mono text-xs text-base-content/45">{{ day(battle.clock) }}</span>
@@ -100,16 +98,25 @@ function day(seconds: number): string {
             <span class="mt-2 block text-xs leading-relaxed text-base-content/70">
               {{ battle.summary }}
             </span>
-          </RouterLink>
-          <!-- The other way in, and the one to take first if the day means
-               nothing to you yet: the same Field with nobody commanding, both
-               Plans running, and what happened said over the top of it. -->
-          <RouterLink
-            class="flex items-center gap-2 border-t border-base-content/10 px-4 py-2.5 text-xs text-base-content/60 transition hover:bg-base-100 hover:text-primary"
-            :to="{ name: 'book', params: { battle: battle.id } }"
-          >
-            Read the account — watch it fought as it was, before you take a side
-          </RouterLink>
+          </div>
+          <!-- Both ways in, side by side and equally legible. The card itself
+               is no longer a link: with two things to do with a battle, one of
+               them cannot be the whole card and the other a line of small print
+               under it. -->
+          <div class="flex flex-wrap gap-2 border-t border-base-content/10 px-4 py-3">
+            <RouterLink
+              class="btn btn-primary btn-sm"
+              :to="{ name: 'battle', params: { battle: battle.id } }"
+            >
+              Take an army
+            </RouterLink>
+            <RouterLink class="btn btn-sm" :to="{ name: 'book', params: { battle: battle.id } }">
+              Read the account
+            </RouterLink>
+            <span class="ml-auto self-center text-xs text-base-content/45">
+              Read it first if the day means nothing to you yet
+            </span>
+          </div>
         </div>
       </div>
     </div>
