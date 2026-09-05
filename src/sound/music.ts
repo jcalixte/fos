@@ -52,6 +52,29 @@ export class Music {
   }
 
   /**
+   * Read the manifest.
+   *
+   * Asked for when a battle opens rather than when the band is switched on,
+   * because a switch that does nothing and says nothing is worse than no
+   * switch: the screen has to be able to tell a player that there are no
+   * tracks, and it cannot know that without having looked.
+   */
+  async learn(): Promise<void> {
+    if (this.asked) return
+    this.asked = true
+    try {
+      const response = await fetch("/music/index.json")
+      if (response.ok) this.list = ((await response.json()) as { tracks: Track[] }).tracks ?? []
+    } catch {
+      // No manifest is a battle with no band, which is the shipped state.
+      this.list = []
+    }
+    // Not the same tune every afternoon. The simulation's own randomness is
+    // seeded and is C8's; this is neither in it nor near it (ADR-0003).
+    this.next = Math.floor(Math.random() * Math.max(1, this.list.length))
+  }
+
+  /**
    * Build the two decks on the battle's own graph, so the band is ducked and
    * silenced by the same master everything else goes through.
    */
@@ -84,25 +107,9 @@ export class Music {
     void this.begin()
   }
 
-  /**
-   * Fetch the manifest once, then start. Asked for only when the band is
-   * actually wanted, so a player who never turns it on never pays for the
-   * request.
-   */
+  /** Start, once the manifest is known. */
   private async begin(): Promise<void> {
-    if (!this.asked) {
-      this.asked = true
-      try {
-        const response = await fetch("/music/index.json")
-        if (response.ok) this.list = ((await response.json()) as { tracks: Track[] }).tracks ?? []
-      } catch {
-        // No manifest is a battle with no band, which is the shipped state.
-        this.list = []
-      }
-      // Not the same tune every afternoon. The simulation's own randomness is
-      // seeded and is C8's; this is neither in it nor near it (ADR-0003).
-      this.next = Math.floor(Math.random() * Math.max(1, this.list.length))
-    }
+    await this.learn()
     if (!this.on || this.list.length === 0) return
     if (this.decks.some((deck) => !deck.audio.paused)) return
     this.cue(this.live)

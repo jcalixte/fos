@@ -184,13 +184,13 @@ reaching one of your own — each its own sound, and each heard from where your 
 standing, so fire near the staff is loud and fire a kilometre off is a murmur and both change as you
 ride. A discharge rolls rather than cracks: six hundred men do not fire together, so a Volley is a
 dozen cracks scattered across half a second, and distance dulls them and smears them into each other
-as well as quietening them. Under it all sits the roar of the whole Field, swelling through the
-crisis and falling away when the firing stops, and beneath that the pas ordinaire at 76 to the
-minute — a real sound on a real battlefield, drowned by musketry exactly as it was.
+as well as quietening them.
 
-Nothing is downloaded: every sound in the game is a filter and four numbers. It ships off, and the
-settings — off, quiet, full, and the drums on their own switch — are on the Settings page and on the
-battle screen, because leaving a battle to quieten it would cost you the battle.
+Nothing is downloaded for any of that: every sound the battle itself makes is a filter and four
+numbers. It ships off, and the settings — off, quiet, full — are on the Settings page and on the
+battle screen, because leaving a battle to quieten it would cost you the battle. Synthesis stops at
+the events, which is deliberate: a discharge is a short physical thing and a filter is honest about
+it, whereas anything continuous made the same way is a noise generator left running.
 
 **The band**, if you want one, is the only part of this the game does not make itself. Drop tracks
 into `public/music/` and name them in the `index.json` beside them — they are streamed rather than
