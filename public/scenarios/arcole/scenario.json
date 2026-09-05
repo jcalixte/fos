@@ -2,17 +2,11 @@
   "name": "Arcole",
   "summary": "15 November 1796, and the case where the ground stops an army rather than the enemy does. Bonaparte has come over the Adige at Ronco into the fork of two rivers, and the fork is under water: three raised roads across a flooded plain, and at the end of the longest of them a village on the far bank of the Alpone with the only bridge over it. A battalion on a dike is fast and 170m deep and two men wide; the same battalion in line has its wings in the marsh and crawls. Rivoli is impassability by gradient and this is impassability by Ground — nothing here is steep, and almost nothing here is walkable. The Field is a reading of the ground between the Adige and the Alpone rather than a survey of it.",
   "field": {
-    "cells": [
-      240,
-      150
-    ],
+    "cells": [240, 150],
     "cellSize": 8,
     "ground": "ground.png",
     "heightmap": "height.png",
-    "elevation": [
-      0,
-      30
-    ]
+    "elevation": [0, 30]
   },
   "clock": 2400,
   "seed": 179617,
@@ -27,12 +21,7 @@
         "x": 484,
         "y": 788
       },
-      "deploymentZone": [
-        272,
-        660,
-        664,
-        460
-      ]
+      "deploymentZone": [272, 660, 664, 460]
     },
     {
       "id": "austrian",
@@ -44,50 +33,25 @@
         "x": 1748,
         "y": 356
       },
-      "deploymentZone": [
-        320,
-        0,
-        1592,
-        490
-      ]
+      "deploymentZone": [320, 0, 1592, 490]
     }
   ],
   "crossings": [
     {
       "name": "the bridge at Ronco",
-      "cells": [
-        33,
-        100,
-        11,
-        1
-      ]
+      "cells": [33, 100, 11, 1]
     },
     {
       "name": "the bridge at Arcole",
-      "cells": [
-        185,
-        56,
-        6,
-        1
-      ]
+      "cells": [185, 56, 6, 1]
     },
     {
       "name": "the culvert on the Arcole dike",
-      "cells": [
-        94,
-        88,
-        10,
-        2
-      ]
+      "cells": [94, 88, 10, 2]
     },
     {
       "name": "the culvert on the Porcile dike",
-      "cells": [
-        46,
-        79,
-        3,
-        9
-      ]
+      "cells": [46, 79, 3, 9]
     }
   ],
   "keyGround": [
