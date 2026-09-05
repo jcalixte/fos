@@ -8,6 +8,7 @@ import TopBar from "@/components/TopBar.vue"
 import UnitCard from "@/components/UnitCard.vue"
 import { useBattle } from "@/composables/useBattle"
 import type { FormationName, Grade } from "@/sim/types"
+import { LOUDNESS_CHOICES } from "@/sound"
 
 const route = useRoute()
 const router = useRouter()
@@ -207,6 +208,17 @@ onBeforeUnmount(() => {
             @click="battle.toggleFireZones()"
           >
             range
+          </button>
+          <button
+            v-for="level in LOUDNESS_CHOICES"
+            :key="level"
+            type="button"
+            class="btn btn-xs"
+            :class="ui.sound === level ? 'btn-primary' : 'btn-ghost'"
+            :title="`the Field, heard from where your Headquarters is standing: ${level}`"
+            @click="battle.setSound(level)"
+          >
+            {{ level }}
           </button>
 
           <!-- Breaking off ends the battle and cannot be taken back, so the

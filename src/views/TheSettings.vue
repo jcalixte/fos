@@ -4,14 +4,16 @@ import TopBar from "@/components/TopBar.vue"
 import { swatchField } from "@/render/plate"
 import { PAPERS, type PaperName, STAFF_MAP_DEFAULTS, buildStaffMapCanvas } from "@/render/staffmap"
 import { HACHURE_CHOICES, loadSettings, saveSettings, type Settings } from "@/settings"
+import { LOUDNESS_CHOICES } from "@/sound"
 
 /**
- * How the Field is drawn, and nothing else.
+ * How the Field is drawn, and how loud it is.
  *
- * Every choice here is shown rather than named. A tone offered as the word
- * "foxed" is not a choice a player can make, and the thing being chosen is a
- * picture — so each option carries a picture of itself, drawn by the renderer
- * that will draw the battle.
+ * A choice is shown rather than named wherever it can be. A tone offered as the
+ * word "foxed" is not a choice a player can make, and the thing being chosen is
+ * a picture — so each paper carries a picture of itself, drawn by the renderer
+ * that will draw the battle. The Noise is the one thing here with no picture to
+ * carry, and it is left named.
  */
 const settings = reactive<Settings>(loadSettings())
 watch(settings, () => saveSettings({ ...settings }))
@@ -120,9 +122,34 @@ const paperNote = computed(() =>
           </div>
         </section>
 
+        <section class="flex flex-col gap-3">
+          <div>
+            <h2 class="text-sm font-semibold">Noise</h2>
+            <p class="text-xs text-base-content/60">
+              Volleys, guns, Charges, Contacts, Routs and your own Orders arriving, heard from where
+              your Headquarters is standing — so fire near the staff is loud and fire a kilometre
+              off is a murmur, and both change as you ride. Nothing here is said that the Field does
+              not already show, which is why it can be turned off.
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              v-for="level in LOUDNESS_CHOICES"
+              :key="level"
+              type="button"
+              class="btn btn-sm"
+              :class="settings.sound === level ? 'btn-primary' : 'btn-ghost'"
+              @click="settings.sound = level"
+            >
+              {{ level }}
+            </button>
+          </div>
+        </section>
+
         <p class="text-xs text-base-content/40">
-          The Field is drawn once when a battle opens, so a change here shows on the next battle you
-          start rather than on one already running.
+          The Field is drawn once when a battle opens, so the paper and the relief show on the next
+          battle you start rather than on one already running. The Noise is not: it can be moved
+          from the battle screen, because leaving a battle to quieten it would cost you the battle.
         </p>
       </div>
     </main>

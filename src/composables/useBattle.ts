@@ -2,6 +2,7 @@ import { markRaw, onBeforeUnmount, reactive, shallowRef } from "vue"
 import { armyColours, BattleView, type HeadquartersView, type ViewState } from "@/render/BattleView"
 import { STAFF_MAP_DEFAULTS } from "@/render/staffmap"
 import { loadSettings } from "@/settings"
+import { type Loudness, Noises } from "@/sound"
 import { loadScenario } from "@/scenario/loader"
 import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
 import type { BattleSession, Command } from "@/session"
@@ -65,6 +66,13 @@ export interface BattleUi {
   tempo: number
   /** Show beaten ground for every Unit, not just the selected one. */
   fireZones: boolean
+  /**
+   * How loud the Field is, live. It starts at what Settings says and is movable
+   * from the battle screen, which the paper and the hachures are not: those are
+   * baked into the Field when it is drawn, and a battle left to change one is a
+   * battle thrown away.
+   */
+  sound: Loudness
   running: boolean
   ordersInFlight: number
   units: UnitSnapshot[]
@@ -139,6 +147,7 @@ function blankUi(): BattleUi {
     clock: 0,
     tempo: 4,
     fireZones: false,
+    sound: "off",
     running: false,
     ordersInFlight: 0,
     units: [],
@@ -188,6 +197,8 @@ export function useBattle() {
    * something anything below is allowed to find out (ADR-0013).
    */
   const session = shallowRef<BattleSession | null>(null)
+  /** The Field, heard (C13). It holds the audio device and no rule. */
+  const noises = new Noises()
   /** The decoded Scenario, kept for the half of it an Army is read out of. */
   let scenario: ScenarioFile | null = null
   /** The name the URL knows this battle by, so it can be remembered. */
@@ -334,6 +345,10 @@ export function useBattle() {
       const look = loadSettings()
       v.setField(battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
       view.value = v
+      // Metres and not cells: what the Noise pans across is the ground, the
+      // same width the Commander is looking at.
+      noises.open(battle.field.width * battle.field.cellSize, look.sound)
+      ui.sound = look.sound
 
       const remote = against === true || typeof address === "string"
       const s = markRaw(
@@ -371,6 +386,7 @@ export function useBattle() {
     frame = 0
     view.value?.destroy()
     view.value = null
+    noises.close()
     session.value?.close()
     session.value = null
     scenario = null
@@ -391,6 +407,10 @@ export function useBattle() {
     // re-read here (ADR-0008).
     readHeadquarters()
     v.draw(s.previous, s.current, s.alpha, viewState)
+    // With the flash and not after it: a Volley is one event, and the report
+    // going with the smoke is what makes a discharge at the far end of the line
+    // readable rather than confusing.
+    noises.hear(s.current)
 
     // The screen runs at 60fps; the panels have no business re-rendering there.
     if (now - uiClock < 100) return
@@ -507,6 +527,9 @@ export function useBattle() {
     const s = session.value
     if (!s || !scenario || ui.phase !== "command") return
     if (!scenario.armies.some((a) => a.id === armyId)) return
+    // A browser hands over the audio device inside a gesture and nowhere else,
+    // and this is the press every battle starts with.
+    noises.wake()
     // Asked for, and not taken. From the moment it is granted the battle is
     // only ever seen through one Commander's eyes: what the other army's Units
     // have left in their legs, what they are laid on and what they have been
@@ -548,6 +571,7 @@ export function useBattle() {
   function beginBattle(): void {
     const s = session.value
     if (!s) return
+    noises.wake()
     s.send({ kind: "stand-to" })
     readSeat(s)
     readPhase(s)
@@ -562,6 +586,18 @@ export function useBattle() {
     // of trusting the button that was pressed.
     s.send({ kind: "tempo", tempo })
     ui.tempo = s.tempo
+  }
+
+  /**
+   * How loud, from inside the battle.
+   *
+   * Not written back to Settings, which is the point of it being here: a player
+   * who wants quiet for this afternoon is not saying anything about the next
+   * one, and leaving a battle to say it would cost him the battle.
+   */
+  function setSound(level: Loudness): void {
+    ui.sound = level
+    noises.setLoudness(level)
   }
 
   function toggleFireZones(): void {
@@ -1088,6 +1124,7 @@ export function useBattle() {
     beginBattle,
     setTempo,
     toggleFireZones,
+    setSound,
     togglePause,
     offerToConcede,
     breakOff,

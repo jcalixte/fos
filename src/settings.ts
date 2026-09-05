@@ -1,7 +1,9 @@
 import { PAPERS, type PaperName, STAFF_MAP_DEFAULTS, type StaffMapOptions } from "@/render/staffmap"
+import { LOUDNESS_CHOICES, type Loudness } from "@/sound"
 
 /**
- * What the player has said about how the game looks, and nothing else.
+ * What the player has said about how the game looks and sounds, and nothing
+ * else.
  *
  * Kept apart from `useBattle` because it outlives every battle: a Scenario is
  * never saved (see the router), and this is the one thing that survives closing
@@ -30,6 +32,16 @@ export interface Settings {
    * decoration.
    */
   hachures: Exclude<StaffMapOptions["hachures"], "off">
+  /**
+   * How loud the Field is. Unlike the two above it this one may be turned off
+   * altogether: everything the Noise says is also on the screen, so silence
+   * costs a player nothing he needs (F15, C13).
+   *
+   * It starts at `off`. A game that makes a noise the first time it is opened
+   * is a game opened once in an office and closed again, and the Noise is not
+   * what any of this is for.
+   */
+  sound: Loudness
 }
 
 export const HACHURE_CHOICES = ["light", "full"] as const
@@ -37,6 +49,7 @@ export const HACHURE_CHOICES = ["light", "full"] as const
 export const DEFAULT_SETTINGS: Settings = {
   paper: STAFF_MAP_DEFAULTS.paper,
   hachures: STAFF_MAP_DEFAULTS.hachures === "off" ? "light" : STAFF_MAP_DEFAULTS.hachures,
+  sound: "off",
 }
 
 export function loadSettings(): Settings {
@@ -51,7 +64,11 @@ export function loadSettings(): Settings {
       stored.hachures && (HACHURE_CHOICES as readonly string[]).includes(stored.hachures)
         ? stored.hachures
         : DEFAULT_SETTINGS.hachures
-    return { paper, hachures }
+    const sound =
+      stored.sound && (LOUDNESS_CHOICES as readonly string[]).includes(stored.sound)
+        ? stored.sound
+        : DEFAULT_SETTINGS.sound
+    return { paper, hachures, sound }
   } catch {
     return { ...DEFAULT_SETTINGS }
   }
