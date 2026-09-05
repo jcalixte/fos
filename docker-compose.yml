@@ -25,6 +25,19 @@ services:
     environment:
       # Where the Scenarios are read from, inside the image.
       SCENARIO_ROOT: public
+      # One record per battle, appended here and kept across deploys — a
+      # container's own log is wiped by the next push, which is no place for
+      # the thing you go looking for after an afternoon has gone wrong.
+      RECORD_PATH: /record/battles.jsonl
+      # A named volume has no size of its own, so the bound is the writer's:
+      # a month of battles, and 16MB whatever a month turns out to hold.
+      RECORD_KEEP_DAYS: "30"
+      RECORD_MAX_BYTES: "16777216"
+    volumes:
+      - record:/record
     expose:
       - "8787"
     restart: unless-stopped
+
+volumes:
+  record:
