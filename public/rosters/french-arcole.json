@@ -1,0 +1,189 @@
+{
+  "id": "french-arcole",
+  "name": "Armée d'Italie, la tête de pont de Ronco",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-4e-legere",
+      "name": "4e Légère",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 600,
+      "formation": "march-column",
+      "standing": "close-up",
+      "position": {
+        "x": 692,
+        "y": 740
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-51e",
+      "name": "51e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "march-column",
+      "standing": "close-up",
+      "position": {
+        "x": 532,
+        "y": 764
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-45e",
+      "name": "45e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "position": {
+        "x": 468,
+        "y": 788
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-5e",
+      "name": "1er/5e de Ligne",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 640,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 484,
+        "y": 708
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-32e",
+      "name": "32e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "march-column",
+      "standing": "close-up",
+      "position": {
+        "x": 380,
+        "y": 724
+      },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-75e",
+      "name": "75e de Ligne",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 660,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "position": {
+        "x": 380,
+        "y": 772
+      },
+      "facing": -1.5708
+    },
+    {
+      "id": "fr-25e-legere",
+      "name": "25e Légère",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "position": {
+        "x": 692,
+        "y": 692
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-1er-hussards",
+      "name": "1er Hussards",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 260,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "position": {
+        "x": 436,
+        "y": 804
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-batterie-ronco",
+      "name": "3e Cie, 2e Rgt d'Artillerie à Pied",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 105,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "position": {
+        "x": 500,
+        "y": 804
+      },
+      "facing": 0
+    },
+    {
+      "id": "fr-guieu-29e",
+      "name": "29e Légère (colonne Guieu)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 1380,
+        "entry": {
+          "x": 1860,
+          "y": 1188
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1668,
+            "y": 620
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    },
+    {
+      "id": "fr-guieu-69e",
+      "name": "1er/69e de Ligne (colonne Guieu)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 1440,
+        "entry": {
+          "x": 1860,
+          "y": 1188
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1740,
+            "y": 660
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    }
+  ]
+}

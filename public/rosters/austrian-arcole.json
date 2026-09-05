@@ -1,0 +1,177 @@
+{
+  "id": "austrian-arcole",
+  "name": "Alvinczis Korps, die Alpone-Stellung",
+  "grades": {
+    "conscript": "Landwehr",
+    "line": "Linie",
+    "elite": "Grenadier"
+  },
+  "entries": [
+    {
+      "id": "au-grenz-brod",
+      "name": "1. Broder Grenz-Infanterie",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 620,
+      "formation": "open-order",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1588,
+        "y": 428
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-grenz-szluin",
+      "name": "2. Szluiner Grenz-Infanterie",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 560,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "position": {
+        "x": 1428,
+        "y": 404
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir19",
+      "name": "IR Alvinczy Nr. 19",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1668,
+        "y": 476
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir24",
+      "name": "IR Preiss Nr. 24",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1700,
+        "y": 100
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-batterie-arcole",
+      "name": "Positionsbatterie Arcole",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 120,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1660,
+        "y": 356
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir27",
+      "name": "IR Strassoldo Nr. 27",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 740,
+      "formation": "march-column",
+      "standing": "close-up",
+      "position": {
+        "x": 460,
+        "y": 212
+      },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-ir40",
+      "name": "IR Mittrowsky Nr. 40",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 660,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 500,
+        "y": 164
+      },
+      "facing": 1.5708
+    },
+    {
+      "id": "au-batterie-alpone",
+      "name": "Positionsbatterie an der Alpone",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 90,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1640,
+        "y": 250
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-husaren",
+      "name": "Erzherzog Joseph Husaren",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 300,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1812,
+        "y": 452
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-uhlanen",
+      "name": "Mészáros Uhlanen",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 240,
+      "formation": "line",
+      "standing": "hold-ground",
+      "position": {
+        "x": 1820,
+        "y": 190
+      },
+      "facing": 3.14159
+    },
+    {
+      "id": "au-ir16",
+      "name": "IR Terzy Nr. 16 (von Villanova)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 900,
+        "entry": {
+          "x": 1780,
+          "y": 4
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1740,
+            "y": 340
+          },
+          "arrivalFacing": 3.14159,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

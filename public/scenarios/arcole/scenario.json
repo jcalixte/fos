@@ -1,0 +1,594 @@
+{
+  "name": "Arcole",
+  "summary": "15 November 1796, and the case where the ground stops an army rather than the enemy does. Bonaparte has come over the Adige at Ronco into the fork of two rivers, and the fork is under water: three raised roads across a flooded plain, and at the end of the longest of them a village on the far bank of the Alpone with the only bridge over it. A battalion on a dike is fast and 170m deep and two men wide; the same battalion in line has its wings in the marsh and crawls. Rivoli is impassability by gradient and this is impassability by Ground — nothing here is steep, and almost nothing here is walkable. The Field is a reading of the ground between the Adige and the Alpone rather than a survey of it.",
+  "field": {
+    "cells": [
+      240,
+      150
+    ],
+    "cellSize": 8,
+    "ground": "ground.png",
+    "heightmap": "height.png",
+    "elevation": [
+      0,
+      30
+    ]
+  },
+  "clock": 2400,
+  "seed": 179617,
+  "armies": [
+    {
+      "id": "french",
+      "name": "French",
+      "colour": "#2f4d8f",
+      "brief": "Get to the bridge at Arcole, which is at the far end of a causeway the guns in the village are laid along. You can go fast in column and arrive as a target, or come off the dike into the marsh and arrive late; the campi are the only ground in the fork worth forming on. Guieu is marching round by Albaredo and comes up the east bank behind the village three-quarters of the way through the afternoon — the village has to still be worth taking when he does. Do not lose the bridgehead at Ronco behind you: it is counted at the end exactly as the bridge is.",
+      "roster": "/rosters/french-arcole.json",
+      "headquarters": {
+        "x": 484,
+        "y": 788
+      },
+      "deploymentZone": [
+        272,
+        660,
+        664,
+        460
+      ]
+    },
+    {
+      "id": "austrian",
+      "name": "Austrian",
+      "colour": "#e3e7ef",
+      "brief": "The Alpone is your line and Arcole is the lock on it. The battery in the village reaches nine hundred metres back down the Arcole dike, which is the only fast road the French have, so make them use it or make them wade. Your own weight is on the east bank where horse is worth having, and a second column comes down the Porcile dike in the north-west toward their bridgehead at Ronco — that bridgehead is counted at the end too, and it is behind them. Watch the Albaredo road south of the village.",
+      "roster": "/rosters/austrian-arcole.json",
+      "headquarters": {
+        "x": 1748,
+        "y": 356
+      },
+      "deploymentZone": [
+        320,
+        0,
+        1592,
+        490
+      ]
+    }
+  ],
+  "crossings": [
+    {
+      "name": "the bridge at Ronco",
+      "cells": [
+        33,
+        100,
+        11,
+        1
+      ]
+    },
+    {
+      "name": "the bridge at Arcole",
+      "cells": [
+        185,
+        56,
+        6,
+        1
+      ]
+    },
+    {
+      "name": "the culvert on the Arcole dike",
+      "cells": [
+        94,
+        88,
+        10,
+        2
+      ]
+    },
+    {
+      "name": "the culvert on the Porcile dike",
+      "cells": [
+        46,
+        79,
+        3,
+        9
+      ]
+    }
+  ],
+  "keyGround": [
+    {
+      "name": "the bridge at Arcole",
+      "position": {
+        "x": 1500,
+        "y": 452
+      },
+      "radius": 60
+    },
+    {
+      "name": "the bridgehead at Ronco",
+      "position": {
+        "x": 396,
+        "y": 804
+      },
+      "radius": 64
+    }
+  ],
+  "plan": [
+    {
+      "at": 30,
+      "unitId": "fr-25e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 884,
+          "y": 700
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 996,
+          "y": 708
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 120,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 884,
+          "y": 716
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 180,
+      "unitId": "fr-32e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 372,
+          "y": 644
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 240,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 724,
+          "y": 732
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 300,
+      "unitId": "fr-75e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 388,
+          "y": 532
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1268,
+          "y": 580
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 480,
+      "unitId": "fr-25e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1316,
+          "y": 516
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 540,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 996,
+          "y": 708
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 600,
+      "unitId": "fr-1er-hussards",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 932,
+          "y": 596
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 720,
+      "unitId": "fr-32e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 404,
+          "y": 452
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 840,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1444,
+          "y": 468
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 960,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1124,
+          "y": 644
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "fr-batterie-ronco",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 932,
+          "y": 596
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 1200,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1268,
+          "y": 580
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 1320,
+      "unitId": "fr-5e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 500,
+          "y": 756
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1540,
+          "y": 452
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 1620,
+      "unitId": "fr-guieu-29e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1604,
+          "y": 476
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1680,
+      "unitId": "fr-guieu-69e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1668,
+          "y": 460
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1860,
+      "unitId": "fr-51e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1444,
+          "y": 468
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 2040,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1268,
+          "y": 580
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 2040,
+      "unitId": "fr-guieu-29e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1588,
+          "y": 428
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 2160,
+      "unitId": "fr-25e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 516
+        },
+        "arrivalFacing": 0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "au-grenz-szluin",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1364,
+          "y": 388
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 120,
+      "unitId": "au-ir27",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 404,
+          "y": 452
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 240,
+      "unitId": "au-ir40",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 436,
+          "y": 324
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 480,
+      "unitId": "au-ir27",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 388,
+          "y": 532
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 600,
+      "unitId": "au-grenz-brod",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1500,
+          "y": 452
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1020,
+      "unitId": "au-ir16",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1700,
+          "y": 452
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "au-ir27",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 380,
+          "y": 700
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 1200,
+      "unitId": "au-husaren",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1804,
+          "y": 700
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1440,
+      "unitId": "au-ir40",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 404,
+          "y": 452
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "au-ir24",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1748,
+          "y": 596
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1620,
+      "unitId": "au-ir27",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 396,
+          "y": 804
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "march-column"
+      }
+    },
+    {
+      "at": 1740,
+      "unitId": "au-uhlanen",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1836,
+          "y": 500
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1800,
+      "unitId": "au-grenz-szluin",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1124,
+          "y": 340
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1980,
+      "unitId": "au-ir19",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1604,
+          "y": 460
+        },
+        "arrivalFacing": 3.14159,
+        "arrivalFormation": "line"
+      }
+    }
+  ]
+}
