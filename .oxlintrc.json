@@ -4,8 +4,13 @@
   "categories": {
     "correctness": "error"
   },
-  "rules": {},
+  "rules": {
+    "typescript/switch-exhaustiveness-check": "error"
+  },
   "env": {
     "builtin": true
+  },
+  "options": {
+    "typeAware": true
   }
 }
