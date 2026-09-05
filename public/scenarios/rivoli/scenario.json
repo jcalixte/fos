@@ -239,7 +239,6 @@
         "arrivalFormation": "line"
       }
     },
-
     {
       "at": 60,
       "unitId": "au-jaeger",
@@ -489,6 +488,65 @@
         "arrivalFacing": 3.14159,
         "arrivalFormation": "line"
       }
+    }
+  ],
+  "chapters": [
+    {
+      "at": 0,
+      "title": "Six columns, one plateau",
+      "text": "14 January 1797. Alvinczi has brought the last Austrian army in Italy down off Monte Baldo to break the siege of Mantua, and it is arriving on the Rivoli plateau in separate columns divided by torrent gullies that keep them from seeing one another. Bonaparte has four thousand fewer men and one advantage: he is standing in the middle of all of it. Watch the north edge — they come one at a time, which is the only reason this is a battle."
+    },
+    {
+      "at": 185,
+      "title": "Quasdanovich comes up the Adige road",
+      "text": "IR 10 walks on at the top right, off the road running under the cliffs from the Adige. To reach the plateau it has to file up the defile past the chapel of San Marco a battalion at a time — the gorge is a Crossing here for the same reason a bridge is, because only a column fits through it. Everything Quasdanovich has will arrive in the order that gap allows.",
+      "unitId": "au-ir10"
+    },
+    {
+      "at": 745,
+      "title": "The chapel changes hands",
+      "text": "San Marco goes Austrian. Quasdanovich's guns and his dragoons are up on the plateau and for a few minutes the gate at the top of the gorge is his. This is the point at which the day could have gone the other way: hold the chapel and the rest of the column walks up behind him."
+    },
+    {
+      "at": 765,
+      "title": "Belgiojoso breaks in the centre",
+      "text": "IR 44 breaks. The columns coming down off the heights reach the flat one at a time and each is met by a line that is already formed and already facing it. That is the arithmetic Alvinczi's plan never got round, and it is the same arithmetic all afternoon.",
+      "unitId": "au-ir44"
+    },
+    {
+      "at": 785,
+      "title": "Lusignan is behind them",
+      "text": "Lusignan's battalion walks on at the western edge, in the French rear. It is the manoeuvre that was meant to finish Bonaparte and instead finished Lusignan: he is behind an army that still has somewhere to fall back to, and he is alone until the rest of Alvinczi reaches him.",
+      "unitId": "au-ir45"
+    },
+    {
+      "at": 905,
+      "title": "Rey comes up from Castelnuovo",
+      "text": "The head of Rey's column arrives from the south, onto the same ground Lusignan is standing on. Lusignan is now between the French line and the French reserve, which is the position he spent the morning marching into.",
+      "unitId": "fr-39e"
+    },
+    {
+      "at": 1210,
+      "title": "The Adige column is thrown back",
+      "text": "IR 10 is destroyed, and the dragoons that came up behind it follow a minute later. Quasdanovich is finished as a threat and San Marco comes back to the French. The gorge that let him up one battalion at a time is now the way back down.",
+      "unitId": "au-ir10"
+    },
+    {
+      "at": 1850,
+      "title": "Lusignan is finished",
+      "text": "Lusignan's battalion is destroyed and his grenadiers go soon after. In the event most of that command was taken prisoner: the column sent to cut Bonaparte's retreat found it had none of its own.",
+      "unitId": "au-ir45"
+    },
+    {
+      "at": 2000,
+      "title": "The last push on the plateau",
+      "text": "IR 48 breaks trying to come onto Rivoli itself. It is the last thing Alvinczi has that is still going forward, and when it stops the plateau is settled.",
+      "unitId": "au-ir48"
+    },
+    {
+      "at": 2280,
+      "title": "What it was worth",
+      "text": "Rivoli ended the fourth and last Austrian attempt to relieve Mantua. The city surrendered a fortnight later, and northern Italy went with it."
     }
   ]
 }

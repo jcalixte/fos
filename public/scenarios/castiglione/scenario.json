@@ -31,13 +31,7 @@
     }
   ],
   "crossings": [],
-  "keyGround": [
-    {
-      "name": "Monte Medolano",
-      "position": { "x": 1190, "y": 900 },
-      "radius": 80
-    }
-  ],
+  "keyGround": [{ "name": "Monte Medolano", "position": { "x": 1190, "y": 900 }, "radius": 80 }],
   "plan": [
     {
       "at": 30,
@@ -410,6 +404,54 @@
         "arrivalFacing": 3.14159,
         "arrivalFormation": "line"
       }
+    }
+  ],
+  "chapters": [
+    {
+      "at": 0,
+      "title": "Wurmser stands across the road",
+      "text": "5 August 1796. Wurmser has come down from the Tyrol to relieve Mantua and has the Army of Italy in front of him on the plain south of Lake Garda. His right is up on the Solferino heights and can look after itself. His left is out in the open, resting on the entrenched knoll of Monte Medolano — and past the knoll there is nothing at all. Watch the French spread across the whole front: none of it is meant to break through."
+    },
+    {
+      "at": 300,
+      "title": "Marmont's guns come up",
+      "text": "Marmont takes his horse battery forward against the guns on the knoll — what the French brief calls the answer to them. Under these rules it is not much of one: a battery is a poor target for a battery, being few men spread thin, and Monte Medolano will still be firing half an hour from now. What the move actually buys is that the Austrians are looking west.",
+      "unitId": "fr-marmont"
+    },
+    {
+      "at": 720,
+      "title": "The 51e pays for the open ground",
+      "text": "The 51e breaks with a fifth of its men down, caught crossing a plain in front of two batteries. This is the bill Bonaparte is choosing to pay. He is not trying to win in front of Wurmser — he is trying to hold him by the throat and be expensive enough about it that the Austrian left never turns round.",
+      "unitId": "fr-51e"
+    },
+    {
+      "at": 1200,
+      "title": "Fiorella comes up from Guidizzolo",
+      "text": "The head of Fiorella's column walks onto the Field behind the Austrian left. This is the whole of the plan for 5 August: a detached force up the Medole road onto a flank that ends in open air. Wurmser now has an enemy on two sides of one corner, and the knoll is what that corner is built on.",
+      "unitId": "fr-69e"
+    },
+    {
+      "at": 1415,
+      "title": "Jellačić's battalion gives way",
+      "text": "IR 53 breaks. The Austrian left has been fighting west against the grenadiers and south against Fiorella at the same time, and what goes first is not the knoll but the infantry standing round it. A battery with no covering line is about to find out what that is worth.",
+      "unitId": "au-ir53"
+    },
+    {
+      "at": 1440,
+      "title": "The knoll is taken",
+      "text": "The 1er Hussards ride in on the battery on Monte Medolano and it breaks. What ends a battery is rarely fire — it is horse arriving among the pieces, and 135 gunners in the open have no answer to it. This is the ground the day is counted on, and the French are standing on it from here to dusk.",
+      "unitId": "au-medolano"
+    },
+    {
+      "at": 1830,
+      "title": "The Austrian left comes apart",
+      "text": "IR 52 quits the Field. Wurmser has now lost the knoll, the battalion behind it and the hussars that covered it. Historically this is about where he broke off and withdrew across the Mincio. Here the clock simply keeps running, because a battle in this game ends when the afternoon does.",
+      "unitId": "au-ir52"
+    },
+    {
+      "at": 2280,
+      "title": "What it was worth",
+      "text": "Wurmser got away south-east over the Mincio with most of his army, which is what the clock stands for: neither ending here is annihilation. What Castiglione cost him was the initiative in Italy, and Mantua stayed shut."
     }
   ]
 }
