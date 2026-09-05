@@ -222,9 +222,27 @@ describe("what it costs", () => {
     // Without this the rule that fired goes on holding the Order — it is asked
     // no further questions while it is the one suspending — and the Unit stands
     // in an empty field with a square it will never start.
-    const horse = unit({ id: "cav", name: "1er Hussards", arm: "cavalry", strength: 280 })
+    const horse = unit({
+      id: "cav",
+      name: "1er Hussards",
+      arm: "cavalry",
+      strength: 280,
+      position: { x: 760, y: 400 },
+    })
     const line = unit({ id: "line", army: "austrian", position: { x: 560, y: 400 } })
-    const mob = unit({ id: "mob", name: "IR 10", army: "austrian", position: { x: 560, y: 340 } })
+    // Drawn up alongside the line and turned across it, so the two are clear of
+    // each other at the start: a battalion standing in a battalion is now in
+    // Disorder before anything has happened, which would be this test's own
+    // ending arriving before its setup. It runs west, over the line, because a
+    // mob runs from whatever broke it and the horse is east of it.
+    const mob = unit({
+      id: "mob",
+      name: "IR 10",
+      army: "austrian",
+      strength: 240,
+      facing: Math.PI / 2,
+      position: { x: 620, y: 400 },
+    })
     const battle = fixture([horse, line, mob])
     letGoAt(horse, line.id)
     // Far enough to be still walking up, and near enough that the battalion has
@@ -233,7 +251,6 @@ describe("what it costs", () => {
     expect(line.suspendedBy).toBe("formed square, cavalry coming on")
     expect(line.changing?.to).toBe("square")
     breakUnit(battle, mob)
-    mob.routing = { heading: Math.PI / 2, brokeAt: battle.time }
     run(battle, 20)
     expect(isDisordered(line)).toBe(true)
     expect(line.changing).toBeNull()

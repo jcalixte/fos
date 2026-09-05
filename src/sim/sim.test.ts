@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import { concede, isOver, STEP, step, unitSpeed } from "./battle"
+import { isDisordered } from "./disorder"
 import { blankField, entryToUnit, takeCommand } from "./scenario"
 import { snapshot } from "./snapshot"
 import { cellIndex } from "./field"
@@ -15,6 +16,7 @@ import {
   frontage,
   gapToPoint,
   mobRadius,
+  overlaps,
   poseOf,
   reachOnBearing,
   slots,
@@ -2368,6 +2370,270 @@ describe("C6 Fighting — the Charge", () => {
     dread(exposed, horse, true, 10)
     expect(1 - facing.morale).toBeGreaterThan(0)
     expect(1 - exposed.morale).toBeCloseTo((1 - facing.morale) * 3, 5)
+  })
+})
+
+describe("C8 the ground a Unit stands on", () => {
+  /**
+   * Two thousand men do not walk through two thousand men. Everything in here
+   * is one fact read three ways: a march is held against what it cannot enter,
+   * a Charge strikes the first Face it comes to rather than the one it was
+   * aimed at, and a Unit walked through has had its ranks opened.
+   */
+
+  /** A regiment of horse, facing east, ready to be let go at something. */
+  function regiment(overrides: Partial<Unit> = {}): Unit {
+    return battalion({
+      id: "ca",
+      name: "1er Hussards",
+      arm: "cavalry",
+      strength: 400,
+      formation: "line",
+      position: { x: 500, y: 1000 },
+      facing: 0,
+      ...overrides,
+    })
+  }
+
+  function austrian(overrides: Partial<Unit> = {}): Unit {
+    return battalion({
+      id: "au",
+      army: "austrian",
+      name: "IR 23",
+      position: { x: 1000, y: 1000 },
+      facing: Math.PI,
+      ...overrides,
+    })
+  }
+
+  function letGoAt(unit: Unit, targetId: string): void {
+    unit.order = {
+      order: { id: "o1", unitId: unit.id, body: { kind: "charge", targetId }, issuedAt: 0 },
+      arrivedAt: 0,
+    }
+  }
+
+  function sendTo(unit: Unit, destination: Vec2): void {
+    unit.order = {
+      order: {
+        id: "m1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination,
+          arrivalFacing: unit.facing,
+          arrivalFormation: unit.formation,
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+  }
+
+  function run(battle: Battle, seconds: number): void {
+    for (let t = 0; t < seconds; t += STEP) step(battle)
+  }
+
+  describe("a Charge strikes the first Face it comes to", () => {
+    /** A screen, the battery it screens, and the horse let go at the battery. */
+    function through(screen: Partial<Unit> = {}) {
+      const horse = regiment()
+      const line = austrian({ id: "au-line", name: "IR 23", position: { x: 900, y: 1000 } })
+      Object.assign(line, screen)
+      const guns = austrian({
+        id: "au-guns",
+        name: "Kavalleriebatterie Nr. 1",
+        arm: "artillery",
+        strength: 100,
+        formation: "in-battery",
+        position: { x: 1100, y: 1000 },
+      })
+      letGoAt(horse, guns.id)
+      const battle = emptyBattle(blankField(400, 400), [horse, line, guns])
+      while (battle.time < 600 && battle.contacts.length === 0) step(battle)
+      return { horse, line, guns, battle, contact: battle.contacts[0] }
+    }
+
+    it("meets the line standing in front of the guns it was aimed at", () => {
+      const { horse, line, guns, contact } = through()
+      expect(contact?.unitId).toBe(horse.id)
+      expect(contact?.targetId).toBe(line.id)
+      expect(guns.strength).toBe(100)
+    })
+
+    it("commits the Charge to what it ran into, and not only that one blow", () => {
+      // The recoil is the tell: a regiment thrown back goes back from the Unit
+      // that threw it, so a Charge still aimed two hundred metres beyond would
+      // measure its distance from the wrong body of men.
+      const { horse, line } = through()
+      expect(horse.charging?.targetId ?? null).not.toBe("au-guns")
+      if (horse.charging) expect(horse.charging.targetId).toBe(line.id)
+    })
+
+    it("rides past a screen, which holds no ground", () => {
+      const { line, guns, contact } = through({ formation: "open-order" })
+      expect(contact?.targetId).toBe(guns.id)
+      expect(line.strength).toBe(700)
+    })
+
+    it("rides past what is clear of its lane", () => {
+      // Two hundred metres wide, and the battalion is four hundred off the line
+      // of the charge. Measured centre to centre the horse would read as
+      // touching it; measured along the charge it rides by.
+      const { guns, contact } = through({ position: { x: 900, y: 1400 } })
+      expect(contact?.targetId).toBe(guns.id)
+    })
+  })
+
+  describe("a march is held against what it cannot walk through", () => {
+    const standingOf = (unit: Unit) => ({
+      shape: unitFootprint(unit),
+      at: unit.position,
+      facing: unit.facing,
+    })
+
+    /** March one of ours at an enemy two hundred metres off, and watch the ground. */
+    function marchInto(theirs: Partial<Unit> = {}) {
+      const mine = battalion({ position: { x: 800, y: 1000 } })
+      const enemy = austrian({ position: { x: 1000, y: 1000 }, ...theirs })
+      sendTo(mine, { x: 1200, y: 1000 })
+      const battle = emptyBattle(blankField(400, 400), [mine, enemy])
+      let met = false
+      for (let t = 0; t < 400; t += STEP) {
+        step(battle)
+        // A mob is nobody's Footprint, so a Rout that either of them fell into
+        // is not the question being asked here.
+        if (isRouting(mine)) break
+        if (overlaps(standingOf(mine), standingOf(enemy))) met = true
+      }
+      return { mine, enemy, met, battle }
+    }
+
+    it("never puts two thousand men in the same ground, and the Order stands", () => {
+      const { mine, enemy, met } = marchInto()
+      expect(met).toBe(false)
+      expect(mine.position.x).toBeLessThan(enemy.position.x)
+      // Held and not cancelled, the same answer `admits` gives at a Crossing.
+      expect(mine.order).not.toBeNull()
+    })
+
+    it("walks through a screen, which holds no ground", () => {
+      const { met } = marchInto({ formation: "open-order" })
+      expect(met).toBe(true)
+    })
+
+    it("walks through a mob, which has no ground left to hold", () => {
+      // Horse on the road, because a mob runs at 2.6 metres a second and only
+      // march column catches it. It is not a Pursuit: no Charge was asked for
+      // and none is let go — it is a column marching over men in its way.
+      const mine = battalion({
+        arm: "cavalry",
+        name: "1er Hussards",
+        strength: 400,
+        formation: "march-column",
+        position: { x: 800, y: 1000 },
+      })
+      const mob = austrian({
+        position: { x: 1000, y: 1000 },
+        formation: "march-column",
+        routing: { heading: 0, brokeAt: 0 },
+        morale: 0,
+      })
+      sendTo(mine, { x: 1600, y: 1000 })
+      const battle = emptyBattle(blankField(400, 400), [mine, mob])
+      let met = false
+      for (let t = 0; t < 400; t += STEP) {
+        step(battle)
+        if (overlaps(standingOf(mine), standingOf(mob))) met = true
+      }
+      expect(met).toBe(true)
+    })
+
+    it("lets a Unit already standing in one walk out of it", () => {
+      // Two Units that begin the day in each other would otherwise have no step
+      // either of them could take, and would stand there all afternoon. The
+      // guns are limbered so that nothing shoots the answer out of the test.
+      const mine = battalion({ position: { x: 1000, y: 1000 } })
+      const guns = austrian({
+        arm: "artillery",
+        name: "Kavalleriebatterie Nr. 1",
+        strength: 100,
+        formation: "limbered",
+      })
+      sendTo(mine, { x: 700, y: 1000 })
+      const battle = emptyBattle(blankField(400, 400), [mine, guns])
+      run(battle, 400)
+      expect(mine.position.x).toBeLessThan(750)
+      expect(overlaps(standingOf(mine), standingOf(guns))).toBe(false)
+    })
+  })
+
+  it("pulls a recoil up when it is thrown back onto ground it cannot give", () => {
+    // A regiment thrown back has one way out of the Charge state, which is
+    // putting RECOIL_DISTANCE between itself and what threw it. Penned in, it
+    // would stand in contact with it for the rest of the afternoon.
+    const horse = regiment({ position: { x: 995, y: 1000 } })
+    const enemy = austrian()
+    const behind = austrian({ id: "au-2", name: "IR 45", position: { x: 940, y: 1000 } })
+    horse.charging = { targetId: enemy.id, launchedAt: 0, recoiling: true, pursuing: false }
+    letGoAt(horse, enemy.id)
+    const battle = emptyBattle(blankField(400, 400), [horse, enemy, behind])
+    while (battle.time < 200 && horse.charging) step(battle)
+    expect(horse.charging).toBeNull()
+    // Pulled up well short of the distance that would otherwise have ended it.
+    expect(gapTo(horse, enemy)).toBeLessThan(RECOIL_DISTANCE)
+    expect(battle.dispatches.map((d) => d.text)).toContain(
+      "1er Hussards was thrown back onto ground it could not give",
+    )
+  })
+
+  describe("walking through a formed Unit opens its ranks", () => {
+    /** Two of ours, one marched across the other's front. */
+    function crossing(over: Partial<Unit> = {}, mover: Partial<Unit> = {}) {
+      const standing = battalion({ id: "a", position: { x: 1000, y: 1000 }, ...over })
+      const marching = battalion({
+        id: "b",
+        name: "5e Ligne",
+        position: { x: 1000, y: 800 },
+        facing: Math.PI / 2,
+        ...mover,
+      })
+      sendTo(marching, { x: 1000, y: 1200 })
+      const battle = emptyBattle(blankField(400, 400), [standing, marching])
+      run(battle, 200)
+      return { standing, marching, battle }
+    }
+
+    it("costs the pair of them their shape", () => {
+      const { standing, marching } = crossing()
+      expect(isDisordered(standing)).toBe(true)
+      expect(isDisordered(marching)).toBe(true)
+    })
+
+    it("names what came through in the Dispatch", () => {
+      const { battle } = crossing()
+      const said = battle.dispatches.map((d) => d.text)
+      expect(said).toContain("12e Ligne is in disorder, 5e Ligne came through its ranks")
+    })
+
+    it("costs a screen nothing, either way round", () => {
+      const { standing, marching } = crossing({ formation: "open-order" })
+      expect(isDisordered(standing)).toBe(false)
+      expect(isDisordered(marching)).toBe(false)
+    })
+
+    it("is not a tax on standing in each other, only on walking through", () => {
+      // Nobody moves. Two battalions drawn up in each other are crowded and not
+      // ruined, and standing still is what mends ranks in any case — so a rule
+      // that charged them every step would hold them under it for the whole
+      // afternoon over a state neither of them was doing anything about.
+      const one = battalion({ id: "a", position: { x: 1000, y: 1000 } })
+      const two = battalion({ id: "b", name: "5e Ligne", position: { x: 1000, y: 1000 } })
+      const battle = emptyBattle(blankField(400, 400), [one, two])
+      run(battle, 200)
+      expect(isDisordered(one)).toBe(false)
+      expect(isDisordered(two)).toBe(false)
+    })
   })
 })
 
