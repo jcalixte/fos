@@ -142,7 +142,7 @@
         "entry": { "x": 1420, "y": 1140 },
         "order": {
           "kind": "move",
-          "destination": { "x": 1290, "y": 1030 },
+          "destination": { "x": 1430, "y": 1090 },
           "arrivalFacing": -1.75,
           "arrivalFormation": "line"
         }

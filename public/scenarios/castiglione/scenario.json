@@ -56,7 +56,7 @@
         "kind": "move",
         "destination": { "x": 720, "y": 330 },
         "arrivalFacing": 0,
-        "arrivalFormation": "attack-column"
+        "arrivalFormation": "line"
       }
     },
     {
@@ -66,7 +66,7 @@
         "kind": "move",
         "destination": { "x": 720, "y": 500 },
         "arrivalFacing": 0,
-        "arrivalFormation": "attack-column"
+        "arrivalFormation": "line"
       }
     },
     {
@@ -110,6 +110,16 @@
       }
     },
     {
+      "at": 300,
+      "unitId": "fr-marmont",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1020, "y": 895 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
       "at": 420,
       "unitId": "fr-batterie-pied",
       "body": {
@@ -140,16 +150,6 @@
       }
     },
     {
-      "at": 780,
-      "unitId": "fr-marmont",
-      "body": {
-        "kind": "move",
-        "destination": { "x": 1000, "y": 880 },
-        "arrivalFacing": 0,
-        "arrivalFormation": "in-battery"
-      }
-    },
-    {
       "at": 900,
       "unitId": "fr-4e-legere",
       "body": {
@@ -161,64 +161,96 @@
     },
     {
       "at": 960,
-      "unitId": "fr-1er-hussards",
+      "unitId": "fr-45e",
       "body": {
         "kind": "move",
-        "destination": { "x": 1000, "y": 1090 },
+        "destination": { "x": 1090, "y": 840 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1020,
+      "unitId": "fr-5e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1060, "y": 1010 },
         "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
     },
     {
       "at": 1080,
-      "unitId": "fr-45e",
+      "unitId": "fr-20e-dragons",
       "body": {
         "kind": "move",
-        "destination": { "x": 1100, "y": 830 },
+        "destination": { "x": 1000, "y": 1000 },
         "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
     },
     {
-      "at": 1200,
+      "at": 1080,
       "unitId": "fr-verdier",
       "body": {
         "kind": "move",
-        "destination": { "x": 1150, "y": 960 },
+        "destination": { "x": 1080, "y": 930 },
         "arrivalFacing": 0,
         "arrivalFormation": "attack-column"
       }
     },
     {
-      "at": 1320,
-      "unitId": "fr-5e",
-      "body": {
-        "kind": "move",
-        "destination": { "x": 1080, "y": 1010 },
-        "arrivalFacing": 0,
-        "arrivalFormation": "line"
-      }
-    },
-    {
-      "at": 1440,
-      "unitId": "fr-verdier",
-      "body": {
-        "kind": "move",
-        "destination": { "x": 1210, "y": 905 },
-        "arrivalFacing": 0,
-        "arrivalFormation": "attack-column"
-      }
-    },
-    {
-      "at": 1620,
+      "at": 1140,
       "unitId": "fr-1er-hussards",
       "body": {
         "kind": "move",
-        "destination": { "x": 1350, "y": 1080 },
+        "destination": { "x": 1010, "y": 1080 },
         "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
     },
+    {
+      "at": 1140,
+      "unitId": "fr-1er-hussards",
+      "body": { "kind": "charge", "targetId": "au-medolano" }
+    },
+    {
+      "at": 1260,
+      "unitId": "fr-20e-dragons",
+      "body": { "kind": "charge", "targetId": "au-medolano" }
+    },
+    { "at": 1320, "unitId": "fr-verdier", "body": { "kind": "charge", "targetId": "au-medolano" } },
+    {
+      "at": 1440,
+      "unitId": "fr-69e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1300, "y": 960 },
+        "arrivalFacing": -1.75,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "fr-verdier",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1190, "y": 900 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1560,
+      "unitId": "fr-45e",
+      "body": {
+        "kind": "move",
+        "destination": { "x": 1150, "y": 850 },
+        "arrivalFacing": 0,
+        "arrivalFormation": "line"
+      }
+    },
+    { "at": 1680, "unitId": "fr-69e", "body": { "kind": "charge", "targetId": "au-medolano" } },
     {
       "at": 1800,
       "unitId": "fr-32e",
@@ -230,21 +262,21 @@
       }
     },
     {
-      "at": 1920,
+      "at": 1860,
       "unitId": "fr-69e",
       "body": {
         "kind": "move",
-        "destination": { "x": 1220, "y": 940 },
-        "arrivalFacing": -1.75,
+        "destination": { "x": 1190, "y": 900 },
+        "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
     },
     {
-      "at": 2040,
-      "unitId": "fr-45e",
+      "at": 2100,
+      "unitId": "fr-5e",
       "body": {
         "kind": "move",
-        "destination": { "x": 1280, "y": 840 },
+        "destination": { "x": 1180, "y": 970 },
         "arrivalFacing": 0,
         "arrivalFormation": "line"
       }
