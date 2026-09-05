@@ -183,6 +183,22 @@ describe("what buys it", () => {
     }
   })
 
+  it("is not bought at all by a screen, which has no ranks left to open", () => {
+    // The bug this is here for: re-forming is priced at the drill out of Open
+    // Order, so a Unit already standing in Open Order owes no drill at all and
+    // is Ordered the instant it is disarranged. It used to be told so once
+    // every step for as long as the mob was on top of it, which is a third of
+    // Castiglione's whole feed spent saying nothing.
+    const screen = unit({ id: "screen", name: "11e Legere", formation: "open-order" })
+    const mob = unit({ id: "mob", name: "IR 10", army: "austrian", position: { x: 400, y: 340 } })
+    const battle = fixture([screen, mob])
+    breakUnit(battle, mob)
+    mob.routing = { heading: Math.PI / 2, brokeAt: 0 }
+    run(battle, 30)
+    expect(isDisordered(screen)).toBe(false)
+    expect(battle.dispatches.filter((d) => d.text.includes("in disorder"))).toHaveLength(0)
+  })
+
   it("is not carried by the mob itself: a Rout is a dearer bill, charged instead", () => {
     const battle = fixture([unit()])
     const u = battle.units[0]

@@ -103,6 +103,17 @@ export function reformingSeconds(unit: Unit): number {
  * with the Unit's ranks as they now are.
  */
 export function disarrange(battle: Battle, unit: Unit, because: string): void {
+  // A Unit already standing in the loosest order there is has no ranks left to
+  // open. Its way back into shape is the shape it is holding, which is no drill
+  // at all — so Disorder is not a state it can be in, and none of the three
+  // prices is one it can pay. That is the same reading ADR-0012 already takes
+  // for a mob, which has none left either, and it is why a screen pays for
+  // having no dressed rank permanently and in its reload instead.
+  //
+  // Asked of the drill table rather than by naming Open Order, so a Formation
+  // that is its own way back needs no clause of its own here — which is the
+  // discipline the rest of this module is held to.
+  if (reformingSeconds(unit) <= ORDERED) return
   const was = isDisordered(unit)
   if (unit.changing) {
     unit.changing = null
