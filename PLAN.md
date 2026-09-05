@@ -11,16 +11,15 @@ Delete this file when it is done. It is scaffolding, not documentation.
 
 Phases 0 to 6 are done and verified. Everything below is the whole of what is not.
 
-1. **Fight one across two machines**, which is the other half of Phase 6's F21 row and the only way
-   to get a round-trip figure that means anything. The loopback number is 1.9ms median against a
-   100ms budget; what a real connection costs is unmeasured.
+1. **Fight one across two machines**, which is the other half of Phase 6's F21 row. A Castiglione
+   has now been fought across a real connection, but from one machine with two browser profiles, so
+   the two Commanders shared a link. The network leg to the host measures 13–17ms and the tick
+   quantises at 100ms, which says the wire is not what a Commander feels — what is still unmeasured
+   is two Commanders whose latencies disagree.
 2. **Time a person arranging Rivoli.** F23's three minutes is asserted as a clock and unmeasured as
    a human act. Thirteen Units is the largest army anybody has to arrange, and if three minutes
    binds, DESIGN §8 says the arranging *grammar* is what is slow and the clock is not the thing to
    change.
-3. **Watch what the wire costs.** 15KB a state, ten a second, ~148KB/s per Commander. Recorded in
-   DESIGN §8 with its trigger; rounding coordinates buys 2%, so the answer when it bites is a
-   shorter encoding.
 
 Then delete this file, and sweep `DESIGN.md` and `README.md` for "player" → "Commander" — the last
 item under *Not in this plan* and the only one of them that is bookkeeping rather than design.

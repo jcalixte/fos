@@ -1015,14 +1015,31 @@ measured here and is the honest gap in this table. What the loopback figure does
 nothing in the *authority* is slow: the server takes an Order, steps nothing, cuts a snapshot for 22
 Units and answers, and that whole path is under five milliseconds at the worst of thirty tries.
 
-**What the wire costs is the number this milestone did not promise and should have.** A state message
-is about 15KB and there are ten a second, so a Commander is sent roughly 148KB a second and the
-server sends twice that. It works, and on one machine it is invisible. The reason it is recorded
-rather than fixed is that the obvious fix is not one: rounding every coordinate to a centimetre takes
-**2%** off, because the payload is field *names* and not float digits. A real reduction is a shorter
-encoding or a per-Unit delta, and both are a change to make deliberately. **Trigger:** the first
-battle fought across a real connection where the Field visibly stutters — at which point the answer
-is the encoding and not the tick rate, because the tick rate is the simulation's.
+**What the wire costs was estimated at 15KB a state and measured at 9.46.** Sixty seconds of a
+running Castiglione, counted on a Commander's own socket across a real connection: 600 states in
+60.0s, **9.46KB each**, **94.6KB/s** to one Commander and about 189KB/s out of the server. The tick
+is exactly the 10.0/s it was built to be.
+
+The estimate was not wrong about the object it measured — it measured the wrong object. 15KB is a
+`BattleSnapshot`; the wire carries a `State`, which is that snapshot minus two things this milestone
+put there and then did not re-measure. The other army's Units arrive with their Report null, so his
+cost 346 bytes against my 483 — 137 bytes eleven times, some 13% of every message. And the feed goes
+as a tail rather than as a feed: `dispatches` is **170 bytes** on the wire where a snapshot in memory
+holds every Dispatch the afternoon has produced. That second one is the larger half, and it is why
+the cost does not climb as a battle goes on.
+
+Taken apart, one message is 9,844 bytes of which `units` is 92.6% — 22 Units at 414 bytes each — and
+**field names are 5,469 bytes, 55.6% of the whole**. That is the 2% from rounding coordinates
+explained rather than asserted: the names are the payload and the float digits are the rounding
+error. A real reduction is a shorter encoding or a per-Unit delta, and both are a change to make
+deliberately.
+
+**Trigger: tested, and it did not fire.** A Castiglione was fought between two Commanders across a
+real connection — 16ms of network against a tick that quantises to 100ms — and the Field did not
+stutter. What the number now bounds is the bill rather than the feel: message rate is wall-clock and
+not Scenario clock, so a forty-minute Castiglione costs about **57MB a Commander at Tempo 4** and
+four times that at Tempo 1. Fine on a desk and not fine on a phone, which is a different trigger than
+the one written here and is not yet anybody's Goal.
 
 **F23's clock is measured and F23's question is not.** That both Commanders are sent only their own
 army, and that the arranging ends on both having Stood To or on the three minutes, are assertions
@@ -1415,13 +1432,15 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   **Trigger:** the first behaviour that exists in one and not the other — at which point
   ADR-0013 has been broken rather than extended, and should be superseded rather than quietly
   stretched.
-- **A state message is 15KB and there are ten a second.** Roughly 148KB/s to each Commander, twice
-  that out of the server. Fine on one machine and unmeasured on a real connection. What makes it a
-  tension rather than a bug is that the cheap fix is a mirage: rounding every coordinate to a
-  centimetre takes 2% off, because the cost is field names. **Trigger:** a battle across a real
-  connection where the Field stutters — the answer is then a shorter encoding or a per-Unit delta,
-  never a slower tick, because the tick is the simulation's own 10Hz and F14 draws between two of
-  them.
+- **A state message is 9.46KB and there are ten a second.** 94.6KB/s to each Commander and about
+  189KB/s out of the server, measured on a running Castiglione across a real connection rather than
+  estimated. What makes it a tension rather than a bug is that the cheap fix is a mirage: field
+  names are 55.6% of the message, so rounding every coordinate to a centimetre takes 2% off.
+  **Trigger:** a battle across a real connection where the Field stutters — which has now been
+  fought without stuttering, so what is left of this row is the bill and not the feel: about 57MB a
+  Commander for a Castiglione at Tempo 4, because the rate is wall-clock and not Scenario clock. The
+  answer, when it comes, is a shorter encoding or a per-Unit delta, never a slower tick, because the
+  tick is the simulation's own 10Hz and F14 draws between two of them.
 - **A battle now outlives the tab that opened it.** T13 says *no save — no serialisation of
   simulation state at all*, and that is still true: the state was never written down, it simply
   lives in a process. **Trigger:** wanting a battle to outlive the *server*, at which point T13 is
