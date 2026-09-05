@@ -264,10 +264,14 @@ export class Noises {
           cut: 2400,
           to: 900,
           q: 0.8,
-          decay: 0.07,
+          // Twenty milliseconds, against a gap of about twenty between cracks.
+          // A musket's report is a very short thing, and the first version of
+          // this gave it seventy — so five cracks sounded at once and a Volley
+          // came out as a wash of filtered noise rather than as musketry.
+          decay: 0.02,
         })
-        this.thump(pan, 0.32 * bulk * far, 68, 0.16)
-        this.tail(pan, 0.3 * bulk * far, 340, 0.85)
+        this.thump(pan, 0.32 * bulk * far, 68, 0.14)
+        this.tail(pan, 0.11 * bulk * far, 300, 0.3)
         return
       case "gun":
         // A battery is several pieces on their own reload clocks, so it rolls
@@ -279,10 +283,13 @@ export class Noises {
           cut: 760,
           to: 190,
           q: 0.9,
-          decay: 0.3,
-          thump: { hz: 46, decay: 0.4, gain: 0.7 },
+          // Longer than a musket and still short. A gun is a crack and a
+          // pressure wave; the length people remember is the echo, and that is
+          // the tail below rather than the report.
+          decay: 0.09,
+          thump: { hz: 46, decay: 0.34, gain: 0.7 },
         })
-        this.tail(pan, 0.42 * far, 210, 1.3)
+        this.tail(pan, 0.2 * far, 200, 0.6)
         return
       case "contact":
         // The loudest thing that happens, and the only one with steel in it:
@@ -295,7 +302,9 @@ export class Noises {
           cut: 2800,
           to: 1100,
           q: 1.1,
-          decay: 0.09,
+          // Denser than fire and still made of separate blows, because that is
+          // what it is. Steel is short.
+          decay: 0.035,
         })
         this.thump(pan, 0.5 * far, 95, 0.28)
         return
@@ -566,9 +575,21 @@ export class Noises {
 
   private build(): void {
     const ctx = new AudioContext()
+    // Twenty-two battalions can fire inside the same 100ms and each is a dozen
+    // cracks, so the bus can be asked for more than one, and anything over one
+    // is not loudness — it is fuzz, and fuzz is heard as *the sound is broken*
+    // rather than as *the battle is loud*. A limiter is the cheapest honest
+    // answer and it never acts on anything smaller.
+    const limiter = ctx.createDynamicsCompressor()
+    limiter.threshold.value = -8
+    limiter.knee.value = 6
+    limiter.ratio.value = 12
+    limiter.attack.value = 0.002
+    limiter.release.value = 0.2
+    limiter.connect(ctx.destination)
     const master = ctx.createGain()
     master.gain.value = MASTER[this.loudness]
-    master.connect(ctx.destination)
+    master.connect(limiter)
 
     const frames = Math.floor(ctx.sampleRate * NOISE_SECONDS)
     const noise = ctx.createBuffer(1, frames, ctx.sampleRate)
@@ -581,8 +602,8 @@ export class Noises {
     this.master = master
     this.noise = noise
     this.bed = {
-      rumble: this.layer(ctx, master, noise, "lowpass", 260, 0.7),
-      crackle: this.layer(ctx, master, noise, "bandpass", 1400, 0.5),
+      rumble: this.layer(ctx, master, noise, "lowpass", 220, 0.7),
+      crackle: this.layer(ctx, master, noise, "bandpass", 700, 1.2),
     }
   }
 
@@ -598,13 +619,20 @@ export class Noises {
     const source = ctx.createBufferSource()
     source.buffer = noise
     source.loop = true
+    // Two in series, not one. A single biquad rolls off at 12dB an octave,
+    // which over a bed that never stops leaves audible hiss on top of the
+    // rumble — and a permanent hiss is the one thing a bed must not be.
     const filter = ctx.createBiquadFilter()
     filter.type = type
     filter.frequency.value = frequency
     filter.Q.value = q
+    const again = ctx.createBiquadFilter()
+    again.type = type
+    again.frequency.value = frequency
+    again.Q.value = q
     const gain = ctx.createGain()
     gain.gain.value = 0
-    source.connect(filter).connect(gain).connect(master)
+    source.connect(filter).connect(again).connect(gain).connect(master)
     source.start()
     return gain
   }
