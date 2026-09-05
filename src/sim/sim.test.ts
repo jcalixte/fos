@@ -847,6 +847,37 @@ describe("C2 Initiative — the Standing Order", () => {
     expect(distance(unit.position, unit.post)).toBeLessThanOrEqual(leash("stand-off"))
   })
 
+  it("reports a rule once while it holds, not once a tick", () => {
+    const { unit, battle } = facing(150, { standing: "stand-off" })
+    // An Order that walks the Unit back onto what its brief walks it away from:
+    // the Order pulls in, the brief pushes out, and the rule stops matching for
+    // the tick in between. Both instructions are being obeyed; only one thing is
+    // happening, and the feed used to carry a line of it ten times a second.
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 400, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    unit.post = { x: 400, y: 100 }
+    for (let i = 0; i < 3000; i++) step(battle)
+    const said = battle.dispatches.filter(
+      (d) => d.unitId === unit.id && d.text.endsWith("gave ground rather than be closed with"),
+    )
+    // Said, and said sparingly: once when it starts, and not again inside the
+    // minute the same judgement is held to be one act of it.
+    expect(said.length).toBeGreaterThan(0)
+    expect(said.length).toBeLessThanOrEqual(battle.time / 60)
+  })
+
   it("gives no ground with guns in battery, which stand on their trails", () => {
     const { unit, battle } = facing(150, {
       arm: "artillery",

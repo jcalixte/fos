@@ -244,6 +244,25 @@ const STANDOFF_RANGE = 200
 /** Metres of ground below which taking a step is not worth suspending an Order for. */
 const WORTH_MOVING = 2
 
+/**
+ * Seconds within which the same rule firing again on the same Unit is the same
+ * act of judgement, and is not reported twice.
+ *
+ * A rule holds an Order only for as long as it goes on matching, and several of
+ * them stop matching the moment they have been obeyed: a Unit that gives ground
+ * to the edge of its leash is a Unit the rule now has nothing to say about, so
+ * the Order comes back, walks it a metre inside the leash, and the rule fires
+ * again on the next tick. That tug of war is the two instructions doing exactly
+ * what they were given — the Order pulling in, the brief pushing out — and it is
+ * not eleven hundred separate decisions to report at ten a second. CONTEXT has
+ * a Dispatch as a line about what just happened, and the second one has not
+ * happened: it is the first one still going on.
+ *
+ * A minute, because that is about how long a Unit's situation takes to become a
+ * different situation. Giving ground again ten minutes later is news.
+ */
+const SAME_JUDGEMENT = 60
+
 /** The nearest enemy that `want` accepts, within `range`, or null. */
 function nearestEnemy(
   unit: Unit,
@@ -645,16 +664,30 @@ export function applyInitiative(unit: Unit, battle: Battle): void {
     else if (action.obedience === "rally") rally(unit)
     else if (!reformed && !action.march && !gone) return
     unit.suspendedBy = rule.name
-    battle.dispatches.push({
-      at: battle.time,
-      unitId: unit.id,
-      army: unit.army,
-      text: `${unit.name} ${rule.name}`,
-    })
+    report(battle, unit, rule.name)
     return
   }
   unit.shift = null
   if (unit.suspendedBy !== null && unit.changing === null) {
     unit.suspendedBy = null
   }
+}
+
+/**
+ * The Dispatch a fired rule writes, once per act of judgement rather than once
+ * per tick it holds the Order for.
+ *
+ * The feed itself is what remembers, so nothing is carried on the Unit and
+ * nothing goes over the wire: the scan walks back only as far as
+ * `SAME_JUDGEMENT` seconds, which is a handful of lines, and the repeats it
+ * suppresses are the lines that would have made it long.
+ */
+function report(battle: Battle, unit: Unit, rule: string): void {
+  const text = `${unit.name} ${rule}`
+  for (let i = battle.dispatches.length - 1; i >= 0; i--) {
+    const said = battle.dispatches[i]!
+    if (said.at < battle.time - SAME_JUDGEMENT) break
+    if (said.unitId === unit.id && said.text === text) return
+  }
+  battle.dispatches.push({ at: battle.time, unitId: unit.id, army: unit.army, text })
 }
