@@ -71,33 +71,46 @@ function day(seconds: number): string {
       </p>
 
       <div class="mt-6 grid gap-3">
-        <RouterLink
+        <div
           v-for="battle in battles"
           :key="battle.id"
-          class="rounded-box border border-base-content/15 bg-base-200 p-4 text-left transition hover:border-primary hover:bg-base-100"
-          :to="{ name: 'battle', params: { battle: battle.id } }"
+          class="rounded-box border border-base-content/15 bg-base-200 transition hover:border-primary"
         >
-          <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span class="text-sm font-semibold">{{ battle.name }}</span>
-            <span class="font-mono text-xs text-base-content/45">{{ day(battle.clock) }}</span>
-            <span class="ml-auto flex items-center gap-2">
-              <span
-                v-for="army in battle.armies"
-                :key="army.id"
-                class="flex items-center gap-1.5 text-xs text-base-content/60"
-              >
+          <RouterLink
+            class="block p-4 text-left transition hover:bg-base-100"
+            :to="{ name: 'battle', params: { battle: battle.id } }"
+          >
+            <span class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span class="text-sm font-semibold">{{ battle.name }}</span>
+              <span class="font-mono text-xs text-base-content/45">{{ day(battle.clock) }}</span>
+              <span class="ml-auto flex items-center gap-2">
                 <span
-                  class="size-3 shrink-0 rounded-full border border-base-content/25"
-                  :style="{ background: army.colour }"
-                />
-                {{ army.name }}
+                  v-for="army in battle.armies"
+                  :key="army.id"
+                  class="flex items-center gap-1.5 text-xs text-base-content/60"
+                >
+                  <span
+                    class="size-3 shrink-0 rounded-full border border-base-content/25"
+                    :style="{ background: army.colour }"
+                  />
+                  {{ army.name }}
+                </span>
               </span>
             </span>
-          </span>
-          <span class="mt-2 block text-xs leading-relaxed text-base-content/70">
-            {{ battle.summary }}
-          </span>
-        </RouterLink>
+            <span class="mt-2 block text-xs leading-relaxed text-base-content/70">
+              {{ battle.summary }}
+            </span>
+          </RouterLink>
+          <!-- The other way in, and the one to take first if the day means
+               nothing to you yet: the same Field with nobody commanding, both
+               Plans running, and what happened said over the top of it. -->
+          <RouterLink
+            class="flex items-center gap-2 border-t border-base-content/10 px-4 py-2.5 text-xs text-base-content/60 transition hover:bg-base-100 hover:text-primary"
+            :to="{ name: 'book', params: { battle: battle.id } }"
+          >
+            Read the account — watch it fought as it was, before you take a side
+          </RouterLink>
+        </div>
       </div>
     </div>
   </div>

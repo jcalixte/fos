@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router"
 import { loadCatalogue } from "@/scenario/catalogue"
 import TheBattle from "@/views/TheBattle.vue"
+import TheBook from "@/views/TheBook.vue"
 import TheMenu from "@/views/TheMenu.vue"
 import ThePlate from "@/views/ThePlate.vue"
 import TheSettings from "@/views/TheSettings.vue"
@@ -46,6 +47,16 @@ const routes: RouteRecordRaw[] = [
    * refused.
    */
   { path: "/battles/:battle/:id", name: "seat", component: TheBattle },
+  /**
+   * One battle, read instead of fought.
+   *
+   * A URL keeps its promise here for the reason ADR-0009 asked for and a
+   * battle in progress could not give: a Book has no Commander in it, so
+   * there is no state a player put there. The Field, the two Rosters and the
+   * two Plans are the whole of it, and the same address opens the same
+   * afternoon at the top of it every time.
+   */
+  { path: "/book/:battle", name: "book", component: TheBook },
   {
     path: "/battles/:battle",
     name: "battle",
