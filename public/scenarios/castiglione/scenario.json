@@ -17,7 +17,7 @@
       "colour": "#2f4d8f",
       "brief": "Take hold of the whole Austrian line and do not let go of it, because the column coming up from Guidizzolo arrives behind their left twenty minutes in and has to find them still facing you. Marmont's horse battery is the answer to the guns on Monte Medolano, and it will not move until it is hitched up. The knoll is the only ground here that counts at the end.",
       "roster": "/rosters/french-castiglione.json",
-      "headquarters": { "x": 330, "y": 830 },
+      "headquarters": { "x": 330, "y": 780 },
       "deploymentZone": [140, 180, 520, 940]
     },
     {

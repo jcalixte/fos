@@ -17,7 +17,7 @@
       "colour": "#2f4d8f",
       "brief": "Hold the plateau until Rey's column comes up from Castelnuovo. They outnumber you and they cannot help each other: three lanes off the heights that only meet where you are standing, and a fourth coming up the gorge one man wide past the chapel. Beat them as they arrive, and keep something in hand for the one that walks on behind you.",
       "roster": "/rosters/french-rivoli.json",
-      "headquarters": { "x": 960, "y": 1060 },
+      "headquarters": { "x": 1060, "y": 1060 },
       "deploymentZone": [520, 600, 1040, 520]
     },
     {
