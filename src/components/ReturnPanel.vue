@@ -91,12 +91,12 @@ function mark(column: "ground" | "break"): string {
       <thead>
         <tr class="text-xs uppercase tracking-wide text-base-content/45">
           <th class="pb-1 text-left font-medium">Return</th>
-          <th class="pb-1 text-right font-medium" :class="mark('ground')">Ground</th>
-          <th class="pb-1 text-right font-medium">In hand</th>
-          <th class="pb-1 text-right font-medium">Running</th>
-          <th class="pb-1 text-right font-medium">Gone</th>
-          <th class="pb-1 text-right font-medium">Lost</th>
-          <th class="pb-1 text-right font-medium" :class="mark('break')">Toward break</th>
+          <th class="pb-1 pl-4 text-right font-medium" :class="mark('ground')">Ground</th>
+          <th class="pb-1 pl-4 text-right font-medium">In hand</th>
+          <th class="pb-1 pl-4 text-right font-medium">Running</th>
+          <th class="pb-1 pl-4 text-right font-medium">Gone</th>
+          <th class="pb-1 pl-4 text-right font-medium">Lost</th>
+          <th class="pb-1 pl-4 text-right font-medium" :class="mark('break')">Toward break</th>
         </tr>
       </thead>
       <tbody>
@@ -112,18 +112,18 @@ function mark(column: "ground" | "break"): string {
             </span>
             <span class="mt-0.5 block pl-5 text-xs text-base-content/50">{{ ground(row) }}</span>
           </td>
-          <td class="py-2 text-right tabular-nums" :class="mark('ground')">
+          <td class="py-2 pl-4 text-right tabular-nums" :class="mark('ground')">
             {{ row.keyGround.length
             }}<span class="text-xs text-base-content/40">/{{ keyGround.length }}</span>
           </td>
-          <td class="py-2 text-right tabular-nums">{{ row.inHand }}</td>
-          <td class="py-2 text-right tabular-nums">{{ row.running }}</td>
-          <td class="py-2 text-right tabular-nums">{{ row.gone }}</td>
-          <td class="py-2 text-right tabular-nums">
+          <td class="py-2 pl-4 text-right tabular-nums">{{ row.inHand }}</td>
+          <td class="py-2 pl-4 text-right tabular-nums">{{ row.running }}</td>
+          <td class="py-2 pl-4 text-right tabular-nums">{{ row.gone }}</td>
+          <td class="py-2 pl-4 text-right tabular-nums">
             {{ men(row.mustered - row.strength) }}
             <span class="text-xs text-base-content/40">/ {{ men(row.mustered) }}</span>
           </td>
-          <td class="py-2 text-right tabular-nums" :class="mark('break')">
+          <td class="py-2 pl-4 text-right tabular-nums" :class="mark('break')">
             {{ towardBreak(row.towardBreak) }}
           </td>
         </tr>
