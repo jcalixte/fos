@@ -308,65 +308,74 @@ onBeforeUnmount(() => {
       >
         the book
       </span>
-      <div class="ml-auto flex items-center gap-3">
+      <div class="ml-auto flex flex-wrap items-center gap-5">
         <span class="font-mono text-sm tabular-nums">
           {{ stamp(ui.time) }}<span class="text-base-content/40"> / {{ stamp(ui.clock) }}</span>
         </span>
-        <button type="button" class="btn btn-xs" :disabled="!!ui.outcome" @click="togglePause">
-          {{ ui.running ? "pause" : "read on" }}
-        </button>
-        <span class="join">
+        <!-- Grouped tight and spaced apart from the clock and the way out, the
+             same shape the battle screen's bar has: these are strips of related
+             switches and not eight unrelated buttons in a row. -->
+        <div class="flex items-center gap-1">
+          <button
+            type="button"
+            class="btn btn-ghost btn-xs"
+            :disabled="!!ui.outcome"
+            @click="togglePause"
+          >
+            {{ ui.running ? "pause" : "read on" }}
+          </button>
           <button
             v-for="t in TEMPOS"
             :key="t"
             type="button"
-            class="btn join-item btn-xs"
-            :class="{ 'btn-active': ui.tempo === t }"
+            class="btn btn-xs"
+            :class="ui.tempo === t ? 'btn-primary' : 'btn-ghost'"
+            :title="`how fast the afternoon is read: ×${t}`"
             @click="setTempo(t)"
           >
             ×{{ t }}
           </button>
-        </span>
-        <!-- Silent until the reader has touched the page at all, because the
+          <!-- Silent until the reader has touched the page at all, because the
              audio device is only handed over inside a gesture and a Book has
              no press of its own to take it in. -->
-        <button
-          v-if="ui.silent"
-          type="button"
-          class="btn btn-xs"
-          title="a browser gives up its speakers only when you ask it to"
-          @click="hearIt"
-        >
-          hear it
-        </button>
-        <span v-else class="join">
           <button
-            v-for="level in LOUDNESS_CHOICES"
-            :key="level"
+            v-if="ui.silent"
             type="button"
-            class="btn join-item btn-xs"
-            :class="{ 'btn-active': ui.sound === level }"
-            :title="`the Field, heard from above the middle of it: ${level}`"
-            @click="setSound(level)"
+            class="btn btn-xs"
+            title="a browser gives up its speakers only when you ask it to"
+            @click="hearIt"
           >
-            {{ level }}
+            hear it
           </button>
-        </span>
-        <button
-          v-if="!ui.silent"
-          type="button"
-          class="btn btn-xs"
-          :class="{ 'btn-active': ui.music && ui.sound !== 'off' }"
-          :disabled="ui.sound === 'off' || !ui.bandAvailable"
-          :title="
-            ui.bandAvailable
-              ? 'the band, held under the battle and pulled down by the fighting'
-              : 'no tracks are installed — see public/music/README.md'
-          "
-          @click="toggleMusic"
-        >
-          band
-        </button>
+          <template v-if="!ui.silent">
+            <button
+              v-for="level in LOUDNESS_CHOICES"
+              :key="level"
+              type="button"
+              class="btn btn-xs"
+              :class="ui.sound === level ? 'btn-primary' : 'btn-ghost'"
+              :title="`the Field, heard from above the middle of it: ${level}`"
+              @click="setSound(level)"
+            >
+              {{ level }}
+            </button>
+          </template>
+          <button
+            v-if="!ui.silent"
+            type="button"
+            class="btn btn-xs"
+            :class="ui.music && ui.sound !== 'off' ? 'btn-primary' : 'btn-ghost'"
+            :disabled="ui.sound === 'off' || !ui.bandAvailable"
+            :title="
+              ui.bandAvailable
+                ? 'the band, held under the battle and pulled down by the fighting'
+                : 'no tracks are installed — see public/music/README.md'
+            "
+            @click="toggleMusic"
+          >
+            band
+          </button>
+        </div>
         <RouterLink class="btn btn-ghost btn-xs" :to="{ name: 'battle', params: { battle: id } }">
           fight it
         </RouterLink>
