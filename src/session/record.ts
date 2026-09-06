@@ -126,6 +126,10 @@ function ending(outcome: Outcome | null, army: (id: ArmyId) => string): string {
 export function battleRecord(head: RecordHead, at: BattleSnapshot, returns: ArmyReturn[]): string {
   const armyName = (id: ArmyId | null): string =>
     (id && returns.find((r) => r.id === id)?.name) || String(id ?? "—")
+  // Only for the Units table, where the subject is a Unit still standing and a
+  // lookup cannot miss. The Dispatch table does not use it: a Dispatch carries
+  // the name it was sent under, because most of the Units worth reading about
+  // by the end of a day are the ones no longer on the Field to be found.
   const unitName = (id: string): string => at.units.find((u) => u.id === id)?.name ?? id
 
   const lines: string[] = []
@@ -216,7 +220,7 @@ export function battleRecord(head: RecordHead, at: BattleSnapshot, returns: Army
       at.dispatches.map((d) => [
         stamp(d.at),
         d.army ? armyName(d.army) : "both",
-        d.unitId ? unitName(d.unitId) : "—",
+        d.unitName ?? "—",
         d.text,
       ]),
     ),

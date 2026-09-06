@@ -1487,6 +1487,17 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 
 ## 10. Inconsistencies spotted and fixed
 
+- **The record named the survivors and numbered the dead.** The Dispatch table resolved each
+  Dispatch's subject against the Units in the snapshot, and `clearTheGone` takes a Unit out of the
+  Battle the moment it Breaks and runs off the Field. So a record written at 40:00 printed a name
+  for everything still standing and a bare `fr-57e` for everything that was not — which is to say
+  it lost the name of every regiment the account was actually about. It scaled with how hard the
+  day was: 38 lines of Castiglione, 165 of 364 on Austerlitz. It hid because the only reader that
+  renders that column is the record itself — `read-book.ts` prints the Dispatch text, which has
+  always carried the name in prose. Fixed by carrying `unitName` on the Dispatch beside `army`,
+  for the reason already written there: what a Dispatch said when it was sent does not stop being
+  true because the battalion is gone.
+
 - **F18 has never been true without naming an engine.** Its target reads *bit-identical outcome*,
   and `sin`, `cos`, `hypot` and `atan2` are implementation-approximated — 42 call sites in `sim/`.
   Solo play already simulates in the player's own browser, so a Safari player has been on JSC and

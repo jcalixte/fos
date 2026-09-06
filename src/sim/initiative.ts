@@ -744,5 +744,11 @@ function report(battle: Battle, unit: Unit, rule: string): void {
     if (said.at < battle.time - SAME_JUDGEMENT) break
     if (said.unitId === unit.id && said.text === text) return
   }
-  battle.dispatches.push({ at: battle.time, unitId: unit.id, army: unit.army, text })
+  battle.dispatches.push({
+    at: battle.time,
+    unitId: unit.id,
+    unitName: unit.name,
+    army: unit.army,
+    text,
+  })
 }

@@ -166,6 +166,7 @@ function advanceFormationChange(battle: Battle, unit: Unit, dt: number): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     text: `${unit.name} is in ${describeFormation(settled)}`,
   })
@@ -414,6 +415,7 @@ function advanceCharge(battle: Battle, unit: Unit, targetId: UnitId, dt: number)
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      unitName: unit.name,
       army: unit.army,
       text: `${unit.name} is riding ${target.name} down`,
     })
@@ -590,6 +592,7 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     // What it is standing in, which is the arrival Formation wherever the Unit
     // got it and the one Initiative gave it instead wherever the enemy was too
@@ -624,6 +627,7 @@ function releaseArrivals(battle: Battle): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      unitName: unit.name,
       army: unit.army,
       text: `${unit.name} came onto the Field`,
     })
@@ -677,6 +681,7 @@ function clearTheGone(battle: Battle): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      unitName: unit.name,
       army: unit.army,
       text:
         unit.strength <= 0
@@ -930,7 +935,7 @@ function endBattle(battle: Battle, by: Outcome["by"], winner: ArmyId | null, tex
   }
   // How it ended is the one Dispatch both Commanders are told, so it belongs
   // to neither army (F22).
-  battle.dispatches.push({ at: battle.time, unitId: null, army: null, text })
+  battle.dispatches.push({ at: battle.time, unitId: null, unitName: null, army: null, text })
 }
 
 /**

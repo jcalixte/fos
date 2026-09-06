@@ -124,6 +124,7 @@ export function disarrange(battle: Battle, unit: Unit, because: string): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     text: `${unit.name} is in disorder, ${because}`,
   })
@@ -153,6 +154,7 @@ export function reform(battle: Battle, unit: Unit, pace: number, dt: number): vo
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     text: `${unit.name} has its ranks back`,
   })

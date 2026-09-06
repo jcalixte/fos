@@ -161,6 +161,7 @@ export function weary(battle: Battle, unit: Unit, pace: number, dt: number): voi
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     text: was ? `${unit.name} has its wind back` : `${unit.name} is blown`,
   })

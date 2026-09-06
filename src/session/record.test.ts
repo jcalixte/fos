@@ -53,7 +53,15 @@ function snapshot(over: Partial<BattleSnapshot> = {}): BattleSnapshot {
     keyGround: [],
     volleys: [],
     contacts: [],
-    dispatches: [{ at: 60, unitId: "fr-1", army: "fr", text: "12e Ligne is under fire" }],
+    dispatches: [
+      {
+        at: 60,
+        unitId: "fr-1",
+        unitName: "12e Ligne",
+        army: "fr",
+        text: "12e Ligne is under fire",
+      },
+    ],
     ...over,
   }
 }
@@ -141,5 +149,54 @@ describe("the record", () => {
   it("names the file for the battle, the seat and the moment", () => {
     expect(recordName(SEAT, 1420)).toBe("rivoli-fr-23m40s.txt")
     expect(recordName({ ...SEAT, army: null }, 65)).toBe("rivoli-book-1m05s.txt")
+  })
+})
+
+describe("the account keeps the names of the regiments it is about", () => {
+  /**
+   * A Unit that Breaks and runs off the Field is taken out of the Battle, so by
+   * the end of a day the Units still standing are the ones nothing much
+   * happened to. Naming a Dispatch's subject by looking it up among them gave
+   * the survivors their names and everything else a bare id — which is the
+   * whole account of the battle rendered in the one form nobody can read.
+   */
+  it("names a Unit that has quit the Field, and not its id", () => {
+    const written = battleRecord(
+      { ...SEAT, army: null },
+      snapshot({
+        units: [unit({ id: "fr-2", name: "24e Légère" })],
+        dispatches: [
+          {
+            at: 1580,
+            unitId: "fr-1",
+            unitName: "12e Ligne",
+            army: "fr",
+            text: "12e Ligne quit the Field",
+          },
+        ],
+      }),
+      RETURNS,
+    )
+    expect(written).toContain("12e Ligne")
+    expect(written).not.toContain("fr-1")
+  })
+
+  it("says a dash for the Headquarters, which is nobody's Unit", () => {
+    const written = battleRecord(
+      SEAT,
+      snapshot({
+        dispatches: [
+          {
+            at: 900,
+            unitId: null,
+            unitName: null,
+            army: "fr",
+            text: "The Headquarters is riding for new ground",
+          },
+        ],
+      }),
+      RETURNS,
+    )
+    expect(written).toContain("15:00  French  —  The Headquarters is riding for new ground")
   })
 })

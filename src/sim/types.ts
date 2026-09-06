@@ -328,6 +328,19 @@ export interface Dispatch {
   at: number
   unitId: UnitId | null
   /**
+   * What the Unit was called when this was said. Null wherever `unitId` is —
+   * the Headquarters says half of these and has no Unit.
+   *
+   * Carried rather than looked up off `unitId`, for the same reason `army` is
+   * and one more. A Unit that Breaks and runs off the Field is taken out of the
+   * Battle, so by the end of the day a reader resolving these against the Units
+   * still standing has names for everything that survived and bare ids for
+   * everything that did not — which is to say the account loses the name of
+   * every regiment it is about. A Dispatch is a thing that was *sent*, and what
+   * it said at the time does not stop being true because the battalion is gone.
+   */
+  unitName: string | null
+  /**
    * Whose feed it belongs in. Null for the one thing both Commanders are told —
    * how the battle ended.
    *

@@ -161,6 +161,7 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      unitName: unit.name,
       army: unit.army,
       text: `${unit.name} is routing; its Order found nobody to take it`,
     })
@@ -175,6 +176,7 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
     battle.dispatches.push({
       at: battle.time,
       unitId: unit.id,
+      unitName: unit.name,
       army: unit.army,
       text: describe(battle, order.body, unit),
     })
@@ -196,6 +198,7 @@ function deliver(battle: Battle, unit: Unit, order: Order): void {
   battle.dispatches.push({
     at: battle.time,
     unitId: unit.id,
+    unitName: unit.name,
     army: unit.army,
     text: describe(battle, order.body, unit),
   })
