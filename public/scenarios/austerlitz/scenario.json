@@ -766,6 +766,19 @@
       }
     },
     {
+      "at": 1560,
+      "unitId": "fr-14e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1240,
+          "y": 560
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
       "at": 1600,
       "unitId": "al-batterie-langeron",
       "body": {
@@ -776,19 +789,6 @@
         },
         "arrivalFacing": 3.1416,
         "arrivalFormation": "in-battery"
-      }
-    },
-    {
-      "at": 1600,
-      "unitId": "fr-14e",
-      "body": {
-        "kind": "move",
-        "destination": {
-          "x": 1140,
-          "y": 940
-        },
-        "arrivalFacing": 1.5708,
-        "arrivalFormation": "line"
       }
     },
     {
@@ -857,6 +857,19 @@
       }
     },
     {
+      "at": 1820,
+      "unitId": "fr-10e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1160,
+          "y": 880
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
       "at": 1860,
       "unitId": "fr-15e-legere",
       "body": {
@@ -880,6 +893,14 @@
         },
         "arrivalFacing": -1.5708,
         "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1950,
+      "unitId": "fr-chasseurs-garde",
+      "body": {
+        "kind": "charge",
+        "targetId": "al-semenowski"
       }
     },
     {
@@ -946,9 +967,9 @@
     },
     {
       "at": 1320,
-      "title": "Both Guards, spent",
+      "title": "The Guard cavalry, and what is left of it",
       "unitId": "fr-chasseurs-garde",
-      "text": "Bessières lets the Guard chasseurs go at the Russian horse, and within ten minutes neither side has any cavalry left in the centre. That is the shape of this half of the Field: everything committed to the plateau is committed for good, because there is nothing behind it and no way to get anything up there in time."
+      "text": "Bessières lets the Guard chasseurs go at the Russian horse, and inside ten minutes the allied cavalry in the centre has stopped existing — the Ulans first and the Chevaliergarde after them. The chasseurs are still on their feet, which matters more than it looks: they are the only formed thing either army has up here that can cross the plateau at speed, and there is one more use for that before the morning is out."
     },
     {
       "at": 1440,
@@ -961,6 +982,12 @@
       "title": "Recalled, and too late",
       "unitId": "al-grenz-broder",
       "text": "What is left of the left is ordered back up the slope it spent the morning walking down. Same ground, same distance, same Fatigue, except that this time somebody is standing on top of it — and of the three regiments that went south-west an hour ago, the Grenzer are most of what is still on its feet. Saint-Hilaire's division turns round to meet them, which is what a division on a plateau is for."
+    },
+    {
+      "at": 2060,
+      "title": "The Old Vineyards, twice more",
+      "unitId": "al-semenowski",
+      "text": "Drouet's regiment has been driven off the northern summit, and for a few minutes the last unbroken thing the allies own is standing on it. What takes it back is not infantry — there is none up here that is not spent — but the Guard chasseurs, sent at them a second time. Cavalry cannot hold ground. It can take it off somebody who is on the point of breaking, and that is all this needs to be."
     },
     {
       "at": 2200,
