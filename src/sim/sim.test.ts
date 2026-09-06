@@ -3098,3 +3098,92 @@ describe("taking an Army", () => {
     expect(battle.plan.map((p) => p.unitId)).toEqual(["fr-1", "fr-2"])
   })
 })
+
+/**
+ * Two limit cycles the Book found, both of which cost a Unit its afternoon
+ * rather than merely cluttering the feed. Each is a pair of decisions that
+ * disagree and are asked again every tick, so the Unit drills, is turned back,
+ * drills again, and does nothing else until the clock runs out.
+ */
+describe("a Unit does not spend the battle changing its mind", () => {
+  function marching(overrides: Partial<Unit> = {}): Unit {
+    const unit = battalion({ position: { x: 100, y: 100 }, ...overrides })
+    unit.route = [{ x: 900, y: 100 }]
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 900, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "line",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    return unit
+  }
+
+  /**
+   * Deploying and re-columning were asked at one threshold by rules whose
+   * guards are exact complements, so an enemy sitting on it flipped the Unit
+   * every tick — and a Unit halted to drill lets the enemy walk back out of
+   * range, which is what holds the pair on the threshold instead of carrying
+   * them through it.
+   */
+  it("having come off the march, stays off it while the enemy is still about", () => {
+    const unit = marching()
+    const enemy = battalion({ id: "e1", army: "austrian", position: { x: 410, y: 100 } })
+    const battle = emptyBattle(blankField(1200, 40), [unit, enemy])
+    applyInitiative(unit, battle)
+    expect(unit.changing).toBeNull()
+    expect(unit.formation).toBe("line")
+
+    // Well clear, and the same Unit files into column as it always did.
+    enemy.position = { x: 700, y: 100 }
+    applyInitiative(unit, battle)
+    expect(unit.changing?.to).toBe("march-column")
+  })
+
+  /**
+   * A Move's arrival Formation is a preference and a Form Order is how the
+   * player insists, so where Initiative disagrees the Order gives way. Ordered
+   * to arrive in march column with an enemy in reach, the Unit used to file
+   * into column, be deployed back into line, and never report itself in
+   * position — the Order stood for the rest of the battle and the battalion
+   * drilled on the spot in front of the man it was meant to be fighting.
+   */
+  it("retires a Move that asked for a Formation the enemy will not allow", () => {
+    const unit = battalion({ position: { x: 100, y: 100 } })
+    unit.order = {
+      order: {
+        id: "o1",
+        unitId: unit.id,
+        body: {
+          kind: "move",
+          destination: { x: 100, y: 100 },
+          arrivalFacing: 0,
+          arrivalFormation: "march-column",
+        },
+        issuedAt: 0,
+      },
+      arrivedAt: 0,
+    }
+    // Inside ENGAGEMENT_RANGE, so the Unit will not file into column; outside
+    // musket reach, so nothing is shooting and the only thing under test is
+    // whether the two decisions settle.
+    const enemy = battalion({ id: "e1", army: "austrian", position: { x: 350, y: 100 } })
+    const battle = emptyBattle(blankField(1200, 40), [unit, enemy])
+    for (let elapsed = 0; elapsed < 120; elapsed += STEP) step(battle)
+
+    expect(unit.order).toBeNull()
+    expect(unit.formation).toBe("line")
+    const drills = battle.dispatches.filter((d) => d.unitId === unit.id && / is in /.test(d.text))
+    expect(drills.length).toBeLessThanOrEqual(1)
+    // And it says what the battalion is actually standing in, not what the
+    // Order asked for.
+    expect(battle.dispatches.map((d) => d.text)).toContain("12e Ligne is in position, line")
+  })
+})

@@ -37,7 +37,7 @@ import { disarrange, isDisordered, reform } from "./disorder"
 import { isBlown, paceLeft, weary } from "./fatigue"
 import { resolveFire } from "./fighting"
 import { advanceHeadquarters } from "./headquarters"
-import { applyInitiative } from "./initiative"
+import { applyInitiative, caughtOnTheMarchIn } from "./initiative"
 import {
   advanceRout,
   dread,
@@ -579,7 +579,10 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     return
   }
   unit.facing = body.arrivalFacing
-  if (intendedFormation(unit) !== body.arrivalFormation) {
+  if (
+    intendedFormation(unit) !== body.arrivalFormation &&
+    !caughtOnTheMarchIn(unit, battle, body.arrivalFormation)
+  ) {
     formUp(unit, body.arrivalFormation)
     return
   }
@@ -588,7 +591,11 @@ function advanceOrder(battle: Battle, unit: Unit, dt: number): void {
     at: battle.time,
     unitId: unit.id,
     army: unit.army,
-    text: `${unit.name} is in position, ${describeFormation(body.arrivalFormation)}`,
+    // What it is standing in, which is the arrival Formation wherever the Unit
+    // got it and the one Initiative gave it instead wherever the enemy was too
+    // close to file into column for. Reporting the Order's word for it would be
+    // the feed saying a battalion is in march column while it stands in line.
+    text: `${unit.name} is in position, ${describeFormation(intendedFormation(unit))}`,
   })
 }
 

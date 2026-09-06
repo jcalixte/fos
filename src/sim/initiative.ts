@@ -87,6 +87,27 @@ const CROSSING_LOOKAHEAD = 120
 const ENGAGEMENT_RANGE = 300
 
 /**
+ * How far off the nearest enemy has to be before a Unit that has deployed will
+ * file back into column — and the reason this is a second number rather than
+ * ENGAGEMENT_RANGE read twice.
+ *
+ * Deploying and re-columning are asked at the same moment by rules whose
+ * guards are exact complements, so with one threshold between them an enemy
+ * sitting on it makes a Unit change its mind every tick: it begins the drill,
+ * the enemy drifts a metre out, it reverses the drill for the ground it has
+ * covered, the enemy drifts a metre back, and the Unit spends the afternoon
+ * standing still deciding. It is a limit cycle and a Unit can hold itself in
+ * one, because halting to drill is what lets the enemy walk back out of range.
+ *
+ * The margin is the ground a Unit walking away covers while the drill it just
+ * decided on is still being done — thirty to forty seconds of it — because a
+ * battalion that finishes deploying and files straight back into column has
+ * deployed for nothing. It is not a tuning dial: anything shorter than the
+ * drill it protects re-opens the cycle.
+ */
+const MARCHING_AGAIN = ENGAGEMENT_RANGE + 100
+
+/**
  * How far ahead a Crossing still governs the choice of Formation — as against
  * CROSSING_LOOKAHEAD, which is only how late a Unit leaves forming the column.
  * Two questions, two horizons: "should I file into column now" is asked at the
@@ -200,13 +221,47 @@ function travelling(unit: Unit): FormationName {
   return TRAVELLING_FORMATION[unit.arm]
 }
 
-/** True if any enemy stands within ENGAGEMENT_RANGE. */
-function enemyNear(unit: Unit, battle: Battle): boolean {
+/** True if any enemy stands within `range` metres. */
+function enemyWithin(unit: Unit, battle: Battle, range: number): boolean {
   for (const other of battle.units) {
     if (other.army === unit.army) continue
-    if (distance(unit.position, other.position) <= ENGAGEMENT_RANGE) return true
+    if (distance(unit.position, other.position) <= range) return true
   }
   return false
+}
+
+/** True if any enemy is close enough to be worth coming off the march for. */
+function enemyNear(unit: Unit, battle: Battle): boolean {
+  return enemyWithin(unit, battle, ENGAGEMENT_RANGE)
+}
+
+/**
+ * True if the nearest enemy is still near enough that filing back into column
+ * would be filing back into column in front of him. The wide half of the pair
+ * MARCHING_AGAIN describes: a Unit comes off the march at ENGAGEMENT_RANGE and
+ * does not go back onto it until well outside that.
+ */
+function enemyStillAbout(unit: Unit, battle: Battle): boolean {
+  return enemyWithin(unit, battle, MARCHING_AGAIN)
+}
+
+/**
+ * True if taking this Formation, here, is a drill the enemy would undo the
+ * moment it was done: he is inside ENGAGEMENT_RANGE and the Formation cannot
+ * fire, which is precisely the case "deployed, the enemy too close to stay on
+ * the march" exists to reverse.
+ *
+ * Exported because an arriving Move has to ask the same question. A Move's
+ * arrival Formation is a preference and a Form Order is how the player insists
+ * — that is what `pinned` is for — so where the two disagree the Order has to
+ * give way rather than be re-imposed on the next tick. Re-imposed, the Unit
+ * files into column, is turned back into line, files in again, and never
+ * reports itself in position: the Order never retires and the Unit spends the
+ * rest of the battle drilling on the spot in front of the man it is supposed to
+ * be fighting.
+ */
+export function caughtOnTheMarchIn(unit: Unit, battle: Battle, formation: FormationName): boolean {
+  return !canFire(unit.arm, formation) && enemyNear(unit, battle)
 }
 
 /**
@@ -561,7 +616,7 @@ export const RULES: InitiativeRule[] = [
     name: "limbered up, because guns in battery do not move",
     applies: (unit, battle) => {
       if (pinned(unit)) return null
-      if (enemyNear(unit, battle)) return null
+      if (enemyStillAbout(unit, battle)) return null
       if (unit.order?.order.body.kind !== "move") return null
       if (routeRemaining(unit) <= 0) return null
       if (baseSpeed(unit.arm, intendedFormation(unit)) > 0) return null
@@ -572,7 +627,7 @@ export const RULES: InitiativeRule[] = [
     name: "took march column to cover the ground",
     applies: (unit, battle) => {
       if (pinned(unit)) return null
-      if (enemyNear(unit, battle)) return null
+      if (enemyStillAbout(unit, battle)) return null
       if (unit.order?.order.body.kind !== "move") return null
       if (intendedFormation(unit) === travelling(unit)) return null
       if (routeRemaining(unit) < DEPLOY_RANGE) return null

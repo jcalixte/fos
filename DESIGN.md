@@ -1947,6 +1947,33 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   wants facing changes to read as un-dressed, the second wants a speed below which a Unit counts
   as standing, and both are dials that would want a playtest to set.
 
+- **Two limit cycles in the rule list, and neither was only noise.** A Unit caught in either one
+  drills, is turned back, drills again, and does nothing else for the rest of the battle. Found by
+  reading Austerlitz in the Book, where one regiment wrote 68 of the account's 422 Dispatches;
+  Arcole turned out to be far worse, **1,635 of its 1,872 lines were one Unit repeating itself**,
+  and it had been that way unnoticed because Arcole has no Chapters, so nothing had ever read it as
+  a Book. In a played battle the feed scrolls, and a Unit saying the same thing forty times a minute
+  looks like the feed working.
+
+  The first was a **shared threshold**. *Deployed, the enemy too close to stay on the march* and
+  *took march column to cover the ground* guarded on ENGAGEMENT_RANGE with exact complements, so an
+  enemy sitting on 300m flipped the Unit every tick — and because halting to drill is what lets the
+  enemy walk back out of range, the pair held itself on the threshold instead of carrying through
+  it. Fixed with a second distance: a Unit comes off the march at 300m and does not go back onto it
+  until 400m, the margin being the ground an enemy covers while the drill just decided on is still
+  being done. Anything shorter than the drill it protects re-opens the cycle, so it is not a dial.
+
+  The second was an **Order and Initiative disagreeing for ever**. On arrival a Move re-imposed its
+  `arrivalFormation` every tick, so a Move ordered to arrive in march column within 300m of an enemy
+  deadlocked: the Unit filed into column, Initiative deployed it back into line, and the Order never
+  retired. Arcole's 51e did exactly that from 34:33 to the end of the battle. A Move's arrival
+  Formation is a *preference* — a Form Order is how the player insists, which is what `pinned` is
+  for — so the Order now gives way, and reports the Formation the Unit is standing in rather than
+  the one it asked for. Both are regression-tested, each failing without its own half of the fix.
+
+  Neither was authoring. Both are legal Scenarios: Arcole has asked for that column since it was
+  written.
+
 ---
 
 ## Annex — full roof grid
