@@ -216,13 +216,20 @@ export class Noises {
 
   /**
    * Where the Commander is standing: his own Headquarters, which is the one
-   * with a Report on it (C17). The middle of the Field until he has taken an
-   * Army — the moment before the offer, where nothing is his and nothing should
-   * be nearer than anything else.
+   * with a Report on it (C17). The middle of the Field when no staff is his —
+   * the moment before the offer, where nothing is his and nothing should be
+   * nearer than anything else.
+   *
+   * *Exactly* one, and not the first one found. A snapshot cut for nobody
+   * withholds nothing, so in a Book both Headquarters carry a Report and
+   * neither is anybody's; taking the first would put the reader's ears on one
+   * army's staff by the order the Rosters happen to be in. He is looking at the
+   * whole Field from above, so he hears it from the middle of it, and fire on
+   * the left of the map is still fire on the left.
    */
   private ears(current: BattleSnapshot): Vec2 {
-    const mine = current.headquarters.find((hq) => hq.report !== null)
-    return mine ? mine.position : { x: this.across / 2, y: this.across / 2 }
+    const mine = current.headquarters.filter((hq) => hq.report !== null)
+    return mine.length === 1 ? mine[0]!.position : { x: this.across / 2, y: this.across / 2 }
   }
 
   private play(noise: Noise, at: Vec2, ears: Vec2, width: number): void {
