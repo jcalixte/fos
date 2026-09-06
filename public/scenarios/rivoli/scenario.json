@@ -503,15 +503,10 @@
       "unitId": "au-ir10"
     },
     {
-      "at": 745,
-      "title": "The chapel changes hands",
-      "text": "San Marco goes Austrian. Quasdanovich's guns and his dragoons are up on the plateau and for a few minutes the gate at the top of the gorge is his. This is the point at which the day could have gone the other way: hold the chapel and the rest of the column walks up behind him."
-    },
-    {
-      "at": 765,
-      "title": "Belgiojoso breaks in the centre",
-      "text": "IR 44 breaks. The columns coming down off the heights reach the flat one at a time and each is met by a line that is already formed and already facing it. That is the arithmetic Alvinczi's plan never got round, and it is the same arithmetic all afternoon.",
-      "unitId": "au-ir44"
+      "at": 540,
+      "title": "The batteries are laid on each other",
+      "text": "Eight Austrian guns on the slope above the plateau, seven French run out two hundred metres in front of them. A battery reaches most of a kilometre here and every battalion on the plateau stands inside that, so this is the one fight on the Field whose loser pays for it in somebody else's ranks. Bonaparte sites his guns to answer Alvinczi's rather than to sweep the ground the columns are coming down.",
+      "unitId": "fr-batterie"
     },
     {
       "at": 785,
@@ -526,21 +521,45 @@
       "unitId": "fr-39e"
     },
     {
-      "at": 1210,
-      "title": "The Adige column is thrown back",
-      "text": "IR 10 is destroyed, and the dragoons that came up behind it follow a minute later. Quasdanovich is finished as a threat and San Marco comes back to the French. The gorge that let him up one battalion at a time is now the way back down.",
+      "at": 985,
+      "title": "The gorge gives up its horse and guns",
+      "text": "Quasdanovich's horse battery breaks beside the chapel and his dragoons follow inside the minute. Everything he has came up the defile a battalion at a time and formed on the lip of it with nothing behind, so it is beaten in the order the gap let it out — which is what a Crossing costs an army that has to attack through one.",
+      "unitId": "au-dragoner"
+    },
+    {
+      "at": 1015,
+      "title": "San Marco changes hands",
+      "text": "The chapel goes Austrian, and is French again a quarter of a minute later. IR 10 gets onto the ground with the last of the Adige column and is thrown straight back off it, and then it breaks. This is the point at which the day could have gone the other way: hold the chapel and the rest of the column walks up behind him.",
       "unitId": "au-ir10"
     },
     {
-      "at": 1850,
+      "at": 1075,
+      "title": "Belgiojoso breaks in the centre",
+      "text": "IR 44 breaks. The columns coming down off the heights reach the flat one at a time and each is met by a line that is already formed and already facing it. That is the arithmetic Alvinczi's plan never got round, and it is the same arithmetic all afternoon.",
+      "unitId": "au-ir44"
+    },
+    {
+      "at": 1110,
+      "title": "The French guns are broken where they stand",
+      "text": "Bonaparte loses his battery to the duel he sited it for. It is the bill and not the failure: Positionsbatterie Nr. 4 spent the morning firing at guns instead of at the line on the plateau, and the battalions that would otherwise have paid for that are still standing in it.",
+      "unitId": "fr-batterie"
+    },
+    {
+      "at": 1490,
+      "title": "Joubert's centre gives",
+      "text": "The 33e breaks, the first French battalion of the day to go. It has held the ground between the gullies since the first column came down them, and there is nothing Austrian left on that side to come through the gap it leaves — the centre was spent breaking it.",
+      "unitId": "fr-33e"
+    },
+    {
+      "at": 1745,
       "title": "Lusignan is finished",
-      "text": "Lusignan's battalion is destroyed and his grenadiers go soon after. In the event most of that command was taken prisoner: the column sent to cut Bonaparte's retreat found it had none of its own.",
+      "text": "Lusignan's battalion breaks in the French rear and his grenadiers go three minutes behind it. In the event most of that command was taken prisoner: the column sent to cut Bonaparte's retreat found it had none of its own.",
       "unitId": "au-ir45"
     },
     {
-      "at": 2000,
+      "at": 1895,
       "title": "The last push on the plateau",
-      "text": "IR 48 breaks trying to come onto Rivoli itself. It is the last thing Alvinczi has that is still going forward, and when it stops the plateau is settled.",
+      "text": "IR 48 breaks trying to come onto Rivoli itself. It is the last thing Alvinczi has that is still going forward. The firing does not stop with it — Masséna's two regiments both break in the last five minutes and neither leaves the Field — but there is nothing Austrian left to walk into the ground they give.",
       "unitId": "au-ir48"
     },
     {
