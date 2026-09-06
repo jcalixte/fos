@@ -85,7 +85,7 @@ const viewState = reactive<ViewState>({
   arming: false,
 })
 
-const TEMPOS = [0.5, 1, 2, 4]
+const TEMPOS = [0.5, 1, 4, 8]
 
 const selectedUnit = computed(() => ui.units.find((u) => u.id === ui.selected) ?? null)
 
