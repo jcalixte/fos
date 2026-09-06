@@ -26,6 +26,15 @@ be ordered a minute and a half before it is needed. It is a check on the fixture
 replacement for them — a historical battle still cannot be made to contain a mechanic on demand —
 but a rule that fires in a fixture and never in an authored battle is a rule nobody has watched.
 
+**Austerlitz (2 Dec 1805)** is the first Scenario that is openly a *named sub-action* rather than a
+battle, which is the fallback T8 wrote down when it capped the Field at about 1920m. The Field is
+the Pratzen — the plateau, the Goldbach at the foot of it and the ground between — and Telnitz, the
+ponds and Bagration's half of the day are off the edges. It exists for the one thing none of the
+other four is about: **Height as the subject rather than the setting.** Eighty metres of bare climb,
+no Crossing anywhere, an army that is walking off the crest when the clock starts, and a Field where
+the only concealment is the reverse slope. Rivoli has more relief and uses it for impassability; this
+one uses it for what a slope costs to go up and what standing on top of one is worth.
+
 Strength weights used in matrices: **9** strong, **3** medium, **1** weak, blank none.
 
 ---
@@ -1367,7 +1376,7 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
 | T5 | Terrain painted as images over a built editor | F17 drops from "build an editor" to "write a loader"; historical maps can be traced | terrain is opaque in diffs and ungreppable | [0005](./docs/adr/0005-terrain-is-authored-as-images.md) |
 | T6 | Three Grades over five | one fewer axis to balance | Jeune and Vieille Garde collapse into one rung | — |
 | T7 | Whole-battalion Open Order over detached skirmishers | "one Unit, one Formation" holds | no screen-plus-main-body; a battalion skirmishes entirely or not at all | — |
-| T8 | Fixed camera over zoom and pan | zero camera work; forces legibility at the hardest scale first | Field capped at ~1920m, so Austerlitz and Leipzig need named sub-actions or a different game | — |
+| T8 | Fixed camera over zoom and pan | zero camera work; forces legibility at the hardest scale first | Field capped at ~1920m, so Austerlitz and Leipzig need named sub-actions or a different game. *Austerlitz is now authored as one — the Pratzen, at half scale, with the rest of the battle off the edges. The fallback works, and what it costs is that a battalion is proportionally larger than on a Field that fits.* | — |
 | T9 | Terrain-only Concealment over fog of war | no scouting, ghosts or report decay; one uncertainty layer instead of two | no intelligence to gather; every ambush is readable off the map by a careful player | — |
 | T10 | Powder Smoke drawn but inert | legibility preserved, and measured rather than asserted: behind the bases the silhouette is never in the argument, and *one accumulator* taken literally makes the cap exact at 0.268 however many battalions fire into the same ground | the firefight-stalemate dynamic isn't modelled — and there is no dial, because inert means the sim never sees the smoke: turning it on is moving the rule into C6, not changing a number | — |
 | T11 | Morale as the health bar, not casualties | the period's actual dynamic; Pursuit and Rally become real decisions | harder to tune; no legible bar the player can count down | — |

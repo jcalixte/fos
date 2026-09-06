@@ -1,0 +1,283 @@
+{
+  "id": "allied-austerlitz",
+  "name": "Die verbündete Armee, die Kolonnen vom Pratzen",
+  "grades": {
+    "conscript": "Rekrut",
+    "line": "Linie",
+    "elite": "Garde"
+  },
+  "entries": [
+    {
+      "id": "al-batterie-kollowrat",
+      "name": "Positionsbatterie Kollowrat",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "limbered",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1420,
+        "y": 180
+      }
+    },
+    {
+      "id": "al-ir24-auersperg",
+      "name": "IR 24 Auersperg",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 620,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1620,
+        "y": 380
+      }
+    },
+    {
+      "id": "al-ir23-salzburg",
+      "name": "IR 23 Salzburg",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 660,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1580,
+        "y": 540
+      }
+    },
+    {
+      "id": "al-kleinrussland",
+      "name": "Grenadier-Regiment Klein-Russland",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 640,
+      "formation": "line",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "position": {
+        "x": 1560,
+        "y": 700
+      }
+    },
+    {
+      "id": "al-nowgorod",
+      "name": "Musketier-Regiment Nowgorod",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1500,
+        "y": 860
+      }
+    },
+    {
+      "id": "al-apscheron",
+      "name": "Musketier-Regiment Apscheron",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1460,
+        "y": 1020
+      }
+    },
+    {
+      "id": "al-perm",
+      "name": "Musketier-Regiment Perm",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "position": {
+        "x": 1300,
+        "y": 860
+      }
+    },
+    {
+      "id": "al-narva",
+      "name": "Musketier-Regiment Narwa",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "position": {
+        "x": 1180,
+        "y": 960
+      }
+    },
+    {
+      "id": "al-butyrsk",
+      "name": "Musketier-Regiment Butyrski",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "position": {
+        "x": 1420,
+        "y": 760
+      }
+    },
+    {
+      "id": "al-batterie-langeron",
+      "name": "Positionsbatterie Langeron",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 100,
+      "formation": "limbered",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 1060,
+        "y": 1180
+      }
+    },
+    {
+      "id": "al-grenz-broder",
+      "name": "Brooder Grenzer",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 560,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": 3.1416,
+      "position": {
+        "x": 980,
+        "y": 1000
+      }
+    },
+    {
+      "id": "al-kienmayer-husaren",
+      "name": "Husaren-Regiment Hessen-Homburg",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 260,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "position": {
+        "x": 900,
+        "y": 1140
+      }
+    },
+    {
+      "id": "al-semenowski",
+      "name": "Leibgarde-Regiment Semenowski",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 640,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "arrival": {
+        "at": 860,
+        "entry": {
+          "x": 1900,
+          "y": 300
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1500,
+            "y": 300
+          },
+          "arrivalFacing": 3.1416,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-preobraschenski",
+      "name": "Leibgarde-Regiment Preobraschenski",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 620,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 3.1416,
+      "arrival": {
+        "at": 1000,
+        "entry": {
+          "x": 1900,
+          "y": 460
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1520,
+            "y": 460
+          },
+          "arrivalFacing": 3.1416,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-ulanen-konstantin",
+      "name": "Ulanen-Regiment Grossfürst Konstantin",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 260,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "arrival": {
+        "at": 900,
+        "entry": {
+          "x": 1900,
+          "y": 180
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1520,
+            "y": 180
+          },
+          "arrivalFacing": 3.1416,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-chevaliergarde",
+      "name": "Chevaliergarde-Regiment",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 280,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": 3.1416,
+      "arrival": {
+        "at": 960,
+        "entry": {
+          "x": 1900,
+          "y": 240
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1500,
+            "y": 240
+          },
+          "arrivalFacing": 3.1416,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

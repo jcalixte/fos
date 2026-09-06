@@ -19,6 +19,7 @@ node scripts/make-castiglione-field.mjs  # repaint Castiglione's, and audit what
 node scripts/make-rivoli-field.mjs       # repaint Rivoli's, and audit that nothing is walled in
 node scripts/make-arcole-field.mjs       # repaint Arcole's, and audit that its Crossings still span water
 node scripts/make-quatre-bras-field.mjs  # repaint Quatre Bras's, and audit that no Order sends anyone into the pond
+node scripts/make-austerlitz-field.mjs   # repaint Austerlitz's, and audit that nobody starts on the plateau the French have to climb
 ```
 
 Vite builds the site; **Bun runs the server and the tests**, because the simulation is measured on

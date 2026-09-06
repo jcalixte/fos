@@ -1,0 +1,255 @@
+{
+  "id": "french-austerlitz",
+  "name": "La Grande Armée, la matinée du Pratzen",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-24e-legere",
+      "name": "24e Légère (Vandamme)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 620,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": 0.0,
+      "position": {
+        "x": 740,
+        "y": 150
+      }
+    },
+    {
+      "id": "fr-57e",
+      "name": "57e de Ligne, « Le Terrible » (Vandamme)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 740,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "position": {
+        "x": 270,
+        "y": 300
+      }
+    },
+    {
+      "id": "fr-4e",
+      "name": "4e de Ligne (Vandamme)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "position": {
+        "x": 270,
+        "y": 460
+      }
+    },
+    {
+      "id": "fr-batterie-soult",
+      "name": "Batterie à pied du 4e Corps",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": 0.0,
+      "position": {
+        "x": 430,
+        "y": 610
+      }
+    },
+    {
+      "id": "fr-10e-legere",
+      "name": "10e Légère (Saint-Hilaire)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 700,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "position": {
+        "x": 270,
+        "y": 720
+      }
+    },
+    {
+      "id": "fr-14e",
+      "name": "14e de Ligne (Saint-Hilaire)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "position": {
+        "x": 270,
+        "y": 890
+      }
+    },
+    {
+      "id": "fr-36e",
+      "name": "36e de Ligne (Saint-Hilaire)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "position": {
+        "x": 130,
+        "y": 820
+      }
+    },
+    {
+      "id": "fr-26e-legere",
+      "name": "26e Légère (Legrand)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 640,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": 0.0,
+      "position": {
+        "x": 520,
+        "y": 990
+      }
+    },
+    {
+      "id": "fr-3e",
+      "name": "3e de Ligne (Legrand)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 0.0,
+      "position": {
+        "x": 400,
+        "y": 1100
+      }
+    },
+    {
+      "id": "fr-batterie-legrand",
+      "name": "Batterie à pied de la division Legrand",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 100,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": 0.0,
+      "position": {
+        "x": 300,
+        "y": 980
+      }
+    },
+    {
+      "id": "fr-108e",
+      "name": "108e de Ligne (Friant)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 660,
+      "formation": "march-column",
+      "standing": "follow-up",
+      "facing": 0.0,
+      "arrival": {
+        "at": 640,
+        "entry": {
+          "x": 32,
+          "y": 1090
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 620,
+            "y": 1120
+          },
+          "arrivalFacing": 0.0,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-15e-legere",
+      "name": "15e Légère (Friant)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 600,
+      "formation": "march-column",
+      "standing": "follow-up",
+      "facing": 0.0,
+      "arrival": {
+        "at": 820,
+        "entry": {
+          "x": 32,
+          "y": 1030
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 660,
+            "y": 1030
+          },
+          "arrivalFacing": 0.0,
+          "arrivalFormation": "open-order"
+        }
+      }
+    },
+    {
+      "id": "fr-27e-legere",
+      "name": "27e Légère (Drouet)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "arrival": {
+        "at": 760,
+        "entry": {
+          "x": 16,
+          "y": 240
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 900,
+            "y": 240
+          },
+          "arrivalFacing": 0.0,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    },
+    {
+      "id": "fr-chasseurs-garde",
+      "name": "Chasseurs à cheval de la Garde",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 280,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": 0.0,
+      "arrival": {
+        "at": 1040,
+        "entry": {
+          "x": 16,
+          "y": 320
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 940,
+            "y": 320
+          },
+          "arrivalFacing": 0.0,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

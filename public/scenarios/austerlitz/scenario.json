@@ -1,0 +1,971 @@
+{
+  "name": "Austerlitz",
+  "campaign": "austerlitz-1805",
+  "summary": "2 December 1805, and the only Field on the shelf that is a piece of a battle rather than a battle. Austerlitz is ten kilometres wide; this is the three in the middle that decided the other seven. Napoleon has given the Pratzen plateau away on purpose and left his right at Sokolnitz visibly thin, because the allied plan he wants them to have is to march round that right — and the only way round it is to come down off the high ground in the centre and cross his front to get there. They are doing it when the clock starts. What is left on the crest is one column strung out in the order it was walking in, and what is in the bottom of the Goldbach, out of sight of all of them, is two divisions with orders to go straight up. The Field is a reading of that ground rather than a survey of it, at about half scale: eighty metres of climb, no Crossing anywhere, and a crest with nothing on it to hide behind, because what hides a battalion here is the reverse slope and nothing else. Telnitz and the frozen ponds are off the south edge, which is where the allied left goes if it loses.",
+  "field": {
+    "cells": [240, 150],
+    "cellSize": 8,
+    "ground": "ground.png",
+    "heightmap": "height.png",
+    "elevation": [0, 120]
+  },
+  "clock": 2400,
+  "seed": 120205,
+  "armies": [
+    {
+      "id": "french",
+      "name": "French",
+      "colour": "#2f4d8f",
+      "brief": "Let his left go. He is marching it off the plateau in front of you to get round your right, and every battalion that leaves the crest leaves it emptier — so the longer Legrand holds Sokolnitz with far too little, the better the trade. What you have in the bottom is two divisions nobody up there can see. Everything you do is uphill and costs Fatigue before it costs anything else, so do not halt on the slope: that is where their guns reach and where your columns are deepest. You have about an hour before their Guard comes round the far side of the plateau.",
+      "roster": "/rosters/french-austerlitz.json",
+      "headquarters": {
+        "x": 190,
+        "y": 210
+      },
+      "deploymentZone": [100, 100, 720, 1060]
+    },
+    {
+      "id": "allied",
+      "name": "Russo-Austrian",
+      "colour": "#e3e7ef",
+      "brief": "The plan is four days old and it is to turn the French right at Sokolnitz, which is thin, which is the whole reason it is the plan. Your left is already on its way there and it is walking off the plateau to go. What is left in the centre is Kollowrat's column, strung out along the crest in the order it was marching in and facing the wrong way for anything coming up the western slope. That crest is also the road home for everything below it. The Guard is behind Krzenowitz and will take twenty minutes to reach the high ground: decide before then whether you are still turning his right or getting your centre back.",
+      "roster": "/rosters/allied-austerlitz.json",
+      "headquarters": {
+        "x": 1700,
+        "y": 620
+      },
+      "deploymentZone": [820, 140, 840, 1040]
+    }
+  ],
+  "crossings": [],
+  "keyGround": [
+    {
+      "name": "Stary Vinohrady",
+      "position": {
+        "x": 1200,
+        "y": 320
+      },
+      "radius": 80
+    },
+    {
+      "name": "the Pratzeberg",
+      "position": {
+        "x": 1280,
+        "y": 752
+      },
+      "radius": 80
+    },
+    {
+      "name": "Sokolnitz",
+      "position": {
+        "x": 496,
+        "y": 992
+      },
+      "radius": 70
+    }
+  ],
+  "plan": [
+    {
+      "at": 60,
+      "unitId": "fr-24e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 800,
+          "y": 160
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "al-grenz-broder",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 740,
+          "y": 1020
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 90,
+      "unitId": "al-kienmayer-husaren",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 800,
+          "y": 1100
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 100,
+      "unitId": "fr-57e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 720,
+          "y": 310
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 140,
+      "unitId": "fr-4e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 720,
+          "y": 470
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 140,
+      "unitId": "al-butyrsk",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1020,
+          "y": 920
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 180,
+      "unitId": "fr-10e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 720,
+          "y": 610
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 180,
+      "unitId": "al-perm",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 960,
+          "y": 1020
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 200,
+      "unitId": "al-batterie-langeron",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 940,
+          "y": 1180
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 220,
+      "unitId": "fr-36e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 730
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 220,
+      "unitId": "al-narva",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 1080
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 260,
+      "unitId": "fr-14e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 720,
+          "y": 850
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 300,
+      "unitId": "fr-batterie-soult",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 560
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 360,
+      "unitId": "al-butyrsk",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 920
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 390,
+      "unitId": "al-perm",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 820,
+          "y": 1020
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 400,
+      "unitId": "fr-24e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1150,
+          "y": 180
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "al-narva",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 780,
+          "y": 1080
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "fr-57e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1150,
+          "y": 340
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 450,
+      "unitId": "fr-4e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1150,
+          "y": 480
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 480,
+      "unitId": "fr-10e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1140,
+          "y": 620
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 500,
+      "unitId": "al-ir24-auersperg",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 340
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 510,
+      "unitId": "fr-36e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1140,
+          "y": 760
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 510,
+      "unitId": "al-ir23-salzburg",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 500
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 520,
+      "unitId": "al-kleinrussland",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 660
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 540,
+      "unitId": "fr-14e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1140,
+          "y": 900
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 540,
+      "unitId": "al-nowgorod",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 820
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 560,
+      "unitId": "al-apscheron",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 980
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 560,
+      "unitId": "al-batterie-kollowrat",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1420,
+          "y": 180
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 620,
+      "unitId": "al-butyrsk",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 920
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 650,
+      "unitId": "al-perm",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 680,
+          "y": 1020
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 680,
+      "unitId": "al-narva",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 640,
+          "y": 1080
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 700,
+      "unitId": "fr-batterie-soult",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 960,
+          "y": 540
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 720,
+      "unitId": "al-batterie-langeron",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 1180
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 760,
+      "unitId": "fr-57e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1260,
+          "y": 340
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 790,
+      "unitId": "fr-4e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1260,
+          "y": 480
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 820,
+      "unitId": "fr-10e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1250,
+          "y": 620
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 850,
+      "unitId": "fr-36e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1250,
+          "y": 760
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 880,
+      "unitId": "fr-14e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1250,
+          "y": 900
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 920,
+      "unitId": "fr-24e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1240,
+          "y": 180
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 940,
+      "unitId": "fr-108e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 1080
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1000,
+      "unitId": "fr-27e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1180,
+          "y": 260
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1000,
+      "unitId": "al-ulanen-konstantin",
+      "body": {
+        "kind": "charge",
+        "targetId": "fr-4e"
+      }
+    },
+    {
+      "at": 1060,
+      "unitId": "fr-15e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 760,
+          "y": 1000
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1060,
+      "unitId": "al-chevaliergarde",
+      "body": {
+        "kind": "charge",
+        "targetId": "fr-4e"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "al-semenowski",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1360,
+          "y": 300
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1140,
+      "unitId": "fr-chasseurs-garde",
+      "body": {
+        "kind": "charge",
+        "targetId": "al-chevaliergarde"
+      }
+    },
+    {
+      "at": 1180,
+      "unitId": "fr-3e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 600,
+          "y": 1100
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1180,
+      "unitId": "al-preobraschenski",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1380,
+          "y": 460
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1260,
+      "unitId": "al-butyrsk",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 880
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1320,
+      "unitId": "fr-26e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 980
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1340,
+      "unitId": "al-perm",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 980
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1380,
+      "unitId": "fr-10e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1240,
+          "y": 500
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1440,
+      "unitId": "al-kienmayer-husaren",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 880,
+          "y": 1040
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "fr-24e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1240,
+          "y": 260
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1520,
+      "unitId": "al-narva",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 800,
+          "y": 1060
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1600,
+      "unitId": "al-batterie-langeron",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 940,
+          "y": 1160
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 1600,
+      "unitId": "fr-14e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1140,
+          "y": 940
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1700,
+      "unitId": "fr-108e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 1080
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1700,
+      "unitId": "al-grenz-broder",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 820,
+          "y": 900
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1720,
+      "unitId": "fr-36e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1120,
+          "y": 820
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1780,
+      "unitId": "fr-batterie-soult",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1080,
+          "y": 460
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 1820,
+      "unitId": "al-butyrsk",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1040,
+          "y": 800
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1860,
+      "unitId": "fr-15e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 1000
+        },
+        "arrivalFacing": 0.0,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1940,
+      "unitId": "al-perm",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 980,
+          "y": 900
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1980,
+      "unitId": "al-preobraschenski",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1480,
+          "y": 460
+        },
+        "arrivalFacing": 3.1416,
+        "arrivalFormation": "line"
+      }
+    }
+  ],
+  "chapters": [
+    {
+      "at": 0,
+      "title": "The hill he wanted them to take",
+      "text": "Napoleon has spent three days looking beatable. He pulled off the Pratzen plateau, left his right along the Goldbach thin enough to be seen to be thin, and sent an envoy to ask for terms. The allied council took the bait and wrote a disposition to march round that right, which cannot be done without coming off the plateau. The clock starts with them doing it."
+    },
+    {
+      "at": 180,
+      "title": "Four kilometres away from the battle",
+      "unitId": "al-butyrsk",
+      "text": "Butyrski's regiment is walking south-west across the front of an enemy it cannot see, and it is one of three doing the same thing. Between them they are most of the allied army. Watch the Key Ground as they cross it: the Pratzeberg changes hands to the allies for a few minutes purely because they are walking over it on the way somewhere else, and nobody takes it off them again for twenty minutes."
+    },
+    {
+      "at": 420,
+      "title": "Two divisions in the bottom",
+      "unitId": "fr-10e-legere",
+      "text": "Saint-Hilaire and Vandamme have been standing in the Goldbach bottom since before it was light. In front of them is eighty metres of bare rise over about a kilometre — gentle by any standard except the one that matters here, which is that a battalion pays for it in Fatigue and pays again for every minute it spends halted halfway up. So they go up in one movement and deploy at the top short of the enemy, rather than arriving in column at fifty metres."
+    },
+    {
+      "at": 620,
+      "title": "Kollowrat faces about",
+      "unitId": "al-ir23-salzburg",
+      "text": "The fourth column is the weakest thing on the field — raw Austrian battalions and Russians who have been on the road since Olmütz — and it is strung out along two kilometres of crest in march order. Turning it to face west takes minutes it has not got, and it turns onto ground downhill of the summit it was standing on."
+    },
+    {
+      "at": 800,
+      "title": "Stary Vinohrady",
+      "unitId": "fr-57e",
+      "text": "The northern summit, the Old Vineyards, and the first of the two. It goes to a single regiment, because there was nobody on it. This is what the whole deception was for, and it has cost an hour's walk and one firefight."
+    },
+    {
+      "at": 940,
+      "title": "Sokolnitz, and Friant up the Raigern road",
+      "unitId": "fr-108e",
+      "text": "Davout's men have marched a hundred and ten kilometres in two days and are arriving in the order they walked. They are walking into the fight the allied left came four kilometres to have, against three regiments, and they will not win it: Friant's leading battalions are cut to pieces here. It does not matter. Holding this village twenty minutes longer is worth more than the village."
+    },
+    {
+      "at": 1060,
+      "title": "The Chevalier Guard",
+      "unitId": "al-chevaliergarde",
+      "text": "The Tsar's own regiment, and the last thing the allies have to put on the plateau. It is aimed at the 4e de Ligne, which is standing in line on ground it took twenty minutes ago and is not fresh."
+    },
+    {
+      "at": 1120,
+      "title": "Forty seconds of drill",
+      "unitId": "fr-4e",
+      "text": "The 4e forms square as the horse comes on, which is the difference between a regiment and a casualty list: a square has no flank, and it throws cavalry back on a quarter of a line's frontage. It does not save the regiment — it is worn, it is alone, and what is left of it goes soon afterwards. But the Chevalier Guard is destroyed doing it, which is the trade the period made over and over."
+    },
+    {
+      "at": 1320,
+      "title": "Both Guards, spent",
+      "unitId": "fr-chasseurs-garde",
+      "text": "Bessières lets the Guard chasseurs go at the Russian horse, and within ten minutes neither side has any cavalry left in the centre. That is the shape of this half of the Field: everything committed to the plateau is committed for good, because there is nothing behind it and no way to get anything up there in time."
+    },
+    {
+      "at": 1440,
+      "title": "The Pratzeberg",
+      "unitId": "fr-36e",
+      "text": "The southern summit, and the last high ground either army holds. With both summits gone the allied army is in two halves that cannot see each other, and the half in the valley is below the half on the hill. Nothing after this is a decision; it is all consequence."
+    },
+    {
+      "at": 1700,
+      "title": "Recalled, and too late",
+      "unitId": "al-grenz-broder",
+      "text": "What is left of the left is ordered back up the slope it spent the morning walking down. Same ground, same distance, same Fatigue, except that this time somebody is standing on top of it — and of the three regiments that went south-west an hour ago, the Grenzer are most of what is still on its feet. Saint-Hilaire's division turns round to meet them, which is what a division on a plateau is for."
+    },
+    {
+      "at": 2200,
+      "title": "Off the south edge",
+      "text": "What is left of the allied left is pushed south, and south of this Field are the Satschan ponds. The story about the ice and twenty thousand men is a bulletin's arithmetic — the drowned were counted in dozens — but the ground is real enough: there was no way out that way, and an army cut off from its own centre finds that out at the water's edge. Austria signed four days later and the Third Coalition was over."
+    }
+  ]
+}
