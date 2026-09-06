@@ -15,6 +15,7 @@ import type { Chapter } from "@/sim/scenario"
 import type { UnitSnapshot } from "@/sim/snapshot"
 import type { Grade, Outcome } from "@/sim/types"
 import { loadSettings } from "@/settings"
+import { type Loudness, LOUDNESS_CHOICES, Noises } from "@/sound"
 
 /**
  * The Book: one battle, read rather than fought.
@@ -36,6 +37,16 @@ const host = useTemplateRef<HTMLElement>("host")
 
 const view = ref<BattleView | null>(null)
 const session = ref<BookSession | null>(null)
+/**
+ * The Field, heard (C13). It holds the audio device and no rule, and it is
+ * handed the same snapshots the renderer is.
+ *
+ * A reader has no Headquarters, so he hears the afternoon from the middle of
+ * the Field rather than from anybody's staff — which `Noises` decides for
+ * itself off the snapshot, because a cut made for nobody leaves both staffs
+ * reported and neither of them anybody's.
+ */
+const noises = new Noises()
 
 const ui = reactive({
   loading: true,
@@ -51,6 +62,11 @@ const ui = reactive({
   selected: null as string | null,
   outcome: null as Outcome | null,
   returns: [] as ArmyReturn[],
+  sound: "off" as Loudness,
+  music: false,
+  bandAvailable: false,
+  /** True until the first gesture on the page, which is what buys the device. */
+  silent: true,
   gradeNames: {} as Record<string, Record<Grade, string>>,
 })
 
@@ -137,6 +153,10 @@ function tick(now: number): void {
     harried: hq.report?.harried ?? false,
   }))
   v.draw(s.previous, s.current, s.alpha, viewState)
+  // With the flash and not after it: a Volley is one event, and the report
+  // going with the smoke is what makes a discharge at the far end of the line
+  // readable rather than confusing.
+  noises.hear(s.current)
 
   if (now - uiClock < 100) return
   uiClock = now
@@ -155,7 +175,59 @@ function setTempo(tempo: number): void {
   session.value?.send({ kind: "tempo", tempo })
 }
 
+/**
+ * A browser hands over the audio device inside a gesture and nowhere else, and
+ * a Book has neither of the two presses a battle is woken by: nobody takes an
+ * Army here and nobody Stands To, because the clock is already running when the
+ * page opens. So the device is taken on the first thing the reader does at all
+ * — pausing, changing the Tempo, or picking a battalion off the Field.
+ *
+ * Until then the afternoon is silent, and the bar says so rather than leaving
+ * him to wonder whether the sound is broken.
+ */
+function wake(): void {
+  // Never turns the Noise on. A reader who has silenced it, here or in
+  // Settings, has said something, and pausing the clock is not him taking it
+  // back — so an incidental gesture only takes the device when the sound was
+  // already wanted, and is otherwise nothing at all.
+  if (!ui.silent || ui.sound === "off") return
+  ui.silent = false
+  noises.setLoudness(ui.sound)
+  noises.wake()
+}
+
+/**
+ * The press that asks for it outright, which is the only thing here allowed to
+ * overrule a silent setting: a button marked *hear it* is not ambiguous. The
+ * Noise ships off (`DEFAULT_SETTINGS`), so for most readers this is the way in
+ * rather than an edge of one.
+ */
+function hearIt(): void {
+  ui.silent = false
+  if (ui.sound === "off") ui.sound = "quiet"
+  noises.setLoudness(ui.sound)
+  noises.wake()
+}
+
+/**
+ * How loud, from inside the Book. Not written back to Settings, for the same
+ * reason the battle screen does not: quiet for this reading says nothing about
+ * the next one.
+ */
+function setSound(level: Loudness): void {
+  ui.silent = false
+  ui.sound = level
+  noises.setLoudness(level)
+  noises.wake()
+}
+
+function toggleMusic(): void {
+  ui.music = !ui.music
+  noises.setMusic(ui.music)
+}
+
 function togglePause(): void {
+  wake()
   session.value?.send({ kind: "pause", on: ui.running })
 }
 
@@ -163,6 +235,7 @@ function togglePause(): void {
 function onCanvasClick(event: MouseEvent): void {
   const v = view.value
   if (!v) return
+  wake()
   const hit = v.unitAt(ui.units, v.toField(event.clientX, event.clientY))
   ui.selected = hit && hit.id !== ui.selected ? hit.id : null
 }
@@ -187,8 +260,19 @@ onMounted(async () => {
       v.destroy()
       return
     }
-    v.setField(loaded.battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...loadSettings() })
+    const look = loadSettings()
+    v.setField(loaded.battle.field, "staff", { ...STAFF_MAP_DEFAULTS, ...look })
     view.value = v
+
+    // Metres and not cells: what the Noise pans across is the ground, the same
+    // width the reader is looking at.
+    const across = loaded.battle.field.width * loaded.battle.field.cellSize
+    noises.open(across, look.sound, look.music)
+    ui.sound = look.sound
+    ui.music = look.music
+    void noises.learn().then((has) => {
+      if (!closed) ui.bandAvailable = has
+    })
 
     const s = markRaw(new BookSession(loaded))
     session.value = s
@@ -209,6 +293,7 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(frame)
   view.value?.destroy()
   view.value = null
+  noises.close()
   session.value?.close()
   session.value = null
 })
@@ -242,6 +327,46 @@ onBeforeUnmount(() => {
             ×{{ t }}
           </button>
         </span>
+        <!-- Silent until the reader has touched the page at all, because the
+             audio device is only handed over inside a gesture and a Book has
+             no press of its own to take it in. -->
+        <button
+          v-if="ui.silent"
+          type="button"
+          class="btn btn-xs"
+          title="a browser gives up its speakers only when you ask it to"
+          @click="hearIt"
+        >
+          hear it
+        </button>
+        <span v-else class="join">
+          <button
+            v-for="level in LOUDNESS_CHOICES"
+            :key="level"
+            type="button"
+            class="btn join-item btn-xs"
+            :class="{ 'btn-active': ui.sound === level }"
+            :title="`the Field, heard from above the middle of it: ${level}`"
+            @click="setSound(level)"
+          >
+            {{ level }}
+          </button>
+        </span>
+        <button
+          v-if="!ui.silent"
+          type="button"
+          class="btn btn-xs"
+          :class="{ 'btn-active': ui.music && ui.sound !== 'off' }"
+          :disabled="ui.sound === 'off' || !ui.bandAvailable"
+          :title="
+            ui.bandAvailable
+              ? 'the band, held under the battle and pulled down by the fighting'
+              : 'no tracks are installed — see public/music/README.md'
+          "
+          @click="toggleMusic"
+        >
+          band
+        </button>
         <RouterLink class="btn btn-ghost btn-xs" :to="{ name: 'battle', params: { battle: id } }">
           fight it
         </RouterLink>
