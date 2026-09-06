@@ -74,7 +74,7 @@
       "unitId": "fr-batterie",
       "body": {
         "kind": "move",
-        "destination": { "x": 1040, "y": 700 },
+        "destination": { "x": 900, "y": 700 },
         "arrivalFacing": -1.5708,
         "arrivalFormation": "in-battery"
       }
