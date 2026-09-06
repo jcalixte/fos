@@ -58,7 +58,7 @@
       "grade": "line",
       "strength": 740,
       "formation": "line",
-      "standing": "hold-ground",
+      "standing": "close-up",
       "position": { "x": 1330, "y": 730 },
       "facing": -1.5708
     },
