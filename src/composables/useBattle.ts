@@ -7,6 +7,7 @@ import { loadScenario } from "@/scenario/loader"
 import { rememberBattle, scenarioPath } from "@/scenario/catalogue"
 import type { BattleSession, Command } from "@/session"
 import { LocalSession } from "@/session/local"
+import { keepTheRecord, type RecordKept } from "@/session/record"
 import { RemoteSession } from "@/session/remote"
 import { deploymentZone } from "@/sim/deployment"
 import { canCharge, chargeable } from "@/sim/charge"
@@ -593,6 +594,38 @@ export function useBattle() {
     readPhase(s)
   }
 
+  /**
+   * Write the afternoon out to a file: the Return, the Units as they stand,
+   * both staffs and the whole Dispatch feed, exactly as this seat was sent them
+   * (`session/record.ts`).
+   *
+   * It is a workbench press and not an act of command — nothing on the Field
+   * changes and nothing is said to anybody — which is why it is here rather
+   * than in the Command union: there is nobody to send it to.
+   *
+   * From a taken battle it is one Commander's papers, because that is all this
+   * screen has ever been sent (F22). The Book writes the whole day.
+   *
+   * What comes back is where it went, which the screen has to say: the two
+   * answers are a clipboard the player must now paste from and a file he must
+   * now go and find.
+   */
+  async function takeRecord(): Promise<RecordKept | null> {
+    const s = session.value
+    if (!s || !scenario) return null
+    return await keepTheRecord(
+      {
+        battle: battleId,
+        name: ui.scenarioName,
+        clock: ui.clock,
+        army: s.army,
+        outcome: s.outcome,
+      },
+      s.current,
+      s.returns(),
+    )
+  }
+
   function setTempo(tempo: number): void {
     const s = session.value
     if (!s) return
@@ -1144,6 +1177,7 @@ export function useBattle() {
     fightAnother,
     beginBattle,
     setTempo,
+    takeRecord,
     toggleFireZones,
     setSound,
     toggleMusic,

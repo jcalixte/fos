@@ -7,6 +7,7 @@ import ReturnPanel from "@/components/ReturnPanel.vue"
 import TopBar from "@/components/TopBar.vue"
 import UnitCard from "@/components/UnitCard.vue"
 import { useBattle } from "@/composables/useBattle"
+import type { RecordKept } from "@/session/record"
 import type { FormationName, Grade } from "@/sim/types"
 import { LOUDNESS_CHOICES } from "@/sound"
 
@@ -79,6 +80,21 @@ async function copyLink(): Promise<void> {
   } catch {
     // No clipboard permission. The link is on screen to be read either way.
   }
+}
+
+/**
+ * Where the last record went, shown on the button for a moment. Copying is
+ * silent and a download is not, so the press has to say something: without it
+ * the only evidence a record was taken at all is a clipboard the player has not
+ * pasted yet.
+ */
+const kept = ref<RecordKept | null>(null)
+let keptFor = 0
+
+async function takeRecord(): Promise<void> {
+  kept.value = await battle.takeRecord()
+  clearTimeout(keptFor)
+  keptFor = setTimeout(() => (kept.value = null), 2000) as unknown as number
 }
 
 /**
@@ -275,6 +291,20 @@ onBeforeUnmount(() => {
             {{ ui.address ? "Stand to" : "Begin the battle" }}
           </button>
         </template>
+
+        <!-- The afternoon on paper, at any point in it. Beside the way out
+             rather than in the strip of dials, because it changes nothing on
+             the Field: it is the one press here that says nothing to anybody
+             and is for reading the battle away from the screen. -->
+        <button
+          v-if="ui.phase !== 'loading' && ui.phase !== 'command'"
+          type="button"
+          class="btn btn-ghost btn-xs"
+          title="copy the afternoon as it stands: the Return, every Unit, and every Dispatch you were sent"
+          @click="takeRecord"
+        >
+          {{ kept === "copied" ? "copied" : kept === "saved" ? "saved to a file" : "record" }}
+        </button>
 
         <!-- Leaving is not breaking off: nothing is decided and nothing is
              saved, the Field is simply put away. -->

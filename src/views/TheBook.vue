@@ -10,6 +10,7 @@ import { loadScenario } from "@/scenario/loader"
 import { armyColours, BattleView, type ViewState } from "@/render/BattleView"
 import { STAFF_MAP_DEFAULTS } from "@/render/staffmap"
 import { BookSession } from "@/session/book"
+import { keepTheRecord, type RecordKept } from "@/session/record"
 import type { ArmyReturn } from "@/sim/return"
 import type { Chapter } from "@/sim/scenario"
 import type { UnitSnapshot } from "@/sim/snapshot"
@@ -174,6 +175,34 @@ function tick(now: number): void {
 function setTempo(tempo: number): void {
   session.value?.send({ kind: "tempo", tempo })
 }
+
+/**
+ * The afternoon on paper: the Return, every Unit as it stands, both staffs and
+ * the whole feed, written out to a file (`session/record.ts`).
+ *
+ * A Book's record is the useful one. It is cut for nobody, so both armies'
+ * Dispatches and both armies' Reports are in it — a battle taken by a Commander
+ * can only ever write down half a day, and half a day is thin evidence that the
+ * afternoon went right.
+ */
+async function takeRecord(): Promise<void> {
+  const s = session.value
+  if (!s) return
+  kept.value = await keepTheRecord(
+    { battle: id, name: ui.name, clock: ui.clock, army: null, outcome: s.outcome },
+    s.current,
+    s.returns(),
+  )
+  clearTimeout(keptFor)
+  keptFor = setTimeout(() => (kept.value = null), 2000) as unknown as number
+}
+
+/**
+ * Where the last record went, shown on the button for a moment. Copying is
+ * silent and a download is not, so the press has to say which it was.
+ */
+const kept = ref<RecordKept | null>(null)
+let keptFor = 0
 
 /**
  * A browser hands over the audio device inside a gesture and nowhere else, and
@@ -376,6 +405,14 @@ onBeforeUnmount(() => {
             band
           </button>
         </div>
+        <button
+          type="button"
+          class="btn btn-ghost btn-xs"
+          title="copy the afternoon as it stands: the Return, every Unit, and every Dispatch, both armies'"
+          @click="takeRecord"
+        >
+          {{ kept === "copied" ? "copied" : kept === "saved" ? "saved to a file" : "record" }}
+        </button>
         <RouterLink class="btn btn-ghost btn-xs" :to="{ name: 'battle', params: { battle: id } }">
           fight it
         </RouterLink>
