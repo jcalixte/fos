@@ -1,0 +1,267 @@
+{
+  "id": "french-quatre-bras",
+  "name": "L'aile gauche de l'Armée du Nord",
+  "grades": {
+    "conscript": "conscrit",
+    "line": "de ligne",
+    "elite": "d'élite"
+  },
+  "entries": [
+    {
+      "id": "fr-2e-legere",
+      "name": "2e Légère (Bachelu)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": -1.5708,
+      "position": {
+        "x": 900,
+        "y": 990
+      }
+    },
+    {
+      "id": "fr-61e",
+      "name": "61e de Ligne (Bachelu)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "position": {
+        "x": 820,
+        "y": 1050
+      }
+    },
+    {
+      "id": "fr-72e",
+      "name": "72e de Ligne (Bachelu)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 680,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "position": {
+        "x": 964,
+        "y": 1050
+      }
+    },
+    {
+      "id": "fr-108e",
+      "name": "108e de Ligne (Bachelu)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "position": {
+        "x": 1104,
+        "y": 1070
+      }
+    },
+    {
+      "id": "fr-92e",
+      "name": "92e de Ligne (Foy)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 740,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "position": {
+        "x": 700,
+        "y": 1070
+      }
+    },
+    {
+      "id": "fr-93e",
+      "name": "93e de Ligne (Foy)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "attack-column",
+      "standing": "close-up",
+      "facing": -1.5708,
+      "position": {
+        "x": 596,
+        "y": 1090
+      }
+    },
+    {
+      "id": "fr-4e-legere",
+      "name": "4e Légère (Foy)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 620,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": -1.5708,
+      "position": {
+        "x": 520,
+        "y": 1010
+      }
+    },
+    {
+      "id": "fr-batterie-bachelu",
+      "name": "Batterie à pied de la 5e Division",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "position": {
+        "x": 1020,
+        "y": 1010
+      }
+    },
+    {
+      "id": "fr-batterie-foy",
+      "name": "Batterie à pied de la 9e Division",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 100,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "position": {
+        "x": 760,
+        "y": 1110
+      }
+    },
+    {
+      "id": "fr-100e",
+      "name": "100e de Ligne (Jérôme)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "march-column",
+      "standing": "follow-up",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 360,
+        "entry": {
+          "x": 896,
+          "y": 1192
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1000,
+            "y": 900
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "attack-column"
+        }
+      }
+    },
+    {
+      "id": "fr-6e-chasseurs",
+      "name": "6e Chasseurs à Cheval (Piré)",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 240,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 600,
+        "entry": {
+          "x": 896,
+          "y": 1192
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1256,
+            "y": 948
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-5e-lanciers",
+      "name": "5e Lanciers (Piré)",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 220,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 660,
+        "entry": {
+          "x": 896,
+          "y": 1192
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1400,
+            "y": 1030
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-8e-cuirassiers",
+      "name": "8e Cuirassiers (Kellermann)",
+      "arm": "cavalry",
+      "grade": "elite",
+      "strength": 260,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 900,
+        "entry": {
+          "x": 896,
+          "y": 1192
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 952,
+            "y": 880
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "fr-11e-cuirassiers",
+      "name": "11e Cuirassiers (Kellermann)",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 240,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": -1.5708,
+      "arrival": {
+        "at": 960,
+        "entry": {
+          "x": 896,
+          "y": 1192
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 876,
+            "y": 920
+          },
+          "arrivalFacing": -1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

@@ -19,6 +19,13 @@ several Arrivals. Mechanics the campaign under-exercises — cavalry catching in
 above all — are checked against purpose-built fixtures instead, because testing a mechanic by
 hoping a historical battle happens to contain it is testing by coincidence.
 
+**Quatre Bras (16 Jun 1815)** was added for that last sentence rather than in spite of it. It is
+the one afternoon where cavalry against unformed infantry is not an incident but the argument:
+open rye, gentle ground, horse on one side and almost none on the other, and a square that has to
+be ordered a minute and a half before it is needed. It is a check on the fixtures and not a
+replacement for them — a historical battle still cannot be made to contain a mechanic on demand —
+but a rule that fires in a fixture and never in an authored battle is a rule nobody has watched.
+
 Strength weights used in matrices: **9** strong, **3** medium, **1** weak, blank none.
 
 ---

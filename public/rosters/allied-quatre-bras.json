@@ -1,0 +1,279 @@
+{
+  "id": "allied-quatre-bras",
+  "name": "The Anglo-Allied force at the crossroads",
+  "grades": {
+    "conscript": "militia",
+    "line": "of the line",
+    "elite": "elite"
+  },
+  "entries": [
+    {
+      "id": "al-27e-jagers",
+      "name": "27e Bataljon Jagers",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 760,
+      "formation": "open-order",
+      "standing": "stand-off",
+      "facing": 1.5708,
+      "position": {
+        "x": 900,
+        "y": 620
+      }
+    },
+    {
+      "id": "al-7e-linie",
+      "name": "7e Bataljon Linie (Belgisch)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 890,
+        "y": 580
+      }
+    },
+    {
+      "id": "al-5e-militie",
+      "name": "5e Bataljon Nationale Militie",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 480,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 1016,
+        "y": 560
+      }
+    },
+    {
+      "id": "al-8e-militie",
+      "name": "8e Bataljon Nationale Militie",
+      "arm": "infantry",
+      "grade": "conscript",
+      "strength": 520,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 764,
+        "y": 560
+      }
+    },
+    {
+      "id": "al-nassau-1",
+      "name": "1. Bataillon, 2. Nassau-Usingen",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 720,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 664,
+        "y": 470
+      }
+    },
+    {
+      "id": "al-nassau-2",
+      "name": "2. Bataillon, 2. Nassau-Usingen",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 700,
+      "formation": "line",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 640,
+        "y": 360
+      }
+    },
+    {
+      "id": "al-bijleveld",
+      "name": "Rijdende Batterij Bijleveld",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 110,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 860,
+        "y": 500
+      }
+    },
+    {
+      "id": "al-stevenart",
+      "name": "Voetbatterij Stevenart",
+      "arm": "artillery",
+      "grade": "line",
+      "strength": 100,
+      "formation": "in-battery",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "position": {
+        "x": 960,
+        "y": 470
+      }
+    },
+    {
+      "id": "al-42nd",
+      "name": "1/42nd Highlanders (Black Watch)",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 620,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 300,
+        "entry": {
+          "x": 800,
+          "y": 8
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 830,
+            "y": 380
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-92nd",
+      "name": "1/92nd Gordon Highlanders",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 580,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 420,
+        "entry": {
+          "x": 800,
+          "y": 8
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 930,
+            "y": 320
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-royals",
+      "name": "3/1st Royal Scots (Picton)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 600,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 540,
+        "entry": {
+          "x": 800,
+          "y": 8
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 1050,
+            "y": 372
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-bs-leib",
+      "name": "Leib-Bataillon (Braunschweig)",
+      "arm": "infantry",
+      "grade": "line",
+      "strength": 620,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 780,
+        "entry": {
+          "x": 800,
+          "y": 8
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 770,
+            "y": 300
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-bs-husaren",
+      "name": "Braunschweigisches Husaren-Regiment",
+      "arm": "cavalry",
+      "grade": "line",
+      "strength": 240,
+      "formation": "march-column",
+      "standing": "hold-ground",
+      "facing": 1.5708,
+      "arrival": {
+        "at": 900,
+        "entry": {
+          "x": 800,
+          "y": 8
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 700,
+            "y": 232
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    },
+    {
+      "id": "al-guards-1",
+      "name": "2/1st Foot Guards",
+      "arm": "infantry",
+      "grade": "elite",
+      "strength": 700,
+      "formation": "march-column",
+      "standing": "close-up",
+      "facing": 0.0,
+      "arrival": {
+        "at": 1500,
+        "entry": {
+          "x": 8,
+          "y": 104
+        },
+        "order": {
+          "kind": "move",
+          "destination": {
+            "x": 600,
+            "y": 300
+          },
+          "arrivalFacing": 1.5708,
+          "arrivalFormation": "line"
+        }
+      }
+    }
+  ]
+}

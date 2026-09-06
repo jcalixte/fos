@@ -1,0 +1,861 @@
+{
+  "name": "Quatre Bras",
+  "campaign": "hundred-days-1815",
+  "summary": "16 June 1815, and the case the Italian campaign could never make: open rye, gentle ground, and horse looking for infantry that has not finished forming square. Ney has to take a crossroads that is the only lateral road between Wellington and Blücher, and he starts the afternoon with more men on the ground than Wellington has. He does not finish it that way. Both armies walk on up the same two roads all day — Picton, the Brunswickers and the Guards from the north, Jérôme and Kellermann's cuirassiers from the south — so the battle is not about a position but about who is still arriving. The Field is a reading of the ground between the crossroads and Frasnes rather than a survey of it: the Bois de Bossu down the west of the chaussée, Gémioncourt in the middle of the open, and the pond and the hamlet holding the east.",
+  "field": {
+    "cells": [240, 150],
+    "cellSize": 8,
+    "ground": "ground.png",
+    "heightmap": "height.png",
+    "elevation": [0, 50]
+  },
+  "clock": 2400,
+  "seed": 181516,
+  "armies": [
+    {
+      "id": "allied",
+      "name": "Anglo-Allied",
+      "colour": "#ffcfa8",
+      "brief": "Hold the four arms of the crossroads until the army arrives, and it arrives one battalion at a time up the Brussels road behind you. You are outnumbered until about the middle of the afternoon and never afterwards, so the ground you give away early is ground you can afford and the crossroads is not. Watch the rye: you have almost no cavalry, his is good, and a battalion caught in column out there has about the time it takes a courier to reach it.",
+      "roster": "/rosters/allied-quatre-bras.json",
+      "headquarters": {
+        "x": 884,
+        "y": 238
+      },
+      "deploymentZone": [420, 170, 900, 480]
+    },
+    {
+      "id": "french",
+      "name": "French",
+      "colour": "#2f4d8f",
+      "brief": "Take the crossroads before the rest of Wellington's army gets there, and it is already on the road. You have the numbers for the next hour and the cavalry for the whole afternoon. Gémioncourt is the hinge in the middle and the Bossu wood on your left will swallow whatever you send into it. Kellermann comes up late: hold the cuirassiers until there is something out in the open that has not made square yet.",
+      "roster": "/rosters/french-quatre-bras.json",
+      "headquarters": {
+        "x": 1120,
+        "y": 1040
+      },
+      "deploymentZone": [300, 980, 1250, 200]
+    }
+  ],
+  "crossings": [],
+  "keyGround": [
+    {
+      "name": "the crossroads",
+      "position": {
+        "x": 816,
+        "y": 168
+      },
+      "radius": 72
+    },
+    {
+      "name": "Gémioncourt",
+      "position": {
+        "x": 904,
+        "y": 768
+      },
+      "radius": 60
+    },
+    {
+      "name": "the Bois de Bossu",
+      "position": {
+        "x": 600,
+        "y": 480
+      },
+      "radius": 90
+    }
+  ],
+  "plan": [
+    {
+      "at": 60,
+      "unitId": "fr-batterie-bachelu",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1010,
+          "y": 960
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 60,
+      "unitId": "al-27e-jagers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 700
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 90,
+      "unitId": "fr-2e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 880
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 120,
+      "unitId": "al-7e-linie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 730
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 140,
+      "unitId": "fr-batterie-foy",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 800,
+          "y": 1020
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 200,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 600,
+          "y": 940
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 200,
+      "unitId": "al-bijleveld",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 880,
+          "y": 540
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 260,
+      "unitId": "fr-61e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 940
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 280,
+      "unitId": "al-8e-militie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 760,
+          "y": 620
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 300,
+      "unitId": "fr-72e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 960,
+          "y": 950
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 340,
+      "unitId": "fr-108e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1090,
+          "y": 960
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 360,
+      "unitId": "al-42nd",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 830,
+          "y": 420
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 400,
+      "unitId": "fr-92e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 720,
+          "y": 990
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 420,
+      "unitId": "al-7e-linie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 890,
+          "y": 650
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 440,
+      "unitId": "fr-93e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 640,
+          "y": 970
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 440,
+      "unitId": "al-92nd",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 930,
+          "y": 380
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 520,
+      "unitId": "fr-2e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 800
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 520,
+      "unitId": "al-royals",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1050,
+          "y": 420
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 560,
+      "unitId": "fr-72e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 940,
+          "y": 830
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 600,
+      "unitId": "al-27e-jagers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 900,
+          "y": 640
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 620,
+      "unitId": "fr-100e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1000,
+          "y": 880
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 680,
+      "unitId": "fr-61e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 860,
+          "y": 850
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 700,
+      "unitId": "al-5e-militie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1010,
+          "y": 600
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 740,
+      "unitId": "fr-6e-chasseurs",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1480,
+          "y": 950
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 800,
+      "unitId": "fr-5e-lanciers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1340,
+          "y": 760
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 860,
+      "unitId": "fr-batterie-bachelu",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1000,
+          "y": 860
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 880,
+      "unitId": "al-bs-leib",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 790,
+          "y": 380
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 920,
+      "unitId": "fr-108e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1080,
+          "y": 830
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 980,
+      "unitId": "al-bs-husaren",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 740,
+          "y": 320
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1000,
+      "unitId": "fr-8e-cuirassiers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1000,
+          "y": 760
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1060,
+      "unitId": "fr-8e-cuirassiers",
+      "body": {
+        "kind": "charge",
+        "targetId": "al-5e-militie"
+      }
+    },
+    {
+      "at": 1080,
+      "unitId": "al-5e-militie",
+      "body": {
+        "kind": "form",
+        "formation": "square"
+      }
+    },
+    {
+      "at": 1100,
+      "unitId": "fr-11e-cuirassiers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1020,
+          "y": 820
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1140,
+      "unitId": "al-7e-linie",
+      "body": {
+        "kind": "form",
+        "formation": "square"
+      }
+    },
+    {
+      "at": 1200,
+      "unitId": "fr-72e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 930,
+          "y": 760
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1220,
+      "unitId": "al-42nd",
+      "body": {
+        "kind": "form",
+        "formation": "square"
+      }
+    },
+    {
+      "at": 1260,
+      "unitId": "fr-2e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1050,
+          "y": 780
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1300,
+      "unitId": "fr-11e-cuirassiers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1100,
+          "y": 900
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1320,
+      "unitId": "al-5e-militie",
+      "body": {
+        "kind": "form",
+        "formation": "line"
+      }
+    },
+    {
+      "at": 1340,
+      "unitId": "fr-100e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 960,
+          "y": 800
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1380,
+      "unitId": "al-bs-husaren",
+      "body": {
+        "kind": "charge",
+        "targetId": "fr-5e-lanciers"
+      }
+    },
+    {
+      "at": 1420,
+      "unitId": "fr-5e-lanciers",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1220,
+          "y": 620
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1440,
+      "unitId": "al-42nd",
+      "body": {
+        "kind": "form",
+        "formation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "fr-61e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 870,
+          "y": 830
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1500,
+      "unitId": "al-nassau-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 664,
+          "y": 560
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1580,
+      "unitId": "al-guards-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 620,
+          "y": 460
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1600,
+      "unitId": "fr-4e-legere",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 620,
+          "y": 780
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "open-order"
+      }
+    },
+    {
+      "at": 1660,
+      "unitId": "al-7e-linie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 880,
+          "y": 560
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1660,
+      "unitId": "al-royals",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1020,
+          "y": 500
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1700,
+      "unitId": "fr-93e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 660,
+          "y": 820
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 1740,
+      "unitId": "al-nassau-2",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 640,
+          "y": 470
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1800,
+      "unitId": "fr-6e-chasseurs",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1240,
+          "y": 560
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1840,
+      "unitId": "al-8e-militie",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 770,
+          "y": 560
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 1900,
+      "unitId": "fr-batterie-bachelu",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 980,
+          "y": 800
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "in-battery"
+      }
+    },
+    {
+      "at": 1940,
+      "unitId": "al-42nd",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 840,
+          "y": 500
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 2000,
+      "unitId": "fr-108e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 1080,
+          "y": 780
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "attack-column"
+      }
+    },
+    {
+      "at": 2040,
+      "unitId": "al-guards-1",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 640,
+          "y": 600
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 2100,
+      "unitId": "fr-92e",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 700,
+          "y": 880
+        },
+        "arrivalFacing": -1.5708,
+        "arrivalFormation": "line"
+      }
+    },
+    {
+      "at": 2140,
+      "unitId": "al-92nd",
+      "body": {
+        "kind": "move",
+        "destination": {
+          "x": 920,
+          "y": 480
+        },
+        "arrivalFacing": 1.5708,
+        "arrivalFormation": "line"
+      }
+    }
+  ],
+  "chapters": [
+    {
+      "at": 0,
+      "title": "Two roads and nobody's plan",
+      "text": "Nobody meant to fight here. The crossroads is a farm, a wood and a name that means only what it is — four arms. It matters because the Nivelles–Namur road running across it is the one lateral Wellington has, and thirteen kilometres east Blücher is being attacked at Ligny. Whoever holds these four arms can march to the other man's battle. Ney has orders to take them and about eight thousand men more than the Dutch-Belgians standing in his way; the rest of both armies is on the roads."
+    },
+    {
+      "at": 120,
+      "title": "Perponcher disobeys usefully",
+      "unitId": "al-27e-jagers",
+      "text": "The orange-coated troops holding this ground were told to fall back on Nivelles last night, and their divisional commander decided not to. Seven thousand of them are covering a crossroads that four hours from now will be worth an army. The jagers are out in front of Gémioncourt because a screen is all there is to put out in front of it."
+    },
+    {
+      "at": 300,
+      "title": "The Black Watch comes down the chaussée",
+      "unitId": "al-42nd",
+      "text": "Picton's division has walked from Brussels and is arriving in the order it walked. This is the shape of the whole afternoon for both armies: the road delivers battalions one at a time, and what either commander has is never what he will have in twenty minutes."
+    },
+    {
+      "at": 560,
+      "title": "Gémioncourt",
+      "unitId": "fr-72e",
+      "text": "The farm in the middle of the open ground is the hinge. Whoever has it has a firing position over the chaussée, and the ground north of it is a slope with nothing on it. Bachelu's columns are going at it directly, which is what attack column is for and what it costs."
+    },
+    {
+      "at": 700,
+      "title": "Piré goes round the pond",
+      "unitId": "fr-6e-chasseurs",
+      "text": "The French light horse works east past the Étang Materne toward the Namur road. There is nothing in the way but rye, and the rye is shoulder-high — which means a squadron at the trot is invisible until it is at three hundred metres, and a battalion in march column on that road has about ninety seconds to notice."
+    },
+    {
+      "at": 940,
+      "title": "The wood eats a brigade",
+      "unitId": "fr-4e-legere",
+      "text": "Foy's men have been in the Bois de Bossu for ten minutes and have gone four hundred metres. A Formation costs speed here and a line costs most of all, so what goes into the wood is a screen and what comes out the other side is disordered. Both armies will feed battalions into it until dark and neither will get it cheaply."
+    },
+    {
+      "at": 1270,
+      "title": "Kellermann",
+      "unitId": "fr-8e-cuirassiers",
+      "text": "This is the moment the battle is remembered for and the reason it is on this shelf. The cuirassiers come up the chaussée at a walk and go at the run for the last hundred and fifty metres, and what they are looking for is a battalion that has not finished making square. A square throws them back on a quarter of a line's frontage. A line does not. The difference is about forty seconds of drill, and the order to form it had to be couriered."
+    },
+    {
+      "at": 1450,
+      "title": "The Brunswick hussars",
+      "unitId": "al-bs-husaren",
+      "text": "Wellington has almost no cavalry here and is spending what he has to buy time rather than ground. A regiment sent at the French lancers will not beat them; it will make them stop, and stopping is what the infantry behind needs."
+    },
+    {
+      "at": 1630,
+      "title": "The Guards, off the Nivelles road",
+      "unitId": "al-guards-1",
+      "text": "The last arrival, and from the west rather than the north — which is why the Bossu wood is where they land. By now Wellington has more men on this ground than Ney does. That is the whole of what the afternoon decided: not who won the fighting, but who was still arriving when it stopped."
+    },
+    {
+      "at": 2280,
+      "title": "What the crossroads was worth",
+      "text": "The day ends with the Anglo-Allied army on the crossroads and the French where they started, and it settles nothing by itself. It settles a great deal two days later: the lateral road stayed open, the army that used it was still in one piece, and the ground it fell back to was a ridge in front of a village called Waterloo."
+    }
+  ]
+}
