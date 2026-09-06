@@ -1,5 +1,6 @@
 {
   "name": "Arcole",
+  "campaign": "italy-1796",
   "summary": "15 November 1796, and the case where the ground stops an army rather than the enemy does. Bonaparte has come over the Adige at Ronco into the fork of two rivers, and the fork is under water: three raised roads across a flooded plain, and at the end of the longest of them a village on the far bank of the Alpone with the only bridge over it. A battalion on a dike is fast and 170m deep and two men wide; the same battalion in line has its wings in the marsh and crawls. Rivoli is impassability by gradient and this is impassability by Ground — nothing here is steep, and almost nothing here is walkable. The Field is a reading of the ground between the Adige and the Alpone rather than a survey of it.",
   "field": {
     "cells": [240, 150],

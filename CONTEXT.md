@@ -275,6 +275,15 @@ _Avoid_: anchor, home, station, waypoint
 An authored battle: a Field, both armies, a Plan for each of them, and what counts as winning.
 _Avoid_: level, mission, map, match, stage
 
+**Campaign**:
+The named group a Scenario is shelved under — one theatre, one season, the same two armies. It is
+a shelf and nothing more. Nothing crosses from one battle to the next: no casualties, no Fatigue,
+no Roster, no order of play, and a Scenario is fought exactly the same whether it is reached
+through its Campaign or on its own. Every Scenario names the one it belongs to, which is all a
+Campaign is made of. Carrying state forward would be *campaign persistence*, which is a different
+thing and is not built ([DESIGN](./DESIGN.md) §9) — so the word must not be used for it here.
+_Avoid_: chapter, season, act, war, theatre, series, progression
+
 **Roster**:
 An army's order of battle as a standalone thing — which Units, of which Arm, at which Grade, at
 what Strength, under what display name. A Scenario names the Rosters it puts on the Field rather
@@ -459,6 +468,8 @@ _Avoid_: game speed, time scale, simulation speed
 - **Latitude** is spent in metres from the **Post**, so a **Unit** acting on its own account can
   drift from the ground it was given and can never choose different ground
 - A **Scenario** carries a **Field**, two **Rosters**, a **Plan** for each army, a clock, and its **Key Ground**
+- A **Scenario** belongs to exactly one **Campaign**, and a **Campaign** holds one or more of them;
+  nothing else passes between the two, because nothing a **Scenario** does outlives it
 - A **Commander** takes one **Army** before **Deployment**; the **Plan** written for it is dropped, and
   the one written for the other is what it fights the afternoon to
 - A battle ends when the **Scenario** clock runs out — and then the **Key Ground** is counted, and

@@ -23,8 +23,9 @@ import type {
 
 /**
  * A Scenario carries a Field, two Rosters, a Plan for each army, a clock and its
- * Key Ground. A Roster is a standalone thing a Scenario names rather than contains,
- * so adding a battle is data and never code (F16).
+ * Key Ground, and it names the Campaign it is shelved under. A Roster is a
+ * standalone thing a Scenario names rather than contains, so adding a battle is
+ * data and never code (F16).
  */
 
 export interface RosterEntry {
@@ -105,6 +106,12 @@ export interface Chapter {
 
 export interface ScenarioFile {
   name: string
+  /**
+   * The Campaign this battle is shelved under, named by its id in
+   * `public/campaigns.json`. A shelf and nothing more: no state crosses between
+   * two Scenarios that share one, and the simulation never reads this at all.
+   */
+  campaign: string
   summary: string
   field: {
     cells: [number, number]

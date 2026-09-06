@@ -224,6 +224,7 @@ how is an open question (DESIGN §1, G9).
 | `src/session/` | the seam: takes Orders, emits snapshots, reports the Outcome — local in the tab, or remote over a socket ([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)) |
 | `server/` | the process a two-Commander battle lives in: `Bun.serve`, one WebSocket, no framework |
 | `public/scenarios/`, `public/rosters/` | the battles themselves, as data; `scenarios/index.json` names the ones on offer |
+| `public/campaigns.json` | the Campaigns the battles are shelved under — a name, its years and a line on the war, and never a list of its battles: each Scenario names its own |
 | `scripts/` | the Field painters, each of which audits the Scenario standing on its ground |
 
 <!-- docs:start -->

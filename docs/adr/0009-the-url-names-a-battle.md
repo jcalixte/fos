@@ -106,3 +106,15 @@ than the server being unconfigured.
 If a later screen — a campaign, the Scenario editor ADR-0003 signed up for — needs an address, it
 is a route and not a `Phase` member. The rule is the one at the top: an address is a promise about
 what can be returned to, and a phase is what is true while you are already there.
+
+**A Campaign came, and took no address — deliberately.** Battles are now shelved under Campaigns,
+and the obvious shape would have been `/campaigns/:campaign` with the battle beneath it. Two
+reasons it is a heading on `/` instead. The smaller one is that grouping four battles behind a
+press buys nothing a heading does not already say. The larger one is that a path segment is a
+claim about identity: `/campaigns/italy-1796/battles/rivoli` says Rivoli is *reached through* its
+Campaign, and it is not — a Campaign is a shelf, nothing crosses between two battles that share
+one, and the battle is the same battle read off any shelf or none. So the slug stays flat and
+globally unique, `/battles/rivoli` still resolves, and every link handed to anybody before this
+still opens the thing that was meant. **Trigger:** enough battles that the list stops fitting the
+screen it is read on, at which point `/campaigns/:campaign` is a *filter* on the list and the
+battle address does not move.

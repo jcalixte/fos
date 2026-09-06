@@ -1,5 +1,6 @@
 {
   "name": "Rivoli",
+  "campaign": "italy-1796",
   "summary": "14 January 1797, and the hardest ground the design has to hold up on. Alvinczi comes down off Monte Baldo in separate columns divided by torrent gullies that let no one lane see the next, Quasdanovich marches up the Adige road under the cliffs with the guns and the horse, and Lusignan is already round the bottom of the plateau and behind the French. Bonaparte has four thousand fewer men and one advantage: he is standing in the middle of all of it, and they arrive one at a time. The Field is a reading of the plateau above Rivoli Veronese rather than a survey of it: the slope down from the north, the river trench cut a hundred metres deep along the east, and one road up out of the gorge past the chapel of San Marco.",
   "field": {
     "cells": [240, 150],

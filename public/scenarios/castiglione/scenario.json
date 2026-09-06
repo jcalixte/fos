@@ -1,5 +1,6 @@
 {
   "name": "Castiglione",
+  "campaign": "italy-1796",
   "summary": "5 August 1796, and the everyday case the design is measured against. Wurmser stands across the Castiglione road with his right on the Solferino heights and his left out in the open plain, resting on the entrenched knoll of Monte Medolano — a flank anchored on a hillock and beyond that hanging in the air. Bonaparte has to hold the whole line by the throat long enough for the column coming up from Guidizzolo to walk onto that flank from behind. The Field is a reading of the morainic ground south of Lake Garda rather than a survey of it: hills across the north, plain to the south, and the Redone between the two armies costing a battalion time without funnelling it anywhere.",
   "field": {
     "cells": [240, 150],

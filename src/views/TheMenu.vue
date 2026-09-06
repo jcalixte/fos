@@ -2,18 +2,14 @@
 import { onMounted, ref } from "vue"
 import BattleMenu from "@/components/BattleMenu.vue"
 import TopBar from "@/components/TopBar.vue"
-import {
-  type CatalogueEntry,
-  type LastBattle,
-  loadCatalogue,
-  recallBattle,
-} from "@/scenario/catalogue"
+import { type LastBattle, loadShelves, recallBattle, type Shelf } from "@/scenario/catalogue"
 
 /**
- * The battles on offer. This is the one page that survives a reload with
- * everything it had, because everything it has is a list of files.
+ * The battles on offer, under the Campaigns they are shelved under. This is the
+ * one page that survives a reload with everything it had, because everything it
+ * has is a list of files.
  */
-const battles = ref<CatalogueEntry[]>([])
+const shelves = ref<Shelf[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
@@ -26,7 +22,7 @@ const last = ref<LastBattle | null>(recallBattle())
 
 onMounted(async () => {
   try {
-    battles.value = await loadCatalogue()
+    shelves.value = await loadShelves()
   } catch (e) {
     error.value = e instanceof Error ? e.message : String(e)
   } finally {
@@ -47,7 +43,7 @@ onMounted(async () => {
       </div>
     </TopBar>
     <main class="relative min-h-0 flex-1">
-      <BattleMenu :battles="battles" :last="last" :error="error" :loading="loading" />
+      <BattleMenu :shelves="shelves" :last="last" :error="error" :loading="loading" />
     </main>
   </div>
 </template>

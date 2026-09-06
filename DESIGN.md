@@ -7,10 +7,11 @@ Hard-to-reverse decisions live in [docs/adr/](./docs/adr/); this is the index th
 they sit in the cascade.
 
 Scope is a single battle, fought by one **Commander** or by two
-([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)). Campaign
-persistence and anything above the Unit are out.
+([ADR-0013](./docs/adr/0013-a-battle-with-two-commanders-lives-on-a-server.md)). A **Campaign**
+groups the battles on offer and does nothing else; *campaign persistence* — anything at all
+crossing from one battle to the next — and anything above the Unit are out.
 
-**Decisions are cross-checked against two nominal battles, both from the first Italian campaign.**
+**Decisions are cross-checked against two nominal battles, both from the First Italian Campaign.**
 **Castiglione (5 Aug 1796)** is the everyday case — open rolling ground, all three Arms manoeuvring
 in Formation, one Arrival, one piece of Key Ground. **Rivoli (14 Jan 1797)** is the ceiling — the
 Field at its size limit, 200m of relief, impassability by gradient, a Crossing formed by a gorge,
@@ -1466,7 +1467,7 @@ comes close: 0.16–1.49ms. The gorge was the worry and the open diagonal is the
   shape caught on purpose rather than by luck. **Trigger:** measuring what the Dispatch feed and the
   Scenario `summary` already teach — because the answer may be that most of G9 is built and nobody
   had noticed.
-- **Campaign persistence.** Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
+- **Campaign persistence.** Not the **Campaign** that now shelves the battles — that one is a heading and carries nothing. This is state crossing between two Scenarios on the same shelf, which is the thing the term is defined to exclude. Rosters are already standalone files, so the door is open. **Trigger:** wanting casualties from Lodi to still be missing at Castiglione.
 
 ## 10. Inconsistencies spotted and fixed
 

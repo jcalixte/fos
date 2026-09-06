@@ -1,5 +1,6 @@
 {
   "name": "The bridge march",
+  "campaign": "drills",
   "summary": "A fixture, not a battle. One river, one bridge, a hamlet commanding the far bank, and an advance guard that has to be over and into it before the Austrians settle in. It exists to answer whether an Order that takes a minute and a half to arrive is a game or a nuisance.",
   "field": {
     "cells": [200, 120],
