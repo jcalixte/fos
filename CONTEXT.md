@@ -302,6 +302,12 @@ The paused phase before a battle in which each **Commander** arranges the army t
 inside a zone and sites the **Headquarters**. No Orders are given; nothing is being commanded yet.
 Where a battle has two Commanders neither sees the other's army while it is being arranged, and it
 ends when both have **Stood To** or the Deployment clock runs out — whichever comes first.
+Authoring rule: site neither **Headquarters** inside an enemy's beaten ground, nor within
+**Harried** range of an enemy **Unit**. A staff handed to a Commander already under fire charges
+every **Order** the harried surcharge from the first minute to the last, and a Commander who never
+thinks to move it never learns why — while a **Plan**, which applies its Orders where they land
+rather than couriering them, pays nothing at all. Where the player then takes the staff is his own
+affair: being able to site it badly is the decision ADR-0008 exists to offer.
 _Avoid_: setup, placement, pre-battle, draft
 
 **Stand To**:

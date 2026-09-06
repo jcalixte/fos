@@ -20,7 +20,7 @@
       "roster": "/rosters/french-advance-guard.json",
       "headquarters": {
         "x": 352,
-        "y": 557
+        "y": 484
       },
       "deploymentZone": [96, 340, 460, 480]
     },
@@ -32,7 +32,7 @@
       "roster": "/rosters/austrian-bridge-guard.json",
       "headquarters": {
         "x": 1248,
-        "y": 557
+        "y": 444
       },
       "deploymentZone": [900, 340, 460, 480]
     }
